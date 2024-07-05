@@ -1,0 +1,58 @@
+Date,Time (ET),Game,Proj_winner,Proj_margin,Win_prob,Proj. score (rounded),Spread,ATS Pick,Spread diff,O/U,O/U pick,O/U diff
+5-Oct,7:00 PM,SMU at UCF,UCF,1.5,54%,30-28,UCF -3,SMU,1.5,64.0,Under,-6.0
+7-Oct,7:00 PM,Nebraska at Rutgers,Nebraska,1.9,54%,27-25,Nebraska -3,Rutgers,1.1,50.5,Over,1.1
+7-Oct,7:30 PM,Houston at Memphis,Memphis,1.3,53%,31-29,Memphis -2.5,Houston,1.2,57.5,Over,2.7
+7-Oct,10:30 PM,Colorado State at Nevada,Nevada,7.5,67%,29-22,Nevada -3,Nevada,4.5,45.5,Over,5.7
+7-Oct,10:30 PM,UNLV at San Jose State,San Jose State,3.7,58%,26-23,San Jose State -5.5,UNLV,1.8,51.5,Under,-2.5
+8-Oct,12:00 PM,Arkansas at Mississippi State,Mississippi State,8.2,68%,33-25,Mississippi State -6.5,Mississippi State,1.7,62.0,Under,-3.6
+8-Oct,12:00 PM,Buffalo at Bowling Green,Bowling Green,0.3,51%,30-30,Buffalo -1.5,Bowling Green,1.8,54.5,Over,5.5
+8-Oct,12:00 PM,Eastern Michigan at Western Michigan,Western Michigan,2.4,56%,30-28,Western Michigan -5,Eastern Michigan,2.6,58.0,Over,0.1
+8-Oct,12:00 PM,Louisville at Virginia,Louisville,2.8,56%,30-27,Louisville -3.5,Virginia,0.7,52.0,Over,5.6
+8-Oct,12:00 PM,Michigan at Indiana,Michigan,24.9,93%,40-15,Michigan -22,Michigan,2.9,59.0,Under,-4.1
+8-Oct,12:00 PM,Missouri at Florida,Florida,4.8,61%,31-26,Florida -10,Missouri,5.2,54.5,Over,2.4
+8-Oct,12:00 PM,Purdue at Maryland,Maryland,2.5,56%,30-27,Maryland -3,Purdue,0.5,60.0,Under,-2.9
+8-Oct,12:00 PM,TCU at Kansas,TCU,7.3,66%,35-28,TCU -6,TCU,1.3,67.5,Under,-4.1
+8-Oct,12:00 PM,Tennessee at LSU,Tennessee,1.9,54%,31-29,Tennessee -2.5,LSU,0.6,62.0,Under,-2.6
+8-Oct,12:00 PM,Texas vs. Oklahoma,Texas,0.5,51%,31-31,Texas -7,Oklahoma,6.5,65.0,Under,-3.1
+8-Oct,2:00 PM,Akron at Ohio,Ohio,9.2,70%,33-24,Ohio -11.5,Akron,2.3,58.0,Under,-0.6
+8-Oct,2:00 PM,Georgia Southern at Georgia State,Georgia State,3.2,57%,31-28,Georgia State -2.5,Georgia State,0.7,66.0,Under,-7.7
+8-Oct,2:30 PM,USF at Cincinnati,Cincinnati,30.2,96%,44-14,Cincinnati -28,Cincinnati,2.2,59.0,Under,-1.0
+8-Oct,3:30 PM,Auburn at Georgia,Georgia,18.8,86%,36-17,Georgia -29.5,Auburn,10.7,49.0,Over,3.3
+8-Oct,3:30 PM,Ball State at Central Michigan,Central Michigan,6.3,64%,32-25,Central Michigan -8.5,Ball State,2.2,63.5,Under,-6.7
+8-Oct,3:30 PM,East Carolina at Tulane,Tulane,5.3,62%,30-25,Tulane -2.5,Tulane,2.8,54.0,Over,1.2
+8-Oct,3:30 PM,Kent State at Miami-OH,Miami-OH,3.7,58%,31-27,Kent State -5,Miami-OH,8.7,58.5,Under,-0.4
+8-Oct,3:30 PM,Liberty at Massachusetts,Liberty,25.9,93%,38-12,Liberty -24.5,Liberty,1.4,50.5,Under,-0.3
+8-Oct,3:30 PM,Middle Tennessee at UAB,UAB,14.7,80%,34-19,UAB -9,UAB,5.7,55.0,Under,-2.0
+8-Oct,3:30 PM,Texas Tech at Oklahoma State,Oklahoma State,12.1,76%,36-23,Oklahoma State -10.5,Oklahoma State,1.6,64.0,Under,-5.0
+8-Oct,3:30 PM,Toledo at Northern Illinois,Toledo,7.7,67%,33-25,Toledo -5.5,Toledo,2.2,58.5,Over,0.1
+8-Oct,3:30 PM,Tulsa at Navy,Tulsa,9.7,71%,30-20,Tulsa -4,Tulsa,5.7,47.0,Over,3.3
+8-Oct,3:30 PM,Utah at UCLA,Utah,0.2,50%,31-31,Utah -4,UCLA,3.8,64.0,Under,-2.6
+8-Oct,3:30 PM,Virginia Tech at Pittsburgh,Pittsburgh,14.1,79%,33-19,Pittsburgh -14.5,Virginia Tech,0.4,43.5,Over,8.0
+8-Oct,3:30 PM,Wisconsin at Northwestern,Wisconsin,14.3,80%,30-16,Wisconsin -10,Wisconsin,4.3,44.0,Over,2.0
+8-Oct,4:00 PM,Duke at Georgia Tech,Duke,3.6,58%,31-28,Duke -3,Duke,0.6,53.5,Over,5.3
+8-Oct,4:00 PM,North Carolina at Miami-FL,Miami-FL,3.7,58%,33-30,Miami-FL -4,North Carolina,0.3,66.0,Under,-2.9
+8-Oct,4:00 PM,Ohio State at Michigan State,Ohio State,17.8,85%,39-21,Ohio State -25.5,Michigan State,7.7,62.0,Under,-2.3
+8-Oct,4:00 PM,Ole Miss at Vanderbilt,Ole Miss,26.0,93%,41-15,Ole Miss -18.5,Ole Miss,7.5,59.5,Under,-2.6
+8-Oct,4:00 PM,Washington at Arizona State,Washington,6.9,65%,31-24,Washington -13.5,Arizona State,6.6,55.5,Over,0.2
+8-Oct,6:00 PM,Western Kentucky at UTSA,UTSA,4.0,59%,35-31,UTSA -6.5,Western Kentucky,2.5,70.5,Under,-4.4
+8-Oct,7:00 PM,Air Force at Utah State,Air Force,10.2,72%,32-22,Air Force -10,Air Force,0.2,55.0,Under,-0.6
+8-Oct,7:00 PM,Appalachian State at Texas State,Appalachian State,17.2,84%,36-19,Appalachian State -19,Texas State,1.8,55.5,Over,0.0
+8-Oct,7:00 PM,Connecticut at Florida International,Connecticut,1.9,54%,28-26,Connecticut -4,Florida International,2.1,49.0,Over,5.4
+8-Oct,7:00 PM,James Madison at Arkansas State,James Madison,15.6,82%,36-21,James Madison -10.5,James Madison,5.1,57.5,Under,-0.8
+8-Oct,7:00 PM,Southern Miss at Troy,Troy,4.7,61%,25-21,Troy -6.5,Southern Miss,1.8,46.0,Under,0.0
+8-Oct,7:00 PM,UTEP at Louisiana Tech,UTEP,0.2,50%,27-26,Louisiana Tech -3,UTEP,3.2,53.0,Under,-0.1
+8-Oct,7:00 PM,Wyoming at New Mexico,Wyoming,2.8,56%,24-21,Wyoming -3.5,New Mexico,0.7,37.5,Over,6.9
+8-Oct,7:30 PM,Army at Wake Forest,Wake Forest,14.7,80%,41-26,Wake Forest -17,Army,2.3,65.0,Over,1.4
+8-Oct,7:30 PM,BYU vs. Notre Dame,Notre Dame,2.8,56%,28-26,Notre Dame -4,BYU,1.2,52.0,Over,2.1
+8-Oct,7:30 PM,Clemson at Boston College,Clemson,19.7,87%,35-15,Clemson -20.5,Boston College,0.8,50.0,Under,-0.2
+8-Oct,7:30 PM,Iowa at Illinois,Iowa,1.8,54%,20-18,Illinois -3.5,Iowa,5.3,35.5,Over,3.1
+8-Oct,7:30 PM,Kansas State at Iowa State,Kansas State,1.6,54%,25-24,Kansas State -2,Iowa State,0.4,46.0,Over,3.3
+8-Oct,7:30 PM,South Carolina at Kentucky,Kentucky,11.9,75%,32-20,Kentucky -10.5,Kentucky,1.4,49.0,Over,2.2
+8-Oct,7:30 PM,Washington State at USC,USC,9.1,70%,33-23,USC -12,Washington State,2.9,61.0,Under,-5.1
+8-Oct,8:00 PM,Coastal Carolina at UL-Monroe,Coastal Carolina,17.4,84%,40-22,Coastal Carolina -14,Coastal Carolina,3.4,58.5,Over,3.5
+8-Oct,8:00 PM,Florida State at NC State,NC State,5.2,62%,28-23,NC State -3.5,NC State,1.7,52.0,Under,-1.0
+8-Oct,8:00 PM,Texas A&M at Alabama,Alabama,19.4,87%,35-16,Alabama -24,Texas A&M,4.6,52.0,Under,-0.8
+8-Oct,9:00 PM,Oregon at Arizona,Oregon,22.7,90%,42-19,Oregon -13,Oregon,9.7,69.5,Under,-8.3
+8-Oct,9:45 PM,Fresno State at Boise State,Boise State,3.0,57%,26-23,Boise State -6.5,Fresno State,3.5,48.5,Over,0.9
+8-Oct,10:30 PM,Hawaii at San Diego State,San Diego State,21.3,89%,37-15,San Diego State -18.5,San Diego State,2.8,49.5,Over,2.5
+8-Oct,11:00 PM,Oregon State at Stanford,Oregon State,5.8,63%,34-28,Oregon State -7,Stanford,1.2,57.5,Over,4.0
