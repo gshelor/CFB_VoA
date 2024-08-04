@@ -1,22 +1,22 @@
-## The Vortex of Accuracy, Version 4.1.2
-## Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy
-## Created by Griffin Shelor
-## Initially intended to use SP+ ratings but due to paywall issues they are unlikely to be accessible via collegefootballdata.com's API and thus they will be inaccessible via cfbfastR, so sections involving current season SP+ will no longer be included in Vortex of Accuracy. Those sections will be commented out in case this accessibility issue ever changes.
-## installing packages
+### The Vortex of Accuracy, Version 4.1.2
+### Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy
+### Created by Griffin Shelor
+### Initially intended to use SP+ ratings but due to paywall issues they are unlikely to be consistently accessible via collegefootballdata.com's API and thus they will be inaccessible via cfbfastR, so sections involving current season SP+ will only be included in Vortex of Accuracy if availability is confirmed. Those sections will be commented out in case this accessibility issue ever changes.
+### installing packages
 # install.packages(c("devtools", "tidyverse", "matrixStats", "gt", "viridis", "webshot", "rvest", "cfbfastR", "here", "ggsci", "RColorBrewer", "ggpubr", "remotes", "pacman", "gtExtras", cfbplotR))
 ## Load Packages for Ranking Variables
 start_time <- Sys.time()
 library(pacman)
-pacman::p_load(tidyverse, gt, cfbfastR, here, RColorBrewer, gtExtras, cfbplotR, ggpubr, webshot2)
+pacman::p_load(tidyverse, gt, cfbfastR, here, RColorBrewer, gtExtras, cfbplotR, ggpubr, webshot2, rstan, parallel)
 ## testing to see if script runs without certain packages I don't think are being used
-# writexl, rvest, openxlsx, tidymodels, ranger, grid, gridExtra, matrixStats, viridis, webshot, ggsci,
+# tidymodels, ranger, grid, gridExtra, matrixStats, viridis, webshot, ggsci,
 
 ## Creating Week and Year String for Top 25 Table Title, eventually could be used as part of reading in cfbfastR/cfbdata API data
 year <- readline(prompt = "What year is it? ")
 week <- readline(prompt = "What week is it? ")
 
 ##### setting strings for table titles, file pathways, unintelligible charts #####
-output_dir <- here("RVoA", "Outputs")
+output_dir <- here("Outputs", "RVoA", paste0("VoA", year))
 data_dir <- here("Data", paste("VoA", year, sep = ""))
 preseason_text <- "Preseason"
 resume_text <- "Resume"
@@ -35,11 +35,11 @@ CUSA_text <- "CUSA"
 Indy_text <- "Independents"
 MAC_text <- "MAC"
 MWC_text <- "MWC"
-Pac12_text <- "Pac12"
+Pac2_text <- "Pac2"
 SEC_text <- "SEC"
 SunBelt_text <- "SunBelt"
 FBS_text <- "FBS"
-Power_Five_text <- "Power 5"
+Power_Four_text <- "Power 4"
 Group_Five_text <- "Group of 5"
 Rating_text <- "_Ratings_Chart.png"
 Ranking_text <- "_Rankings_Chart.png"
@@ -71,32 +71,172 @@ MAC_Output_filename <- paste(year,week_text, week, MAC_text, Rating_text, sep = 
 MAC_Ranking_filename <- paste(year,week_text, week, MAC_text, Ranking_text, sep = "")
 MWC_Output_filename <- paste(year,week_text, week, MWC_text, Rating_text, sep = "")
 MWC_Ranking_filename <- paste(year,week_text, week, MWC_text, Ranking_text, sep = "")
-Pac12_Output_filename <- paste(year,week_text, week, Pac12_text, Rating_text, sep = "")
-Pac12_Ranking_filename <- paste(year,week_text, week, Pac12_text, Ranking_text, sep = "")
+Pac2_Output_filename <- paste(year,week_text, week, Pac2_text, Rating_text, sep = "")
+Pac2_Ranking_filename <- paste(year,week_text, week, Pac2_text, Ranking_text, sep = "")
 SEC_Output_filename <- paste(year,week_text, week, SEC_text, Rating_text, sep = "")
 SEC_Ranking_filename <- paste(year,week_text, week, SEC_text, Ranking_text, sep = "")
 SunBelt_Output_filename <- paste(year,week_text, week, SunBelt_text, Rating_text, sep = "")
 SunBelt_Ranking_filename <- paste(year,week_text, week, SunBelt_text, Ranking_text, sep = "")
 FBS_hist_filename <- paste(year, week_text, week, "_", FBS_text, Histogram_text, sep = "")
-Power5_hist_filename <- paste(year, week_text, week, "_", Power_Five_text, Histogram_text, sep = "")
+Power4_hist_filename <- paste(year, week_text, week, "_", Power_Four_text, Histogram_text, sep = "")
 Group5_hist_filename <- paste(year, week_text, week, "_", Group_Five_text, Histogram_text, sep = "")
 Output_Rating_Plot_filename <- paste(year, week_text, week, "_", Output_Rating_Plot_png, sep = "")
-## creating string for excel spreadsheet pathway
+### creating string for excel spreadsheet pathway
 file_pathway <- paste(data_dir, "/", year, week_text, week,"_", VoAString, sep = "")
 
 ##### Reading in Data #####
-##### regular data pull #####
-## pulling in data based on week of the season
+### pulling in data based on week of the season
 if (as.numeric(week) == 0) {
   ##### WEEK 0 Data Pull #####
-  ## reading in data for 3 previous years
-  FCS_PY3 <- read_csv(here("Data", "VoA2023", "FCSPrevYears", "FCS_PY3.csv"))
-  FCS_PY2 <- read_csv(here("Data", "VoA2023", "FCSPrevYears", "FCS_PY2.csv"))
-  FCS_PY1 <- read_csv(here("Data", "VoA2023", "FCSPrevYears", "FCS_PY1.csv"))
+  ### reading in data for 3 previous years
+  ### reading in FCS data first, made with FCSCleanup.R
+  # FCS_PY3 <- read_csv(here("Data", "VoA2024", "FCSPrevYears", "FCS_PY3.csv"))
+  # FCS_PY2 <- read_csv(here("Data", "VoA2024", "FCSPrevYears", "FCS_PY2.csv"))
+  # FCS_PY1 <- read_csv(here("Data", "VoA2024", "FCSPrevYears", "FCS_PY1.csv"))
+  
+  ### loading in play-by-play data
+  PBP_PY3 <- load_cfb_pbp(seasons = as.numeric(year) - 3)
+  PBP_PY2 <- load_cfb_pbp(seasons = as.numeric(year) - 2)
+  PBP_PY1 <- load_cfb_pbp(seasons = as.numeric(year) - 1)
+  
+  ### pulling out relevant plays used to create/input variables later
+  ## PY3
+  PBP_PY3_Yards <- PBP_PY3 |>
+    filter(play_type == "Pass Incompletion" | play_type == "Pass Completion" | play_type == "Rush" | play_type == "Sack" | play_type == "Fumble Recovery (Own)" | play_type == "Two Point Pass" | play_type == "Two Point Rush" | play_type == "Safety" | play_type == "Pass Reception" | play_type == "Fumble Recovery (Opponent)" | play_type == "Pass" | play_type == "2pt Conversion" | play_type == "Defensive 2pt Conversion" | play_type == "Passing Touchdown" | play_type == "Rushing Touchdown")
+  
+  PBP_PY3_3rdDowns <- PBP_PY3_Yards |>
+    filter(down == 3)
+  
+  PBP_PY3_4thDowns <- PBP_PY3_Yards |>
+    filter(down == 4)
+  
+  PBP_PY3_TDs <- PBP_PY3 |>
+    filter(play_type == "Passing Touchdown" | play_type == "Rushing Touchdown")
+  
+  PBP_PY3_2PtConvs <- PBP_PY3 |>
+    filter(play_type == "Two Point Rush" | play_type == "Two Point Pass" | play_type == "2pt Conversion")
+  
+  PBP_PY3_2ptPlays <- PBP_PY3_TDs |>
+    filter(pos_score_pts == 8)
+  
+  PBP_PY3_2ptPlays <- rbind(PBP_PY3_2ptPlays, PBP_PY3_2PtConvs)
+  
+  PBP_PY3_FGPlays <- PBP_PY3 |>
+    filter(play_type == "Field Goal Good" | play_type == "Field Goal Missed")
+  
+  PBP_PY3_XPPlays <- PBP_PY3_TDs |>
+    filter(pos_score_pts == 7)
+  
+  ### on ReturnTD plays, pos_team does the scoring (at least based on an admittedly too-quick glance)
+  ## except on punt return TDs
+  PBP_PY3_ReturnTDs <- PBP_PY3 |>
+    filter(play_type == "Kickoff Return Touchdown" | play_type == "Punt Return Touchdown" | play_type == "Blocked Punt Touchdown" | play_type == "Blocked Field Goal Touchdown" | play_type == "Missed Field Goal Touchdown")
+  
+  PBP_PY3_PuntReturnTD <- PBP_PY3 |>
+    filter(play_type == "Punt Return Touchdown")
+  
+  ### on KickReturnPlays, pos_team gains yards/does the returning
+  ## will use data from this subset to evaluate a predictor, kick/punt return yards allowed
+  PBP_PY3_KickReturn <- PBP_PY3 |>
+    filter(play_type == "Kickoff Return Touchdown" | play_type == "Kickoff Return (Offense)" | play_type == "Kickoff")
+  
+  ### on punt plays, pos_team does the punting, def_pos_team does the returning
+  PBP_PY3_Punts <- PBP_PY3 |>
+    filter(play_type == "Punt" | play_type == "Punt Return Touchdown")
+  
+  ## PY2
+  PBP_PY2_Yards <- PBP_PY2 |>
+    filter(play_type == "Pass Incompletion" | play_type == "Pass Completion" | play_type == "Rush" | play_type == "Sack" | play_type == "Fumble Recovery (Own)" | play_type == "Two Point Pass" | play_type == "Two Point Rush" | play_type == "Safety" | play_type == "Pass Reception" | play_type == "Fumble Recovery (Opponent)" | play_type == "Pass" | play_type == "2pt Conversion" | play_type == "Defensive 2pt Conversion" | play_type == "Passing Touchdown" | play_type == "Rushing Touchdown")
+  
+  PBP_PY2_3rdDowns <- PBP_PY2_Yards |>
+    filter(down == 3)
+  
+  PBP_PY2_4thDowns <- PBP_PY2_Yards |>
+    filter(down == 4)
+  
+  PBP_PY2_TDs <- PBP_PY2 |>
+    filter(play_type == "Passing Touchdown" | play_type == "Rushing Touchdown")
+  
+  PBP_PY2_2PtConvs <- PBP_PY2 |>
+    filter(play_type == "Two Point Rush" | play_type == "Two Point Pass" | play_type == "2pt Conversion")
+  
+  PBP_PY2_2ptPlays <- PBP_PY2_TDs |>
+    filter(pos_score_pts == 8)
+  
+  PBP_PY2_2ptPlays <- rbind(PBP_PY2_2ptPlays, PBP_PY2_2PtConvs)
+  
+  PBP_PY2_FGPlays <- PBP_PY2 |>
+    filter(play_type == "Field Goal Good" | play_type == "Field Goal Missed")
+  
+  PBP_PY2_XPPlays <- PBP_PY2_TDs |>
+    filter(pos_score_pts == 7)
+  
+  ### on ReturnTD plays, pos_team does the scoring (at least based on an admittedly too-quick glance)
+  ## except on punt return TDs
+  PBP_PY2_ReturnTDs <- PBP_PY2 |>
+    filter(play_type == "Kickoff Return Touchdown" | play_type == "Punt Return Touchdown" | play_type == "Blocked Punt Touchdown" | play_type == "Blocked Field Goal Touchdown" | play_type == "Missed Field Goal Touchdown")
+  
+  PBP_PY2_PuntReturnTD <- PBP_PY2 |>
+    filter(play_type == "Punt Return Touchdown")
+  
+  ### on KickReturnPlays, pos_team gains yards/does the returning
+  ## will use data from this subset to evaluate a predictor, kick/punt return yards allowed
+  PBP_PY2_KickReturn <- PBP_PY2 |>
+    filter(play_type == "Kickoff Return Touchdown" | play_type == "Kickoff Return (Offense)" | play_type == "Kickoff")
+  
+  ### on punt plays, pos_team does the punting, def_pos_team does the returning
+  PBP_PY2_Punts <- PBP_PY2 |>
+    filter(play_type == "Punt" | play_type == "Punt Return Touchdown")
+  
+  ## PY1
+  PBP_PY1_Yards <- PBP_PY1 |>
+    filter(play_type == "Pass Incompletion" | play_type == "Pass Completion" | play_type == "Rush" | play_type == "Sack" | play_type == "Fumble Recovery (Own)" | play_type == "Two Point Pass" | play_type == "Two Point Rush" | play_type == "Safety" | play_type == "Pass Reception" | play_type == "Fumble Recovery (Opponent)" | play_type == "Pass" | play_type == "2pt Conversion" | play_type == "Defensive 2pt Conversion" | play_type == "Passing Touchdown" | play_type == "Rushing Touchdown")
+  
+  PBP_PY1_3rdDowns <- PBP_PY1_Yards |>
+    filter(down == 3)
+  
+  PBP_PY1_4thDowns <- PBP_PY1_Yards |>
+    filter(down == 4)
+  
+  PBP_PY1_TDs <- PBP_PY1 |>
+    filter(play_type == "Passing Touchdown" | play_type == "Rushing Touchdown")
+  
+  PBP_PY1_2PtConvs <- PBP_PY1 |>
+    filter(play_type == "Two Point Rush" | play_type == "Two Point Pass" | play_type == "2pt Conversion")
+  
+  PBP_PY1_2ptPlays <- PBP_PY1_TDs |>
+    filter(pos_score_pts == 8)
+  
+  PBP_PY1_2ptPlays <- rbind(PBP_PY1_2ptPlays, PBP_PY1_2PtConvs)
+  
+  PBP_PY1_FGPlays <- PBP_PY1 |>
+    filter(play_type == "Field Goal Good" | play_type == "Field Goal Missed")
+  
+  PBP_PY1_XPPlays <- PBP_PY1_TDs |>
+    filter(pos_score_pts == 7)
+  
+  ### on ReturnTD plays, pos_team does the scoring (at least based on an admittedly too-quick glance)
+  ## except on punt return TDs
+  PBP_PY1_ReturnTDs <- PBP_PY1 |>
+    filter(play_type == "Kickoff Return Touchdown" | play_type == "Punt Return Touchdown" | play_type == "Blocked Punt Touchdown" | play_type == "Blocked Field Goal Touchdown" | play_type == "Missed Field Goal Touchdown")
+  
+  PBP_PY1_PuntReturnTD <- PBP_PY1 |>
+    filter(play_type == "Punt Return Touchdown")
+  
+  ### on KickReturnPlays, pos_team gains yards/does the returning
+  ## will use data from this subset to evaluate a predictor, kick/punt return yards allowed
+  PBP_PY1_KickReturn <- PBP_PY1 |>
+    filter(play_type == "Kickoff Return Touchdown" | play_type == "Kickoff Return (Offense)" | play_type == "Kickoff")
+  
+  ### on punt plays, pos_team does the punting, def_pos_team does the returning
+  PBP_PY1_Punts <- PBP_PY1 |>
+    filter(play_type == "Punt" | play_type == "Punt Return Touchdown")
+  
+  ### reading in regular stats
   Stats_PY1 <- cfbd_stats_season_team(year = as.integer(year) - 1, season_type = "both") |>
     filter(team != "Kennesaw State") |>
     mutate(total_yds_pg = total_yds/games,
-           pass_yds_pg = net_pass_yds/games,
+           pass_yds_pg = net_pass_yds / games,
            rush_yds_pg = rush_yds/games,
            first_downs_pg = first_downs/games,
            def_interceptions_pg = passes_intercepted/games,
@@ -112,12 +252,31 @@ if (as.numeric(week) == 0) {
            penalty_yds_pg = penalty_yds / games,
            yards_per_penalty = penalty_yds / penalties,
            kick_return_avg = kick_return_yds / kick_returns,
-           punt_return_avg = punt_return_yds / punt_returns)
+           punt_return_avg = punt_return_yds / punt_returns,
+           ### adding columns which will be filled in later using pbp data
+           off_plays_pg = 0,
+           off_ppg = 0,
+           def_ppg = 0,
+           def_yds_pg = 0,
+           def_plays_pg = 0,
+           def_third_conv_rate = 0,
+           def_fourth_conv_rate = 0,
+           def_ypp = 0,
+           fg_rate = 0,
+           fg_rate_allowed = 0,
+           fg_made_pg = 0,
+           fg_made_pg_allowed = 0,
+           xpts_pg = 0,
+           xpts_allowed_pg = 0,
+           kick_return_yds_avg_allowed = 0,
+           punt_return_yds_avg_allowed = 0,
+           st_ppg = 0,
+           st_ppg_allowed = 0)
   ## removing NAs
   Stats_PY1[is.na(Stats_PY1)] = 0
   ## PY2 stats
   Stats_PY2 <- cfbd_stats_season_team(year = as.integer(year) - 2, season_type = "both") |>
-    filter(team != "Sam Houston State" & team != "Jacksonville State" & team != "James Madison") |>
+    filter(team != "Sam Houston State" & team != "Jacksonville State" & team != "Kennesaw State") |>
     mutate(total_yds_pg = total_yds/games,
            pass_yds_pg = net_pass_yds/games,
            rush_yds_pg = rush_yds/games,
@@ -135,12 +294,31 @@ if (as.numeric(week) == 0) {
            penalty_yds_pg = penalty_yds / games,
            yards_per_penalty = penalty_yds / penalties,
            kick_return_avg = kick_return_yds / kick_returns,
-           punt_return_avg = punt_return_yds / punt_returns)
+           punt_return_avg = punt_return_yds / punt_returns,
+           ### adding columns which will be filled in later using pbp data
+           off_plays_pg = 0,
+           off_ppg = 0,
+           def_ppg = 0,
+           def_yds_pg = 0,
+           def_plays_pg = 0,
+           def_third_conv_rate = 0,
+           def_fourth_conv_rate = 0,
+           def_ypp = 0,
+           fg_rate = 0,
+           fg_rate_allowed = 0,
+           fg_made_pg = 0,
+           fg_made_pg_allowed = 0,
+           xpts_pg = 0,
+           xpts_allowed_pg = 0,
+           kick_return_yds_avg_allowed = 0,
+           punt_return_yds_avg_allowed = 0,
+           st_ppg = 0,
+           st_ppg_allowed = 0)
   ## removing NAs
   Stats_PY2[is.na(Stats_PY2)] = 0
   ## PY3 stats
   Stats_PY3 <- cfbd_stats_season_team(year = as.integer(year) - 3, season_type = "both") |>
-    filter(team != "James Madison" & team != "Sam Houston State" & team != "Jacksonville State" & team != "Connecticut" & team != "New Mexico State" & team != "Old Dominion") |>
+    filter(team != "James Madison" & team != "Sam Houston State" & team != "Jacksonville State" & team != "Kennesaw State") |>
     mutate(total_yds_pg = total_yds/games,
            pass_yds_pg = net_pass_yds/games,
            rush_yds_pg = rush_yds/games,
@@ -158,17 +336,32 @@ if (as.numeric(week) == 0) {
            penalty_yds_pg = penalty_yds / games,
            yards_per_penalty = penalty_yds / penalties,
            kick_return_avg = kick_return_yds / kick_returns,
-           punt_return_avg = punt_return_yds / punt_returns)
+           punt_return_avg = punt_return_yds / punt_returns,
+           ### adding columns which will be filled in later using pbp data
+           off_plays_pg = 0,
+           off_ppg = 0,
+           def_ppg = 0,
+           def_yds_pg = 0,
+           def_plays_pg = 0,
+           def_third_conv_rate = 0,
+           def_fourth_conv_rate = 0,
+           def_ypp = 0,
+           fg_rate = 0,
+           fg_rate_allowed = 0,
+           fg_made_pg = 0,
+           fg_made_pg_allowed = 0,
+           xpts_pg = 0,
+           xpts_allowed_pg = 0,
+           kick_return_yds_avg_allowed = 0,
+           punt_return_yds_avg_allowed = 0,
+           st_ppg = 0,
+           st_ppg_allowed = 0)
   ## removing NAs
   Stats_PY3[is.na(Stats_PY3)] = 0
-  ## filtering out COVID opt-outs from 2019 (PY3) data, will be merged into 2020 (PY2) data
-  # COVID_Optouts <- Stats_PY3 |>
-  #   filter(team == "New Mexico State" | team == "Connecticut" | team == "Old Dominion")
-  # Stats_PY2 <- rbind(Stats_PY2, COVID_Optouts)
   
   ## advanced stats data
   Adv_Stats_PY1 <- cfbd_stats_season_advanced(year = as.integer(year) - 1, excl_garbage_time = FALSE, start_week = 1, end_week = 15) |>
-    filter(team != "Sam Houston State" & team != "Jacksonville State") |>
+    filter(team != "Kennesaw State") |>
     select(team, off_ppa, off_success_rate, off_explosiveness, off_power_success,
            off_stuff_rate, off_line_yds, off_second_lvl_yds, off_open_field_yds,
            off_pts_per_opp, off_field_pos_avg_predicted_points, off_havoc_total, 
@@ -192,7 +385,7 @@ if (as.numeric(week) == 0) {
   Adv_Stats_PY1[is.na(Adv_Stats_PY1)] = 0
   ## PY2 advanced stats
   Adv_Stats_PY2 <- cfbd_stats_season_advanced(year = as.integer(year) - 2, excl_garbage_time = FALSE, start_week = 1, end_week = 15) |>
-    filter(team != "James Madison" & team != "Sam Houston State" & team != "Jacksonville State") |>
+    filter(team != "Kennesaw State" & team != "Sam Houston State" & team != "Jacksonville State") |>
     select(team, off_ppa, off_success_rate, off_explosiveness, off_power_success,
            off_stuff_rate, off_line_yds, off_second_lvl_yds, off_open_field_yds,
            off_pts_per_opp, off_field_pos_avg_predicted_points, off_havoc_total, 
@@ -216,7 +409,7 @@ if (as.numeric(week) == 0) {
   Adv_Stats_PY2[is.na(Adv_Stats_PY2)] = 0
   ## PY3 advanced stats
   Adv_Stats_PY3 <- cfbd_stats_season_advanced(year = as.integer(year) - 3, excl_garbage_time = FALSE, start_week = 1, end_week = 15) |>
-    filter(team != "James Madison" & team != "Sam Houston State" & team != "Jacksonville State" & team != "Connecticut" & team != "New Mexico State" & team != "Old Dominion") |>
+    filter(team != "James Madison" & team != "Sam Houston State" & team != "Jacksonville State" & team != "Kennesaw State") |>
     select(team, off_ppa, off_success_rate, off_explosiveness, off_power_success,
            off_stuff_rate, off_line_yds, off_second_lvl_yds, off_open_field_yds,
            off_pts_per_opp, off_field_pos_avg_predicted_points, off_havoc_total, 
@@ -242,40 +435,40 @@ if (as.numeric(week) == 0) {
   ## pulling in SP+ data
   ## PY1 SP Ratings
   SP_Rankings_PY1 <-cfbd_ratings_sp(year = as.integer(year) - 1) |>
-    filter(team != "Jacksonville State" & team != "Sam Houston State" & team != "nationalAverages" & team != "Sam Houston") |>
+    filter(team != "Kennesaw State" & team != "nationalAverages") |>
     select(team, rating, offense_rating, defense_rating, special_teams_rating)
   colnames(SP_Rankings_PY1) <- c("team", "sp_rating_PY1", "sp_offense_rating_PY1", "sp_defense_rating_PY1", "sp_special_teams_rating_PY1")
   ## Eliminating NAs
   SP_Rankings_PY1[is.na(SP_Rankings_PY1)] = 0
   ## PY2 SP Ratings
   SP_Rankings_PY2 <-cfbd_ratings_sp(year = as.integer(year) - 2) |>
-    filter(team != "James Madison" & team != "Jacksonville State" & team != "Sam Houston State" & team != "nationalAverages" & team != "Sam Houston") |>
+    filter(team != "Kennesaw State" & team != "Jacksonville State" & team != "Sam Houston State" & team != "nationalAverages" & team != "Sam Houston") |>
     select(team, rating, offense_rating, defense_rating, special_teams_rating)
   colnames(SP_Rankings_PY2) <- c("team", "sp_rating_PY2", "sp_offense_rating_PY2", "sp_defense_rating_PY2", "sp_special_teams_rating_PY2")
   ## Eliminating NAs
   SP_Rankings_PY2[is.na(SP_Rankings_PY2)] = 0
   ## PY3 SP Ratings
   SP_Rankings_PY3 <-cfbd_ratings_sp(year = as.integer(year) - 3) |>
-    filter(team != "James Madison" & team != "Jacksonville State" & team != "Sam Houston State" & team != "nationalAverages" & team != "Sam Houston" & team != "Connecticut" & team != "New Mexico State" & team != "Old Dominion") |>
+    filter(team != "James Madison" & team != "Jacksonville State" & team != "Sam Houston State" & team != "nationalAverages" & team != "Sam Houston" & team != "Kennesaw State") |>
     select(team, rating, offense_rating, defense_rating, special_teams_rating)
   colnames(SP_Rankings_PY3) <- c("team", "sp_rating_PY3", "sp_offense_rating_PY3", "sp_defense_rating_PY3", "sp_special_teams_rating_PY3")
   ## Eliminating NAs
   SP_Rankings_PY3[is.na(SP_Rankings_PY3)] = 0
   
-  ## pulling FPI data
+  ### pulling FPI data
   FPI_df_PY1 <- espn_ratings_fpi(year = as.integer(year) - 1) |>
-    filter(team_name != "Sam Houston State" & team_name != "Jacksonville State" & team_name != "Sam Houston") |>
+    filter(team_name != "Kennesaw State") |>
     select(team_name, fpi, w, l)
-  ## reading in PY2 FPI data
+  ### reading in PY2 FPI data
   FPI_df_PY2 <- espn_ratings_fpi(year = as.integer(year) - 2) |>
-    filter(team_name != "James Madison" & team_name != "Jacksonville State" & team_name != "Sam Houston State" & team_name != "Sam Houston") |>
+    filter(team_name != "Kennesaw State" & team_name != "Jacksonville State" & team_name != "Sam Houston State" & team_name != "Sam Houston") |>
     select(team_name, fpi, w, l)
-  ## reading in PY3 FPI data
+  ### reading in PY3 FPI data
   FPI_df_PY3 <- espn_ratings_fpi(year = as.integer(year) - 3) |>
-    filter(team_name != "James Madison" & team_name != "Jacksonville State" & team_name != "Sam Houston State" & team_name != "Sam Houston" & team_name != "Connecticut" & team_name != "New Mexico State" & team_name != "Old Dominion") |>
+    filter(team_name != "James Madison" & team_name != "Jacksonville State" & team_name != "Sam Houston State" & team_name != "Sam Houston" & team_name != "Kennesaw State") |>
     select(team_name, fpi, w, l)
   
-  ## converting character columns to numeric
+  ### converting character columns to numeric
   FPI_df_PY1[,2:ncol(FPI_df_PY1)] <- FPI_df_PY1[,2:ncol(FPI_df_PY1)] |> mutate_if(is.character,as.numeric)
   FPI_df_PY2[,2:ncol(FPI_df_PY2)] <- FPI_df_PY2[,2:ncol(FPI_df_PY2)] |> mutate_if(is.character,as.numeric)
   FPI_df_PY3[,2:ncol(FPI_df_PY3)] <- FPI_df_PY3[,2:ncol(FPI_df_PY3)] |> mutate_if(is.character,as.numeric)
@@ -331,6 +524,7 @@ if (as.numeric(week) == 0) {
                             team_name == 'GA Southern' ~ 'Georgia Southern',
                             team_name == 'Massachusetts' ~ 'UMass',
                             team_name == "J'Ville St" ~ 'Jacksonville State',
+                            team_name == "Kennesaw St" ~ 'Kennesaw State',
                             TRUE ~ team_name)) |>
     select(team, fpi, w, l)
   FPI_df_PY2 <- FPI_df_PY2 |>
@@ -376,6 +570,7 @@ if (as.numeric(week) == 0) {
                             team_name == 'GA Southern' ~ 'Georgia Southern',
                             team_name == 'Massachusetts' ~ 'UMass',
                             team_name == "J'Ville St" ~ 'Jacksonville State',
+                            team_name == "Kennesaw St" ~ 'Kennesaw State',
                             TRUE ~ team_name)) |>
     select(team, fpi, w, l)
   FPI_df_PY3 <- FPI_df_PY3 |>
@@ -421,6 +616,7 @@ if (as.numeric(week) == 0) {
                             team_name == 'GA Southern' ~ 'Georgia Southern',
                             team_name == 'Massachusetts' ~ 'UMass',
                             team_name == "J'Ville St" ~ 'Jacksonville State',
+                            team_name == "Kennesaw St" ~ 'Kennesaw State',
                             TRUE ~ team_name)) |>
     select(team, fpi, w, l)
   
@@ -434,42 +630,48 @@ if (as.numeric(week) == 0) {
   
   ## pulling in recruiting rankings
   recruit_PY1 <- cfbd_recruiting_team(year = as.numeric(year) - 1) |>
-    filter(team != "Sam Houston State" & team != "Jacksonville State") |>
+    filter(team != "Kennesaw State") |>
     filter(team %in% Stats_PY1$team) |>
     select(team, points)
   colnames(recruit_PY1) <- c("team", "recruit_pts_PY1")
+  ### converting recruiting points to numeric type
+  recruit_PY1$recruit_pts_PY1 <- as.numeric(recruit_PY1$recruit_pts_PY1)
   
-  ## pulling in talent rankings
+  ### pulling in talent rankings
   talent_df_PY1 <- cfbd_team_talent(year = as.numeric(year) - 1) |>
-    filter(school != "Sam Houston State" & school != "Jacksonville State") |>
+    filter(school != "Kennesaw State") |>
     filter(school %in% Stats_PY1$team) |>
     select(school, talent)
   colnames(talent_df_PY1) <- c("team", "talent_PY1")
   
-  ## pulling in recruiting rankings
+  ### pulling in recruiting rankings
   recruit_PY2 <- cfbd_recruiting_team(year = as.numeric(year) - 2) |>
-    filter(team != "James Madison" & team != "Sam Houston State" & team != "Jacksonville State") |>
+    filter(team != "Kennesaw State" & team != "Sam Houston State" & team != "Jacksonville State") |>
     filter(team %in% Stats_PY2$team) |>
     select(team, points)
   colnames(recruit_PY2) <- c("team", "recruit_pts_PY2")
+  ### converting recruiting points to numeric type
+  recruit_PY2$recruit_pts_PY2 <- as.numeric(recruit_PY2$recruit_pts_PY2)
   
   ## pulling in talent rankings
   talent_df_PY2 <- cfbd_team_talent(year = as.numeric(year) - 2) |>
-    filter(school != "James Madison" & school != "Sam Houston State" & school != "Jacksonville State") |>
+    filter(school != "Kennesaw State" & school != "Sam Houston State" & school != "Jacksonville State") |>
     filter(school %in% Stats_PY2$team) |>
     select(school, talent)
   colnames(talent_df_PY2) <- c("team", "talent_PY2")
   
-  ## pulling in recruiting rankings
+  ### pulling in recruiting rankings
   recruit_PY3 <- cfbd_recruiting_team(year = as.numeric(year) - 3) |>
-    filter(team != "James Madison" & team != "Sam Houston State" & team != "Jacksonville State" & team != "Connecticut" & team != "New Mexico State" & team != "Old Dominion") |>
+    filter(team != "James Madison" & team != "Sam Houston State" & team != "Jacksonville State" & team != "Kennesaw State") |>
     filter(team %in% Stats_PY3$team) |>
     select(team, points)
   colnames(recruit_PY3) <- c("team", "recruit_pts_PY3")
+  ### converting recruiting points to numeric type
+  recruit_PY3$recruit_pts_PY3 <- as.numeric(recruit_PY3$recruit_pts_PY3)
   
   ## pulling in talent rankings
   talent_df_PY3 <- cfbd_team_talent(year = as.numeric(year) - 3) |>
-    filter(school != "James Madison" & school != "Sam Houston State" & school != "Jacksonville State" & school != "Connecticut" & school != "New Mexico State" & school != "Old Dominion") |>
+    filter(school != "James Madison" & school != "Sam Houston State" & school != "Jacksonville State" & school != "Kennesaw State") |>
     filter(school %in% Stats_PY3$team) |>
     select(school, talent)
   colnames(talent_df_PY3) <- c("team", "talent_PY3")
@@ -487,41 +689,39 @@ if (as.numeric(week) == 0) {
   
   ## Pulling Simple Ranking System (SRS) data
   SRS_PY3 <- cfbd_ratings_srs(year = as.numeric(year) - 3) |>
-    filter(team != "Connecticut" & team != "New Mexico State" & team != "Old Dominion") |>
-    select(team, rating)
+    select(team, rating) |>
+    filter(team %in% Stats_PY3$team)
   colnames(SRS_PY3) <- c("team", "SRS_rating_PY3")
   ## IFF SRS data for PY3 is missing due to whatever issue
-  missing_SRSPY3_teams <- anti_join(Stats_PY1, SRS_PY3) |>
-    filter(team != "James Madison")
-  if (nrow(missing_SRSPY3_teams) > 0) {
-    SampleSRS_PY3 <- cfbd_ratings_srs(year = as.numeric(year) - 3) |>
-      select(team, conference, rating)
-    missing_SRSPY3teams <- missing_SRSPY3_teams |>
-      select(team) |>
-      mutate(SRS_rating_PY3 = mean(SampleSRS_PY3$rating))
-    SRS_PY3 <- rbind(SRS_PY3, missing_SRSPY3teams) |>
-      filter(team != "Connecticut" & team != "New Mexico State" & team != "Old Dominion")
-  } else {
-    print("no teams missing from SRS_PY3 data frame")
-  }
+  missing_SRSPY3_teams <- anti_join(Stats_PY1, SRS_PY3)
+  # if (nrow(missing_SRSPY3_teams) > 0) {
+  #   SampleSRS_PY3 <- cfbd_ratings_srs(year = as.numeric(year) - 3) |>
+  #     select(team, conference, rating)
+  #   missing_SRSPY3teams <- missing_SRSPY3_teams |>
+  #     select(team) |>
+  #     mutate(SRS_rating_PY3 = mean(SampleSRS_PY3$rating))
+  #   SRS_PY3 <- rbind(SRS_PY3, missing_SRSPY3teams)
+  # } else {
+  #   print("no teams missing from SRS_PY3 data frame")
+  # }
   
   ## SRS PY2
   SRS_PY2 <- cfbd_ratings_srs(year = as.numeric(year) - 2) |>
-    select(team, rating)
+    select(team, rating) |>
+    filter(team %in% Stats_PY2$team)
   colnames(SRS_PY2) <- c("team", "SRS_rating_PY2")
   ## IFF SRS data for PY2 is missing due to whatever issue
-  missing_SRSPY2_teams <- anti_join(Stats_PY1, SRS_PY2) |>
-    filter(team != "James Madison")
-  if (nrow(missing_SRSPY2_teams) > 0) {
-    SampleSRS_PY2 <- cfbd_ratings_srs(year = as.numeric(year) - 2) |>
-      select(team, conference, rating)
-    missing_SRSPY2teams <- missing_SRSPY2_teams |>
-      select(team) |>
-      mutate(SRS_rating_PY2 = mean(SampleSRS_PY2$rating))
-    SRS_PY2 <- rbind(SRS_PY2, missing_SRSPY2teams)
-  } else {
-    print("no teams missing from SRS_PY2 data frame")
-  }
+  missing_SRSPY2_teams <- anti_join(Stats_PY1, SRS_PY2)
+  # if (nrow(missing_SRSPY2_teams) > 0) {
+  #   SampleSRS_PY2 <- cfbd_ratings_srs(year = as.numeric(year) - 2) |>
+  #     select(team, conference, rating)
+  #   missing_SRSPY2teams <- missing_SRSPY2_teams |>
+  #     select(team) |>
+  #     mutate(SRS_rating_PY2 = mean(SampleSRS_PY2$rating))
+  #   SRS_PY2 <- rbind(SRS_PY2, missing_SRSPY2teams)
+  # } else {
+  #   print("no teams missing from SRS_PY2 data frame")
+  # }
   
   ## SRS PY1
   SRS_PY1 <- cfbd_ratings_srs(year = as.numeric(year) - 1) |>
@@ -530,16 +730,16 @@ if (as.numeric(week) == 0) {
   colnames(SRS_PY1) <- c("team", "SRS_rating_PY1")
   ## IFF SRS data for PY1 is missing due to whatever issue
   missing_SRSPY1_teams <- anti_join(Stats_PY1, SRS_PY1)
-  if (nrow(missing_SRSPY1_teams) > 0) {
-    SampleSRS_PY1 <- cfbd_ratings_srs(year = as.numeric(year) - 1) |>
-      select(team, conference, rating)
-    missing_SRSPY1teams <- missing_SRSPY1_teams |>
-      select(team) |>
-      mutate(SRS_rating_PY1 = mean(SampleSRS_PY1$rating))
-    SRS_PY1 <- rbind(SRS_PY1, missing_SRSPY1teams)
-  } else {
-    print("no teams missing from SRS_PY1 data frame")
-  }
+  # if (nrow(missing_SRSPY1_teams) > 0) {
+  #   SampleSRS_PY1 <- cfbd_ratings_srs(year = as.numeric(year) - 1) |>
+  #     select(team, conference, rating)
+  #   missing_SRSPY1teams <- missing_SRSPY1_teams |>
+  #     select(team) |>
+  #     mutate(SRS_rating_PY1 = mean(SampleSRS_PY1$rating))
+  #   SRS_PY1 <- rbind(SRS_PY1, missing_SRSPY1teams)
+  # } else {
+  #   print("no teams missing from SRS_PY1 data frame")
+  # }
 } else if (as.numeric(week) == 1) {
   ##### WEEK 1 DATA PULL #####
   ## reading in data for 3 previous years
@@ -2092,163 +2292,293 @@ if (as.numeric(week) == 0) {
   PY3_stats_adv_stats_list <- list(Stats_PY3, Adv_Stats_PY3)
   PY3_stats_adv_stats_merge <- PY3_stats_adv_stats_list |>
     reduce(full_join, by = "team") |>
-    select(season, team, conference, games, completion_pct, 
-           pass_ypa, pass_ypr, int_pct, rush_ypc, turnovers_pg, 
-           third_conv_rate, fourth_conv_rate, penalty_yds_pg, 
-           yards_per_penalty, kick_return_avg, punt_return_avg, total_yds_pg, 
-           pass_yds_pg, rush_yds_pg, first_downs_pg, off_ypp, def_interceptions_pg, off_ppa, 
-           off_success_rate, off_explosiveness, off_power_success, off_stuff_rate, 
-           off_line_yds, off_second_lvl_yds, off_open_field_yds, off_pts_per_opp, 
-           off_field_pos_avg_predicted_points, off_havoc_total, off_havoc_front_seven, 
-           off_havoc_db, off_standard_downs_ppa, off_standard_downs_success_rate, 
-           off_standard_downs_explosiveness, off_passing_downs_ppa, 
-           off_passing_downs_success_rate, off_passing_downs_explosiveness, 
-           off_rushing_plays_ppa, off_rushing_plays_success_rate, 
-           off_rushing_plays_explosiveness, off_passing_plays_ppa, 
-           off_passing_plays_success_rate, off_passing_plays_explosiveness, def_ppa, 
-           def_success_rate, def_explosiveness, def_power_success, def_stuff_rate, 
-           def_line_yds, def_second_lvl_yds, def_open_field_yds, def_pts_per_opp, 
-           def_field_pos_avg_predicted_points, def_havoc_total, def_havoc_front_seven, 
-           def_havoc_db, def_standard_downs_ppa, def_standard_downs_success_rate, 
-           def_standard_downs_explosiveness, def_passing_downs_ppa, 
-           def_passing_downs_success_rate, def_passing_downs_explosiveness, 
-           def_rushing_plays_ppa, def_rushing_plays_success_rate, 
-           def_rushing_plays_explosiveness, def_passing_plays_ppa, 
-           def_passing_plays_success_rate, def_passing_plays_explosiveness)
-  colnames(PY3_stats_adv_stats_merge) <- c("season", "team", "conference", "games_PY3", "completion_pct_PY3",
-                                           "pass_ypa_PY3", "pass_ypr_PY3", "int_pct_PY3", "rush_ypc_PY3", "turnovers_pg_PY3",
-                                           "third_conv_rate_PY3", "fourth_conv_rate_PY3", "penalty_yds_pg_PY3",
-                                           "yards_per_penalty_PY3", "kick_return_avg_PY3", "punt_return_avg_PY3", "total_yds_pg_PY3",
-                                           "pass_yds_pg_PY3", "rush_yds_pg_PY3", "first_downs_pg_PY3", "off_ypp_PY3", "def_interceptions_pg_PY3", "off_ppa_PY3",
-                                           "off_success_rate_PY3", "off_explosiveness_PY3", "off_power_success_PY3", "off_stuff_rate_PY3",
-                                           "off_line_yds_PY3", "off_second_lvl_yds_PY3", "off_open_field_yds_PY3", "off_pts_per_opp_PY3",
-                                           "off_field_pos_avg_predicted_points_PY3", "off_havoc_total_PY3", "off_havoc_front_seven_PY3",
-                                           "off_havoc_db_PY3", "off_standard_downs_ppa_PY3", "off_standard_downs_success_rate_PY3",
-                                           "off_standard_downs_explosiveness_PY3", "off_passing_downs_ppa_PY3",
-                                           "off_passing_downs_success_rate_PY3", "off_passing_downs_explosiveness_PY3",
-                                           "off_rushing_plays_ppa_PY3", "off_rushing_plays_success_rate_PY3",
-                                           "off_rushing_plays_explosiveness_PY3", "off_passing_plays_ppa_PY3",
-                                           "off_passing_plays_success_rate_PY3", "off_passing_plays_explosiveness_PY3", "def_ppa_PY3",
-                                           "def_success_rate_PY3", "def_explosiveness_PY3", "def_power_success_PY3", "def_stuff_rate_PY3",
-                                           "def_line_yds_PY3", "def_second_lvl_yds_PY3", "def_open_field_yds_PY3", "def_pts_per_opp_PY3",
-                                           "def_field_pos_avg_predicted_points_PY3", "def_havoc_total_PY3", "def_havoc_front_seven_PY3",
-                                           "def_havoc_db_PY3", "def_standard_downs_ppa_PY3", "def_standard_downs_success_rate_PY3",
-                                           "def_standard_downs_explosiveness_PY3", "def_passing_downs_ppa_PY3",
-                                           "def_passing_downs_success_rate_PY3", "def_passing_downs_explosiveness_PY3",
-                                           "def_rushing_plays_ppa_PY3", "def_rushing_plays_success_rate_PY3",
-                                           "def_rushing_plays_explosiveness_PY3", "def_passing_plays_ppa_PY3",
-                                           "def_passing_plays_success_rate_PY3", "def_passing_plays_explosiveness_PY3")
+    select(season, team, conference, games, completion_pct, pass_ypa, pass_ypr, int_pct, rush_ypc, turnovers_pg, third_conv_rate, fourth_conv_rate, penalty_yds_pg, yards_per_penalty, kick_return_avg, punt_return_avg, total_yds_pg, pass_yds_pg, rush_yds_pg, first_downs_pg, off_ypp, def_interceptions_pg, off_plays_pg, off_ppg, def_ppg, def_yds_pg, def_plays_pg, def_third_conv_rate, def_fourth_conv_rate, def_ypp, fg_rate, fg_rate_allowed, fg_made_pg, fg_made_pg_allowed, xpts_pg, xpts_allowed_pg, kick_return_yds_avg_allowed, punt_return_yds_avg_allowed, st_ppg, st_ppg_allowed, off_ppa, off_success_rate, off_explosiveness, off_power_success, off_stuff_rate, off_line_yds, off_second_lvl_yds, off_open_field_yds, off_pts_per_opp, off_field_pos_avg_predicted_points, off_havoc_total, off_havoc_front_seven, off_havoc_db, off_standard_downs_ppa, off_standard_downs_success_rate, off_standard_downs_explosiveness, off_passing_downs_ppa, off_passing_downs_success_rate, off_passing_downs_explosiveness, off_rushing_plays_ppa, off_rushing_plays_success_rate, off_rushing_plays_explosiveness, off_passing_plays_ppa, off_passing_plays_success_rate, off_passing_plays_explosiveness, def_ppa, def_success_rate, def_explosiveness, def_power_success, def_stuff_rate, def_line_yds, def_second_lvl_yds, def_open_field_yds, def_pts_per_opp, def_field_pos_avg_predicted_points, def_havoc_total, def_havoc_front_seven, def_havoc_db, def_standard_downs_ppa, def_standard_downs_success_rate, def_standard_downs_explosiveness, def_passing_downs_ppa, def_passing_downs_success_rate, def_passing_downs_explosiveness, def_rushing_plays_ppa, def_rushing_plays_success_rate, def_rushing_plays_explosiveness, def_passing_plays_ppa, def_passing_plays_success_rate, def_passing_plays_explosiveness)
+  
+  colnames(PY3_stats_adv_stats_merge) <- c("season", "team", "conference", "games_PY3", "completion_pct_PY3", "pass_ypa_PY3", "pass_ypr_PY3", "int_pct_PY3", "rush_ypc_PY3", "turnovers_pg_PY3", "third_conv_rate_PY3", "fourth_conv_rate_PY3", "penalty_yds_pg_PY3", "yards_per_penalty_PY3", "kick_return_avg_PY3", "punt_return_avg_PY3", "total_yds_pg_PY3", "pass_yds_pg_PY3", "rush_yds_pg_PY3", "first_downs_pg_PY3", "off_ypp_PY3", "def_interceptions_pg_PY3", "off_plays_pg_PY3", "off_ppg_PY3", "def_ppg_PY3", "def_yds_pg_PY3", "def_plays_pg_PY3", "def_third_conv_rate_PY3", "def_fourth_conv_rate_PY3", "def_ypp_PY3", "fg_rate_PY3", "fg_rate_allowed_PY3", "fg_made_pg_PY3", "fg_made_pg_allowed_PY3", "xpts_pg_PY3", "xpts_allowed_pg_PY3", "kick_return_yds_avg_allowed_PY3", "punt_return_yds_avg_allowed_PY3", "st_ppg_PY3", "st_ppg_allowed_PY3", "off_ppa_PY3", "off_success_rate_PY3", "off_explosiveness_PY3", "off_power_success_PY3", "off_stuff_rate_PY3", "off_line_yds_PY3", "off_second_lvl_yds_PY3", "off_open_field_yds_PY3", "off_pts_per_opp_PY3", "off_field_pos_avg_predicted_points_PY3", "off_havoc_total_PY3", "off_havoc_front_seven_PY3", "off_havoc_db_PY3", "off_standard_downs_ppa_PY3", "off_standard_downs_success_rate_PY3", "off_standard_downs_explosiveness_PY3", "off_passing_downs_ppa_PY3", "off_passing_downs_success_rate_PY3", "off_passing_downs_explosiveness_PY3", "off_rushing_plays_ppa_PY3", "off_rushing_plays_success_rate_PY3", "off_rushing_plays_explosiveness_PY3", "off_passing_plays_ppa_PY3", "off_passing_plays_success_rate_PY3", "off_passing_plays_explosiveness_PY3", "def_ppa_PY3", "def_success_rate_PY3", "def_explosiveness_PY3", "def_power_success_PY3", "def_stuff_rate_PY3", "def_line_yds_PY3", "def_second_lvl_yds_PY3", "def_open_field_yds_PY3", "def_pts_per_opp_PY3", "def_field_pos_avg_predicted_points_PY3", "def_havoc_total_PY3", "def_havoc_front_seven_PY3", "def_havoc_db_PY3", "def_standard_downs_ppa_PY3", "def_standard_downs_success_rate_PY3", "def_standard_downs_explosiveness_PY3", "def_passing_downs_ppa_PY3", "def_passing_downs_success_rate_PY3", "def_passing_downs_explosiveness_PY3", "def_rushing_plays_ppa_PY3", "def_rushing_plays_success_rate_PY3", "def_rushing_plays_explosiveness_PY3", "def_passing_plays_ppa_PY3", "def_passing_plays_success_rate_PY3", "def_passing_plays_explosiveness_PY3")
+  
+  ### making list of dfs to be merged
   PY3_df_list <- list(PY3_stats_adv_stats_merge, recruit_PY3, talent_df_PY3, SP_Rankings_PY3, FPI_df_PY3, SRS_PY3)
+  ### merging dfs
   PY3_df <- PY3_df_list |>
     reduce(full_join, by = "team")
-  PY3_df <- rbind(PY3_df, COVID_Optouts_df)
+  
+  ### adding values to off_plays_pg, off_ppg, def_ppg, def_yds_pg, def_plays_pg, def_third_conv_rate, def_fourth_conv_rate, def_ypp, fg_rate, fg_rate_allowed, fg_made_pg, fg_made_pg_allowed, xpts_pg, xpts_allowed_pg, kick_return_yds_avg_allowed, punt_return_yds_avg_allowed, st_ppg, st_ppg_allowed before binding relevant FCS transition teams (their values should already be calculated) to main PY3_df
+  
+  ### list of relevant PBP dfs
+  # PBP_PY3_Yards
+  # PBP_PY3_3rdDowns
+  # PBP_PY3_4thDowns
+  # PBP_PY3_TDs
+  # PBP_PY3_2ptPlays
+  # PBP_PY3_FGPlays
+  # PBP_PY3_XPPlays
+  ### on ReturnTD plays, pos_team does the scoring, except on punt return TDs
+  # PBP_PY3_ReturnTDs
+  # PBP_PY3_PuntReturnTD
+  ### on KickReturnPlays, pos_team gains yards/does the returning
+  # PBP_PY3_KickReturn
+  ### on punt plays, pos_team does the punting, def_pos_team does the returning
+  # PBP_PY3_Punts
+  for (school in 1:nrow(PY3_df)){
+    ### filtering out relevant plays for the team being iterated through
+    ### used to calculate off_plays_pg
+    temp_PBP_PY3_yards <- PBP_PY3_Yards |>
+      filter(pos_team == PY3_df$team[school])
+    ### used to calculate def_yds_pg, def_plays_pg, def_ypp
+    temp_PBP_PY3_Defyards <- PBP_PY3_Yards |>
+      filter(def_pos_team == PY3_df$team[school])
+    ### used to get 3rd and 4th down conversion rate allowed
+    temp_PBP_PY3_3rd <- PBP_PY3_3rdDowns |>
+      filter(def_pos_team == PY3_df$team[school])
+    temp_PBP_PY3_4th <- PBP_PY3_4thDowns |>
+      filter(def_pos_team == PY3_df$team[school])
+    ### used to calculate off_ppg and def_ppg
+    temp_PBP_PY3_OffTDs <- PBP_PY3_TDs |>
+      filter(pos_team == PY3_df$team[school])
+    temp_PBP_PY3_DefTDs <- PBP_PY3_TDs |>
+      filter(def_pos_team == PY3_df$team[school])
+    temp_PBP_PY3_2Pts <- PBP_PY3_2ptPlays |>
+      filter(pos_team == PY3_df$team[school])
+    temp_PBP_PY3_Def2Pts <- PBP_PY3_2ptPlays |>
+      filter(def_pos_team == PY3_df$team[school])
+    ### used as part of calculation of fg_rate, fg_rate_allowed, st_ppg and st_ppg_allowed
+    temp_PBP_PY3_FGs <- PBP_PY3_FGPlays |>
+      filter(pos_team == PY3_df$team[school])
+    temp_PBP_PY3_GoodFGs <- temp_PBP_PY3_FGs |>
+      filter(play_type == "Field Goal Good")
+    temp_PBP_PY3_DefFGs <- PBP_PY3_FGPlays |>
+      filter(def_pos_team == PY3_df$team[school])
+    temp_PBP_PY3_DefGoodFGs <- temp_PBP_PY3_DefFGs |>
+      filter(play_type == "Field Goal Good")
+    temp_PBP_PY3_XPts <- PBP_PY3_XPPlays |>
+      filter(pos_team == PY3_df$team[school])
+    temp_PBP_PY3_DefXPts <- PBP_PY3_XPPlays |>
+      filter(def_pos_team == PY3_df$team[school])
+    ### used to calculate kick and punt return yards allowed
+    temp_PBP_PY3_KickReturn <- PBP_PY3_KickReturn |>
+      filter(def_pos_team == PY3_df$team[school])
+    temp_PBP_PY3_PuntReturn <- PBP_PY3_Punts |>
+      filter(pos_team == PY3_df$team[school])
+    ### used to calculate st_ppg_allowed
+    temp_PBP_PY3_ReturnTDs <- PBP_PY3_ReturnTDs |>
+      filter(def_pos_team == PY3_df$team[school])
+    temp_PBP_PY3_OffReturnTDs <- PBP_PY3_ReturnTDs |>
+      filter(pos_team == PY3_df$team[school])
+    temp_PBP_PY3_PuntTDs <- PBP_PY3_PuntReturnTD |>
+      filter(pos_team == PY3_df$team[school])
+    
+    ### using filtered play datasets to calculate variables
+    PY3_df$off_plays_pg_PY3[school] = nrow(temp_PBP_PY3_yards) / PY3_df$games_PY3[school]
+    PY3_df$off_ppg_PY3[school] = ((nrow(temp_PBP_PY3_OffTDs) * 6) + (nrow(temp_PBP_PY3_2Pts) * 2)) / PY3_df$games_PY3[school]
+    PY3_df$def_ppg_PY3[school] = ((nrow(temp_PBP_PY3_DefTDs) * 6) + (nrow(temp_PBP_PY3_Def2Pts) * 2)) / PY3_df$games_PY3[school]
+    PY3_df$def_yds_pg_PY3[school] = sum(temp_PBP_PY3_Defyards$yards_gained, na.rm = TRUE) / PY3_df$games_PY3[school]
+    PY3_df$def_plays_pg_PY3[school] = nrow(temp_PBP_PY3_Defyards) / PY3_df$games_PY3[school]
+    PY3_df$def_third_conv_rate_PY3[school] = sum(temp_PBP_PY3_3rd$first_by_yards, na.rm = TRUE) / nrow(temp_PBP_PY3_3rd)
+    PY3_df$def_fourth_conv_rate_PY3[school] = sum(temp_PBP_PY3_4th$first_by_yards, na.rm = TRUE) / nrow(temp_PBP_PY3_4th)
+    PY3_df$def_ypp_PY3[school] = sum(temp_PBP_PY3_Defyards$yards_gained, na.rm = TRUE) / nrow(temp_PBP_PY3_Defyards)
+    PY3_df$fg_rate_PY3[school] = nrow(temp_PBP_PY3_GoodFGs) / nrow(temp_PBP_PY3_FGs)
+    PY3_df$fg_rate_allowed_PY3[school] = nrow(temp_PBP_PY3_DefGoodFGs) / nrow(temp_PBP_PY3_DefFGs)
+    PY3_df$fg_made_pg_PY3[school] = nrow(temp_PBP_PY3_GoodFGs) / PY3_df$games_PY3[school]
+    PY3_df$fg_made_pg_allowed_PY3[school] = nrow(temp_PBP_PY3_DefGoodFGs) / PY3_df$games_PY3[school]
+    PY3_df$xpts_pg_PY3[school] = nrow(temp_PBP_PY3_XPts) / PY3_df$games_PY3[school]
+    PY3_df$xpts_allowed_pg_PY3[school] = nrow(temp_PBP_PY3_DefXPts) / PY3_df$games_PY3[school]
+    PY3_df$kick_return_yds_avg_allowed_PY3[school] = sum(temp_PBP_PY3_KickReturn$yards_gained, na.rm = TRUE) / nrow(temp_PBP_PY3_KickReturn)
+    PY3_df$punt_return_yds_avg_allowed_PY3[school] = sum(temp_PBP_PY3_PuntReturn$yards_gained, na.rm = TRUE)
+    PY3_df$st_ppg_PY3[school] = (nrow(temp_PBP_PY3_OffReturnTDs) * 6 / PY3_df$games_PY3[school]) + (nrow(temp_PBP_PY3_XPts) / PY3_df$games_PY3[school]) + (nrow(temp_PBP_PY3_GoodFGs) / PY3_df$games_PY3[school] * 3) 
+    PY3_df$st_ppg_allowed_PY3[school] = (nrow(temp_PBP_PY3_ReturnTDs) * 6 / PY3_df$games_PY3[school]) + (nrow(temp_PBP_PY3_DefXPts) / PY3_df$games_PY3[school]) + (nrow(temp_PBP_PY3_DefGoodFGs) / PY3_df$games_PY3[school] * 3)
+  }
+  
+  ### binding FCS_PY3 df with merged stats 
   PY3_df <- rbind(PY3_df, FCS_PY3)
   
+  ### Merging PY2 data
   PY2_stats_adv_stats_list <- list(Stats_PY2, Adv_Stats_PY2)
   PY2_stats_adv_stats_merge <- PY2_stats_adv_stats_list |>
     reduce(full_join, by = "team") |>
-    select(team, games, completion_pct, pass_ypa, pass_ypr, int_pct, rush_ypc, 
-           turnovers_pg, third_conv_rate, fourth_conv_rate, penalty_yds_pg, 
-           yards_per_penalty, kick_return_avg, punt_return_avg, total_yds_pg, 
-           pass_yds_pg, rush_yds_pg, first_downs_pg, off_ypp, def_interceptions_pg, off_ppa, 
-           off_success_rate, off_explosiveness, off_power_success, off_stuff_rate, 
-           off_line_yds, off_second_lvl_yds, off_open_field_yds, off_pts_per_opp, 
-           off_field_pos_avg_predicted_points, off_havoc_total, off_havoc_front_seven, 
-           off_havoc_db, off_standard_downs_ppa, off_standard_downs_success_rate, 
-           off_standard_downs_explosiveness, off_passing_downs_ppa, 
-           off_passing_downs_success_rate, off_passing_downs_explosiveness, 
-           off_rushing_plays_ppa, off_rushing_plays_success_rate, 
-           off_rushing_plays_explosiveness, off_passing_plays_ppa, 
-           off_passing_plays_success_rate, off_passing_plays_explosiveness, def_ppa, 
-           def_success_rate, def_explosiveness, def_power_success, def_stuff_rate, 
-           def_line_yds, def_second_lvl_yds, def_open_field_yds, def_pts_per_opp, 
-           def_field_pos_avg_predicted_points, def_havoc_total, def_havoc_front_seven, 
-           def_havoc_db, def_standard_downs_ppa, def_standard_downs_success_rate, 
-           def_standard_downs_explosiveness, def_passing_downs_ppa, 
-           def_passing_downs_success_rate, def_passing_downs_explosiveness, 
-           def_rushing_plays_ppa, def_rushing_plays_success_rate, 
-           def_rushing_plays_explosiveness, def_passing_plays_ppa, 
-           def_passing_plays_success_rate, def_passing_plays_explosiveness)
-  colnames(PY2_stats_adv_stats_merge) <- c("team", "games_PY2", "completion_pct_PY2",
-                                           "pass_ypa_PY2", "pass_ypr_PY2", "int_pct_PY2", "rush_ypc_PY2", "turnovers_pg_PY2",
-                                           "third_conv_rate_PY2", "fourth_conv_rate_PY2", "penalty_yds_pg_PY2",
-                                           "yards_per_penalty_PY2", "kick_return_avg_PY2", "punt_return_avg_PY2", "total_yds_pg_PY2",
-                                           "pass_yds_pg_PY2", "rush_yds_pg_PY2", "first_downs_pg_PY2", "off_ypp_PY2", "def_interceptions_pg_PY2", "off_ppa_PY2",
-                                           "off_success_rate_PY2", "off_explosiveness_PY2", "off_power_success_PY2", "off_stuff_rate_PY2",
-                                           "off_line_yds_PY2", "off_second_lvl_yds_PY2", "off_open_field_yds_PY2", "off_pts_per_opp_PY2",
-                                           "off_field_pos_avg_predicted_points_PY2", "off_havoc_total_PY2", "off_havoc_front_seven_PY2",
-                                           "off_havoc_db_PY2", "off_standard_downs_ppa_PY2", "off_standard_downs_success_rate_PY2",
-                                           "off_standard_downs_explosiveness_PY2", "off_passing_downs_ppa_PY2",
-                                           "off_passing_downs_success_rate_PY2", "off_passing_downs_explosiveness_PY2",
-                                           "off_rushing_plays_ppa_PY2", "off_rushing_plays_success_rate_PY2",
-                                           "off_rushing_plays_explosiveness_PY2", "off_passing_plays_ppa_PY2",
-                                           "off_passing_plays_success_rate_PY2", "off_passing_plays_explosiveness_PY2", "def_ppa_PY2",
-                                           "def_success_rate_PY2", "def_explosiveness_PY2", "def_power_success_PY2", "def_stuff_rate_PY2",
-                                           "def_line_yds_PY2", "def_second_lvl_yds_PY2", "def_open_field_yds_PY2", "def_pts_per_opp_PY2",
-                                           "def_field_pos_avg_predicted_points_PY2", "def_havoc_total_PY2", "def_havoc_front_seven_PY2",
-                                           "def_havoc_db_PY2", "def_standard_downs_ppa_PY2", "def_standard_downs_success_rate_PY2",
-                                           "def_standard_downs_explosiveness_PY2", "def_passing_downs_ppa_PY2",
-                                           "def_passing_downs_success_rate_PY2", "def_passing_downs_explosiveness_PY2",
-                                           "def_rushing_plays_ppa_PY2", "def_rushing_plays_success_rate_PY2",
-                                           "def_rushing_plays_explosiveness_PY2", "def_passing_plays_ppa_PY2",
-                                           "def_passing_plays_success_rate_PY2", "def_passing_plays_explosiveness_PY2")
+    select(team, games, completion_pct, pass_ypa, pass_ypr, int_pct, rush_ypc, turnovers_pg, third_conv_rate, fourth_conv_rate, penalty_yds_pg, yards_per_penalty, kick_return_avg, punt_return_avg, total_yds_pg, pass_yds_pg, rush_yds_pg, first_downs_pg, off_ypp, def_interceptions_pg, off_plays_pg, off_ppg, def_ppg, def_yds_pg, def_plays_pg, def_third_conv_rate, def_fourth_conv_rate, def_ypp, fg_rate, fg_rate_allowed, fg_made_pg, fg_made_pg_allowed, xpts_pg, xpts_allowed_pg, kick_return_yds_avg_allowed, punt_return_yds_avg_allowed, st_ppg, st_ppg_allowed, off_ppa, off_success_rate, off_explosiveness, off_power_success, off_stuff_rate, off_line_yds, off_second_lvl_yds, off_open_field_yds, off_pts_per_opp, off_field_pos_avg_predicted_points, off_havoc_total, off_havoc_front_seven, off_havoc_db, off_standard_downs_ppa, off_standard_downs_success_rate, off_standard_downs_explosiveness, off_passing_downs_ppa, off_passing_downs_success_rate, off_passing_downs_explosiveness, off_rushing_plays_ppa, off_rushing_plays_success_rate, off_rushing_plays_explosiveness, off_passing_plays_ppa, off_passing_plays_success_rate, off_passing_plays_explosiveness, def_ppa, def_success_rate, def_explosiveness, def_power_success, def_stuff_rate, def_line_yds, def_second_lvl_yds, def_open_field_yds, def_pts_per_opp, def_field_pos_avg_predicted_points, def_havoc_total, def_havoc_front_seven, def_havoc_db, def_standard_downs_ppa, def_standard_downs_success_rate, def_standard_downs_explosiveness, def_passing_downs_ppa, def_passing_downs_success_rate, def_passing_downs_explosiveness, def_rushing_plays_ppa, def_rushing_plays_success_rate, def_rushing_plays_explosiveness, def_passing_plays_ppa, def_passing_plays_success_rate, def_passing_plays_explosiveness)
+  
+  colnames(PY2_stats_adv_stats_merge) <- c("team", "games_PY2", "completion_pct_PY2", "pass_ypa_PY2", "pass_ypr_PY2", "int_pct_PY2", "rush_ypc_PY2", "turnovers_pg_PY2", "third_conv_rate_PY2", "fourth_conv_rate_PY2", "penalty_yds_pg_PY2", "yards_per_penalty_PY2", "kick_return_avg_PY2", "punt_return_avg_PY2", "total_yds_pg_PY2", "pass_yds_pg_PY2", "rush_yds_pg_PY2", "first_downs_pg_PY2", "off_ypp_PY2", "def_interceptions_pg_PY2", "off_plays_pg_PY2", "off_ppg_PY2", "def_ppg_PY2", "def_yds_pg_PY2", "def_plays_pg_PY2", "def_third_conv_rate_PY2", "def_fourth_conv_rate_PY2", "def_ypp_PY2", "fg_rate_PY2", "fg_rate_allowed_PY2", "fg_made_pg_PY2", "fg_made_pg_allowed_PY2", "xpts_pg_PY2", "xpts_allowed_pg_PY2", "kick_return_yds_avg_allowed_PY2", "punt_return_yds_avg_allowed_PY2", "st_ppg_PY2", "st_ppg_allowed_PY2", "off_ppa_PY2", "off_success_rate_PY2", "off_explosiveness_PY2", "off_power_success_PY2", "off_stuff_rate_PY2", "off_line_yds_PY2", "off_second_lvl_yds_PY2", "off_open_field_yds_PY2", "off_pts_per_opp_PY2", "off_field_pos_avg_predicted_points_PY2", "off_havoc_total_PY2", "off_havoc_front_seven_PY2", "off_havoc_db_PY2", "off_standard_downs_ppa_PY2", "off_standard_downs_success_rate_PY2", "off_standard_downs_explosiveness_PY2", "off_passing_downs_ppa_PY2", "off_passing_downs_success_rate_PY2", "off_passing_downs_explosiveness_PY2", "off_rushing_plays_ppa_PY2", "off_rushing_plays_success_rate_PY2", "off_rushing_plays_explosiveness_PY2", "off_passing_plays_ppa_PY2", "off_passing_plays_success_rate_PY2", "off_passing_plays_explosiveness_PY2", "def_ppa_PY2", "def_success_rate_PY2", "def_explosiveness_PY2", "def_power_success_PY2", "def_stuff_rate_PY2", "def_line_yds_PY2", "def_second_lvl_yds_PY2", "def_open_field_yds_PY2", "def_pts_per_opp_PY2", "def_field_pos_avg_predicted_points_PY2", "def_havoc_total_PY2", "def_havoc_front_seven_PY2", "def_havoc_db_PY2", "def_standard_downs_ppa_PY2", "def_standard_downs_success_rate_PY2", "def_standard_downs_explosiveness_PY2", "def_passing_downs_ppa_PY2", "def_passing_downs_success_rate_PY2", "def_passing_downs_explosiveness_PY2", "def_rushing_plays_ppa_PY2", "def_rushing_plays_success_rate_PY2", "def_rushing_plays_explosiveness_PY2", "def_passing_plays_ppa_PY2", "def_passing_plays_success_rate_PY2", "def_passing_plays_explosiveness_PY2")
+  
+  ### making list of dfs to be merged
   PY2_df_list <- list(PY2_stats_adv_stats_merge, recruit_PY2, talent_df_PY2, SP_Rankings_PY2, FPI_df_PY2, SRS_PY2)
+  ### merging dfs
   PY2_df <- PY2_df_list |>
     reduce(full_join, by = "team")
+  
+  ### adding values to off_plays_pg, off_ppg, def_ppg, def_yds_pg, def_plays_pg, def_third_conv_rate, def_fourth_conv_rate, def_ypp, fg_rate, fg_rate_allowed, fg_made_pg, fg_made_pg_allowed, xpts_pg, xpts_allowed_pg, kick_return_yds_avg_allowed, punt_return_yds_avg_allowed, st_ppg, st_ppg_allowed before binding relevant FCS transition teams (their values should already be calculated) to main PY2_df
+  for (school in 1:nrow(PY2_df)){
+    ### filtering out relevant plays for the team being iterated through
+    ### used to calculate off_plays_pg
+    temp_PBP_PY2_yards <- PBP_PY2_Yards |>
+      filter(pos_team == PY2_df$team[school])
+    ### used to calculate def_yds_pg, def_plays_pg, def_ypp
+    temp_PBP_PY2_Defyards <- PBP_PY2_Yards |>
+      filter(def_pos_team == PY2_df$team[school])
+    ### used to get 3rd and 4th down conversion rate allowed
+    temp_PBP_PY2_3rd <- PBP_PY2_3rdDowns |>
+      filter(def_pos_team == PY2_df$team[school])
+    temp_PBP_PY2_4th <- PBP_PY2_4thDowns |>
+      filter(def_pos_team == PY2_df$team[school])
+    ### used to calculate off_ppg and def_ppg
+    temp_PBP_PY2_OffTDs <- PBP_PY2_TDs |>
+      filter(pos_team == PY2_df$team[school])
+    temp_PBP_PY2_DefTDs <- PBP_PY2_TDs |>
+      filter(def_pos_team == PY2_df$team[school])
+    temp_PBP_PY2_2Pts <- PBP_PY2_2ptPlays |>
+      filter(pos_team == PY2_df$team[school])
+    temp_PBP_PY2_Def2Pts <- PBP_PY2_2ptPlays |>
+      filter(def_pos_team == PY2_df$team[school])
+    ### used as part of calculation of fg_rate, fg_rate_allowed, st_ppg and st_ppg_allowed
+    temp_PBP_PY2_FGs <- PBP_PY2_FGPlays |>
+      filter(pos_team == PY2_df$team[school])
+    temp_PBP_PY2_GoodFGs <- temp_PBP_PY2_FGs |>
+      filter(play_type == "Field Goal Good")
+    temp_PBP_PY2_DefFGs <- PBP_PY2_FGPlays |>
+      filter(def_pos_team == PY2_df$team[school])
+    temp_PBP_PY2_DefGoodFGs <- temp_PBP_PY2_DefFGs |>
+      filter(play_type == "Field Goal Good")
+    temp_PBP_PY2_XPts <- PBP_PY2_XPPlays |>
+      filter(pos_team == PY2_df$team[school])
+    temp_PBP_PY2_DefXPts <- PBP_PY2_XPPlays |>
+      filter(def_pos_team == PY2_df$team[school])
+    ### used to calculate kick and punt return yards allowed
+    temp_PBP_PY2_KickReturn <- PBP_PY2_KickReturn |>
+      filter(def_pos_team == PY2_df$team[school])
+    temp_PBP_PY2_PuntReturn <- PBP_PY2_Punts |>
+      filter(pos_team == PY2_df$team[school])
+    ### used to calculate st_ppg_allowed
+    temp_PBP_PY2_ReturnTDs <- PBP_PY2_ReturnTDs |>
+      filter(def_pos_team == PY2_df$team[school])
+    temp_PBP_PY2_OffReturnTDs <- PBP_PY2_ReturnTDs |>
+      filter(pos_team == PY2_df$team[school])
+    temp_PBP_PY2_PuntTDs <- PBP_PY2_PuntReturnTD |>
+      filter(pos_team == PY2_df$team[school])
+    
+    ### using filtered play datasets to calculate variables
+    PY2_df$off_plays_pg_PY2[school] = nrow(temp_PBP_PY2_yards) / PY2_df$games_PY2[school]
+    PY2_df$off_ppg_PY2[school] = ((nrow(temp_PBP_PY2_OffTDs) * 6) + (nrow(temp_PBP_PY2_2Pts) * 2)) / PY2_df$games_PY2[school]
+    PY2_df$def_ppg_PY2[school] = ((nrow(temp_PBP_PY2_DefTDs) * 6) + (nrow(temp_PBP_PY2_Def2Pts) * 2)) / PY2_df$games_PY2[school]
+    PY2_df$def_yds_pg_PY2[school] = sum(temp_PBP_PY2_Defyards$yards_gained, na.rm = TRUE) / PY2_df$games_PY2[school]
+    PY2_df$def_plays_pg_PY2[school] = nrow(temp_PBP_PY2_Defyards) / PY2_df$games_PY2[school]
+    PY2_df$def_third_conv_rate_PY2[school] = sum(temp_PBP_PY2_3rd$first_by_yards, na.rm = TRUE) / nrow(temp_PBP_PY2_3rd)
+    PY2_df$def_fourth_conv_rate_PY2[school] = sum(temp_PBP_PY2_4th$first_by_yards, na.rm = TRUE) / nrow(temp_PBP_PY2_4th)
+    PY2_df$def_ypp_PY2[school] = sum(temp_PBP_PY2_Defyards$yards_gained, na.rm = TRUE) / nrow(temp_PBP_PY2_Defyards)
+    PY2_df$fg_rate_PY2[school] = nrow(temp_PBP_PY2_GoodFGs) / nrow(temp_PBP_PY2_FGs)
+    PY2_df$fg_rate_allowed_PY2[school] = nrow(temp_PBP_PY2_DefGoodFGs) / nrow(temp_PBP_PY2_DefFGs)
+    PY2_df$fg_made_pg_PY2[school] = nrow(temp_PBP_PY2_GoodFGs) / PY2_df$games_PY2[school]
+    PY2_df$fg_made_pg_allowed_PY2[school] = nrow(temp_PBP_PY2_DefGoodFGs) / PY2_df$games_PY2[school]
+    PY2_df$xpts_pg_PY2[school] = nrow(temp_PBP_PY2_XPts) / PY2_df$games_PY2[school]
+    PY2_df$xpts_allowed_pg_PY2[school] = nrow(temp_PBP_PY2_DefXPts) / PY2_df$games_PY2[school]
+    PY2_df$kick_return_yds_avg_allowed_PY2[school] = sum(temp_PBP_PY2_KickReturn$yards_gained, na.rm = TRUE) / nrow(temp_PBP_PY2_KickReturn)
+    PY2_df$punt_return_yds_avg_allowed_PY2[school] = sum(temp_PBP_PY2_PuntReturn$yards_gained, na.rm = TRUE)
+    PY2_df$st_ppg_PY2[school] = (nrow(temp_PBP_PY2_OffReturnTDs) * 6) + (nrow(temp_PBP_PY2_XPts) / PY2_df$games_PY2[school]) + (nrow(temp_PBP_PY2_GoodFGs) / PY2_df$games_PY2[school] * 3)
+    PY2_df$st_ppg_allowed_PY2[school] = (nrow(temp_PBP_PY2_ReturnTDs) * 6) + (nrow(temp_PBP_PY2_DefXPts) / PY2_df$games_PY2[school]) + (nrow(temp_PBP_PY2_DefGoodFGs) / PY2_df$games_PY2[school] * 3)
+  }
+  
+  ### binding FCS data from transitioning teams to other PY2 teams
   PY2_df <- rbind(PY2_df, FCS_PY2)
   
-  
+  ### PY1
   PY1_stats_adv_stats_list <- list(Stats_PY1, Adv_Stats_PY1)
   PY1_stats_adv_stats_merge <- PY1_stats_adv_stats_list |>
     reduce(full_join, by = "team") |>
-    select(team, games, completion_pct, pass_ypa, pass_ypr, int_pct, rush_ypc, 
-           turnovers_pg, third_conv_rate, fourth_conv_rate, penalty_yds_pg, 
-           yards_per_penalty, kick_return_avg, punt_return_avg, total_yds_pg, 
-           pass_yds_pg, rush_yds_pg, first_downs_pg, off_ypp, def_interceptions_pg, off_ppa, 
-           off_success_rate, off_explosiveness, off_power_success, off_stuff_rate, 
-           off_line_yds, off_second_lvl_yds, off_open_field_yds, off_pts_per_opp, 
-           off_field_pos_avg_predicted_points, off_havoc_total, off_havoc_front_seven, 
-           off_havoc_db, off_standard_downs_ppa, off_standard_downs_success_rate, 
-           off_standard_downs_explosiveness, off_passing_downs_ppa, 
-           off_passing_downs_success_rate, off_passing_downs_explosiveness, 
-           off_rushing_plays_ppa, off_rushing_plays_success_rate, 
-           off_rushing_plays_explosiveness, off_passing_plays_ppa, 
-           off_passing_plays_success_rate, off_passing_plays_explosiveness, def_ppa, 
-           def_success_rate, def_explosiveness, def_power_success, def_stuff_rate, 
-           def_line_yds, def_second_lvl_yds, def_open_field_yds, def_pts_per_opp, 
-           def_field_pos_avg_predicted_points, def_havoc_total, def_havoc_front_seven, 
-           def_havoc_db, def_standard_downs_ppa, def_standard_downs_success_rate, 
-           def_standard_downs_explosiveness, def_passing_downs_ppa, 
-           def_passing_downs_success_rate, def_passing_downs_explosiveness, 
-           def_rushing_plays_ppa, def_rushing_plays_success_rate, 
-           def_rushing_plays_explosiveness, def_passing_plays_ppa, 
-           def_passing_plays_success_rate, def_passing_plays_explosiveness)
-  colnames(PY1_stats_adv_stats_merge) <- c("team", "games_PY1", "completion_pct_PY1",
-                                           "pass_ypa_PY1", "pass_ypr_PY1", "int_pct_PY1", "rush_ypc_PY1", "turnovers_pg_PY1",
-                                           "third_conv_rate_PY1", "fourth_conv_rate_PY1", "penalty_yds_pg_PY1",
-                                           "yards_per_penalty_PY1", "kick_return_avg_PY1", "punt_return_avg_PY1", "total_yds_pg_PY1",
-                                           "pass_yds_pg_PY1", "rush_yds_pg_PY1", "first_downs_pg_PY1", "off_ypp_PY1", "def_interceptions_pg_PY1", "off_ppa_PY1",
-                                           "off_success_rate_PY1", "off_explosiveness_PY1", "off_power_success_PY1", "off_stuff_rate_PY1",
-                                           "off_line_yds_PY1", "off_second_lvl_yds_PY1", "off_open_field_yds_PY1", "off_pts_per_opp_PY1",
-                                           "off_field_pos_avg_predicted_points_PY1", "off_havoc_total_PY1", "off_havoc_front_seven_PY1",
-                                           "off_havoc_db_PY1", "off_standard_downs_ppa_PY1", "off_standard_downs_success_rate_PY1",
-                                           "off_standard_downs_explosiveness_PY1", "off_passing_downs_ppa_PY1",
-                                           "off_passing_downs_success_rate_PY1", "off_passing_downs_explosiveness_PY1",
-                                           "off_rushing_plays_ppa_PY1", "off_rushing_plays_success_rate_PY1",
-                                           "off_rushing_plays_explosiveness_PY1", "off_passing_plays_ppa_PY1",
-                                           "off_passing_plays_success_rate_PY1", "off_passing_plays_explosiveness_PY1", "def_ppa_PY1",
-                                           "def_success_rate_PY1", "def_explosiveness_PY1", "def_power_success_PY1", "def_stuff_rate_PY1",
-                                           "def_line_yds_PY1", "def_second_lvl_yds_PY1", "def_open_field_yds_PY1", "def_pts_per_opp_PY1",
-                                           "def_field_pos_avg_predicted_points_PY1", "def_havoc_total_PY1", "def_havoc_front_seven_PY1",
-                                           "def_havoc_db_PY1", "def_standard_downs_ppa_PY1", "def_standard_downs_success_rate_PY1",
-                                           "def_standard_downs_explosiveness_PY1", "def_passing_downs_ppa_PY1",
-                                           "def_passing_downs_success_rate_PY1", "def_passing_downs_explosiveness_PY1",
-                                           "def_rushing_plays_ppa_PY1", "def_rushing_plays_success_rate_PY1",
-                                           "def_rushing_plays_explosiveness_PY1", "def_passing_plays_ppa_PY1",
-                                           "def_passing_plays_success_rate_PY1", "def_passing_plays_explosiveness_PY1")
+    select(team, games, completion_pct, pass_ypa, pass_ypr, int_pct, rush_ypc, turnovers_pg, third_conv_rate, fourth_conv_rate, penalty_yds_pg, yards_per_penalty, kick_return_avg, punt_return_avg, total_yds_pg, pass_yds_pg, rush_yds_pg, first_downs_pg, off_ypp, def_interceptions_pg, off_plays_pg, off_ppg, def_ppg, def_yds_pg, def_plays_pg, def_third_conv_rate, def_fourth_conv_rate, def_ypp, fg_rate, fg_rate_allowed, fg_made_pg, fg_made_pg_allowed, xpts_pg, xpts_allowed_pg, kick_return_yds_avg_allowed, punt_return_yds_avg_allowed, st_ppg, st_ppg_allowed, off_ppa, off_success_rate, off_explosiveness, off_power_success, off_stuff_rate, off_line_yds, off_second_lvl_yds, off_open_field_yds, off_pts_per_opp, off_field_pos_avg_predicted_points, off_havoc_total, off_havoc_front_seven, off_havoc_db, off_standard_downs_ppa, off_standard_downs_success_rate, off_standard_downs_explosiveness, off_passing_downs_ppa, off_passing_downs_success_rate, off_passing_downs_explosiveness, off_rushing_plays_ppa, off_rushing_plays_success_rate, off_rushing_plays_explosiveness, off_passing_plays_ppa, off_passing_plays_success_rate, off_passing_plays_explosiveness, def_ppa, def_success_rate, def_explosiveness, def_power_success, def_stuff_rate, def_line_yds, def_second_lvl_yds, def_open_field_yds, def_pts_per_opp, def_field_pos_avg_predicted_points, def_havoc_total, def_havoc_front_seven, def_havoc_db, def_standard_downs_ppa, def_standard_downs_success_rate, def_standard_downs_explosiveness, def_passing_downs_ppa, def_passing_downs_success_rate, def_passing_downs_explosiveness, def_rushing_plays_ppa, def_rushing_plays_success_rate, def_rushing_plays_explosiveness, def_passing_plays_ppa, def_passing_plays_success_rate, def_passing_plays_explosiveness)
+  
+  colnames(PY1_stats_adv_stats_merge) <- c("team", "games_PY1", "completion_pct_PY1", "pass_ypa_PY1", "pass_ypr_PY1", "int_pct_PY1", "rush_ypc_PY1", "turnovers_pg_PY1", "third_conv_rate_PY1", "fourth_conv_rate_PY1", "penalty_yds_pg_PY1", "yards_per_penalty_PY1", "kick_return_avg_PY1", "punt_return_avg_PY1", "total_yds_pg_PY1", "pass_yds_pg_PY1", "rush_yds_pg_PY1", "first_downs_pg_PY1", "off_ypp_PY1", "def_interceptions_pg_PY1", "off_plays_pg_PY1", "off_ppg_PY1", "def_ppg_PY1", "def_yds_pg_PY1", "def_plays_pg_PY1", "def_third_conv_rate_PY1", "def_fourth_conv_rate_PY1", "def_ypp_PY1", "fg_rate_PY1", "fg_rate_allowed_PY1", "fg_made_pg_PY1", "fg_made_pg_allowed_PY1", "xpts_pg_PY1", "xpts_allowed_pg_PY1", "kick_return_yds_avg_allowed_PY1", "punt_return_yds_avg_allowed_PY1", "st_ppg_PY1", "st_ppg_allowed_PY1", "off_ppa_PY1", "off_success_rate_PY1", "off_explosiveness_PY1", "off_power_success_PY1", "off_stuff_rate_PY1", "off_line_yds_PY1", "off_second_lvl_yds_PY1", "off_open_field_yds_PY1", "off_pts_per_opp_PY1", "off_field_pos_avg_predicted_points_PY1", "off_havoc_total_PY1", "off_havoc_front_seven_PY1", "off_havoc_db_PY1", "off_standard_downs_ppa_PY1", "off_standard_downs_success_rate_PY1", "off_standard_downs_explosiveness_PY1", "off_passing_downs_ppa_PY1", "off_passing_downs_success_rate_PY1", "off_passing_downs_explosiveness_PY1", "off_rushing_plays_ppa_PY1", "off_rushing_plays_success_rate_PY1", "off_rushing_plays_explosiveness_PY1", "off_passing_plays_ppa_PY1", "off_passing_plays_success_rate_PY1", "off_passing_plays_explosiveness_PY1", "def_ppa_PY1", "def_success_rate_PY1", "def_explosiveness_PY1", "def_power_success_PY1", "def_stuff_rate_PY1", "def_line_yds_PY1", "def_second_lvl_yds_PY1", "def_open_field_yds_PY1", "def_pts_per_opp_PY1", "def_field_pos_avg_predicted_points_PY1", "def_havoc_total_PY1", "def_havoc_front_seven_PY1", "def_havoc_db_PY1", "def_standard_downs_ppa_PY1", "def_standard_downs_success_rate_PY1", "def_standard_downs_explosiveness_PY1", "def_passing_downs_ppa_PY1", "def_passing_downs_success_rate_PY1", "def_passing_downs_explosiveness_PY1", "def_rushing_plays_ppa_PY1", "def_rushing_plays_success_rate_PY1", "def_rushing_plays_explosiveness_PY1", "def_passing_plays_ppa_PY1", "def_passing_plays_success_rate_PY1", "def_passing_plays_explosiveness_PY1")
+  
+  ### making list of dfs to be merged
   PY1_df_list <- list(PY1_stats_adv_stats_merge, recruit_PY1, talent_df_PY1, SP_Rankings_PY1, FPI_df_PY1, SRS_PY1)
+  ### merging dfs
   PY1_df <- PY1_df_list |>
     reduce(full_join, by = "team")
+  
+  ### adding values to off_plays_pg, off_ppg, def_ppg, def_yds_pg, def_plays_pg, def_third_conv_rate, def_fourth_conv_rate, def_ypp, fg_rate, fg_rate_allowed, fg_made_pg, fg_made_pg_allowed, xpts_pg, xpts_allowed_pg, kick_return_yds_avg_allowed, punt_return_yds_avg_allowed, st_ppg, st_ppg_allowed before binding relevant FCS transition teams (their values should already be calculated) to main PY1_df
+  
+  ### list of relevant PBP dfs
+  # PBP_PY1_Yards
+  # PBP_PY1_3rdDowns
+  # PBP_PY1_4thDowns
+  # PBP_PY1_TDs
+  # PBP_PY1_2ptPlays
+  # PBP_PY1_FGPlays
+  # PBP_PY1_XPPlays
+  ### on ReturnTD plays, pos_team does the scoring, except on punt return TDs
+  # PBP_PY1_ReturnTDs
+  # PBP_PY1_PuntReturnTD
+  ### on KickReturnPlays, pos_team gains yards/does the returning
+  # PBP_PY1_KickReturn
+  ### on punt plays, pos_team does the punting, def_pos_team does the returning
+  # PBP_PY1_Punts
+  for (school in 1:nrow(PY1_df)){
+    ### filtering out relevant plays for the team being iterated through
+    ### used to calculate off_plays_pg
+    temp_PBP_PY1_yards <- PBP_PY1_Yards |>
+      filter(pos_team == PY1_df$team[school])
+    ### used to calculate def_yds_pg, def_plays_pg, def_ypp
+    temp_PBP_PY1_Defyards <- PBP_PY1_Yards |>
+      filter(def_pos_team == PY1_df$team[school])
+    ### used to get 3rd and 4th down conversion rate allowed
+    temp_PBP_PY1_3rd <- PBP_PY1_3rdDowns |>
+      filter(def_pos_team == PY1_df$team[school])
+    temp_PBP_PY1_4th <- PBP_PY1_4thDowns |>
+      filter(def_pos_team == PY1_df$team[school])
+    ### used to calculate off_ppg and def_ppg
+    temp_PBP_PY1_OffTDs <- PBP_PY1_TDs |>
+      filter(pos_team == PY1_df$team[school])
+    temp_PBP_PY1_DefTDs <- PBP_PY1_TDs |>
+      filter(def_pos_team == PY1_df$team[school])
+    temp_PBP_PY1_2Pts <- PBP_PY1_2ptPlays |>
+      filter(pos_team == PY1_df$team[school])
+    temp_PBP_PY1_Def2Pts <- PBP_PY1_2ptPlays |>
+      filter(def_pos_team == PY1_df$team[school])
+    ### used as part of calculation of fg_rate, fg_rate_allowed, st_ppg and st_ppg_allowed
+    temp_PBP_PY1_FGs <- PBP_PY1_FGPlays |>
+      filter(pos_team == PY1_df$team[school])
+    temp_PBP_PY1_GoodFGs <- temp_PBP_PY1_FGs |>
+      filter(play_type == "Field Goal Good")
+    temp_PBP_PY1_DefFGs <- PBP_PY1_FGPlays |>
+      filter(def_pos_team == PY1_df$team[school])
+    temp_PBP_PY1_DefGoodFGs <- temp_PBP_PY1_DefFGs |>
+      filter(play_type == "Field Goal Good")
+    temp_PBP_PY1_XPts <- PBP_PY1_XPPlays |>
+      filter(pos_team == PY1_df$team[school])
+    temp_PBP_PY1_DefXPts <- PBP_PY1_XPPlays |>
+      filter(def_pos_team == PY1_df$team[school])
+    ### used to calculate kick and punt return yards allowed
+    temp_PBP_PY1_KickReturn <- PBP_PY1_KickReturn |>
+      filter(def_pos_team == PY1_df$team[school])
+    temp_PBP_PY1_PuntReturn <- PBP_PY1_Punts |>
+      filter(pos_team == PY1_df$team[school])
+    ### used to calculate st_ppg_allowed
+    temp_PBP_PY1_ReturnTDs <- PBP_PY1_ReturnTDs |>
+      filter(def_pos_team == PY1_df$team[school])
+    temp_PBP_PY1_OffReturnTDs <- PBP_PY1_ReturnTDs |>
+      filter(pos_team == PY1_df$team[school])
+    temp_PBP_PY1_PuntTDs <- PBP_PY1_PuntReturnTD |>
+      filter(pos_team == PY1_df$team[school])
+    
+    ### using filtered play datasets to calculate variables
+    PY1_df$off_plays_pg_PY1[school] = nrow(temp_PBP_PY1_yards) / PY1_df$games_PY1[school]
+    PY1_df$off_ppg_PY1[school] = ((nrow(temp_PBP_PY1_OffTDs) * 6) + (nrow(temp_PBP_PY1_2Pts) * 2)) / PY1_df$games_PY1[school]
+    PY1_df$def_ppg_PY1[school] = ((nrow(temp_PBP_PY1_DefTDs) * 6) + (nrow(temp_PBP_PY1_Def2Pts) * 2)) / PY1_df$games_PY1[school]
+    PY1_df$def_yds_pg_PY1[school] = sum(temp_PBP_PY1_Defyards$yards_gained, na.rm = TRUE) / PY1_df$games_PY1[school]
+    PY1_df$def_plays_pg_PY1[school] = nrow(temp_PBP_PY1_Defyards) / PY1_df$games_PY1[school]
+    PY1_df$def_third_conv_rate_PY1[school] = sum(temp_PBP_PY1_3rd$first_by_yards, na.rm = TRUE) / nrow(temp_PBP_PY1_3rd)
+    PY1_df$def_fourth_conv_rate_PY1[school] = sum(temp_PBP_PY1_4th$first_by_yards, na.rm = TRUE) / nrow(temp_PBP_PY1_4th)
+    PY1_df$def_ypp_PY1[school] = sum(temp_PBP_PY1_Defyards$yards_gained, na.rm = TRUE) / nrow(temp_PBP_PY1_Defyards)
+    PY1_df$fg_rate_PY1[school] = nrow(temp_PBP_PY1_GoodFGs) / nrow(temp_PBP_PY1_FGs)
+    PY1_df$fg_rate_allowed_PY1[school] = nrow(temp_PBP_PY1_DefGoodFGs) / nrow(temp_PBP_PY1_DefFGs)
+    PY1_df$fg_made_pg_PY1[school] = nrow(temp_PBP_PY1_GoodFGs) / PY1_df$games_PY1[school]
+    PY1_df$fg_made_pg_allowed_PY1[school] = nrow(temp_PBP_PY1_DefGoodFGs) / PY1_df$games_PY1[school]
+    PY1_df$xpts_pg_PY1[school] = nrow(temp_PBP_PY1_XPts) / PY1_df$games_PY1[school]
+    PY1_df$xpts_allowed_pg_PY1[school] = nrow(temp_PBP_PY1_DefXPts) / PY1_df$games_PY1[school]
+    PY1_df$kick_return_yds_avg_allowed_PY1[school] = sum(temp_PBP_PY1_KickReturn$yards_gained, na.rm = TRUE) / nrow(temp_PBP_PY1_KickReturn)
+    PY1_df$punt_return_yds_avg_allowed_PY1[school] = sum(temp_PBP_PY1_PuntReturn$yards_gained, na.rm = TRUE)
+    PY1_df$st_ppg_PY1[school] = (nrow(temp_PBP_PY1_OffReturnTDs) * 6) + (nrow(temp_PBP_PY1_XPts) / PY1_df$games_PY1[school]) + (nrow(temp_PBP_PY1_GoodFGs) / PY1_df$games_PY1[school] * 3)
+    PY1_df$st_ppg_allowed_PY1[school] = (nrow(temp_PBP_PY1_ReturnTDs) * 6) + (nrow(temp_PBP_PY1_DefXPts) / PY1_df$games_PY1[school]) + (nrow(temp_PBP_PY1_DefGoodFGs) / PY1_df$games_PY1[school] * 3)
+  }
+  
+  ### binding FCS transitioning teams to df of other PY1 teams
   PY1_df <- rbind(PY1_df, FCS_PY1)
   
   ## merging all data frames in order of PY3, PY2, PY1
@@ -2275,7 +2605,13 @@ if (as.numeric(week) == 0) {
            FPI_SP_SRS_PY2_mean = (sp_rating_PY2 + FPI_PY2 + SRS_rating_PY2) / 3,
            FPI_SP_SRS_PY1_mean = (sp_rating_PY1 + FPI_PY1 + SRS_rating_PY1) / 3,
            AllPY_FPI_SP_SRS_mean = (FPI_SP_SRS_PY3_mean + FPI_SP_SRS_PY2_mean + FPI_SP_SRS_PY1_mean) / 3,
-           WeightedAllPY_FPI_SP_SRS_mean = ((FPI_SP_SRS_PY3_mean * 0.1) + (FPI_SP_SRS_PY2_mean * 0.25) + (FPI_SP_SRS_PY1_mean * 0.65)) / 3)
+           WeightedAllPY_FPI_SP_SRS_mean = ((FPI_SP_SRS_PY3_mean * 0.1) + (FPI_SP_SRS_PY2_mean * 0.2) + (FPI_SP_SRS_PY1_mean * 0.7)) / 3,
+           net_st_ppg_PY3 = st_ppg_PY3 - st_ppg_allowed_PY3,
+           net_st_ppg_PY2 = st_ppg_PY2 - st_ppg_allowed_PY2,
+           net_st_ppg_PY1 = st_ppg_PY1 - st_ppg_allowed_PY1,
+           weighted_off_ppg_mean = (off_ppg_PY1 * 0.7) + (off_ppg_PY2 * 0.2) + (off_ppg_PY1 * 0.1),
+           weighted_def_ppg_mean = (def_ppg_PY1 * 0.7) + (def_ppg_PY2 * 0.2) + (def_ppg_PY1 * 0.1),
+           weighted_net_st_ppg_mean = (net_st_ppg_PY1 * 0.7) + (net_st_ppg_PY2 * 0.2) + (net_st_ppg_PY1 * 0.1))
   
 } else if (as.numeric(week) == 1) {
   ##### WEEK 1 DF Merge #####
@@ -7680,11 +8016,11 @@ if (as.numeric(week) == 0) {
 }
 
 ##### Resume VoA #####
-## determining mean VoA Rating of top 12 teams in VoA
-# choosing top 12 because of future playoff expansion which seems likely if not already certain
-# it really should only be 8 max but whatever, I'm gonna be just fine
-## Resume VoA only created after week 5 (Week 6 - end of season)
-if (as.numeric(week) > 5) {
+### determining mean VoA Rating of top 12 teams in VoA
+## choosing top 12 because of future playoff expansion which seems likely if not already certain
+## it really should only be 8 max but whatever, I'm gonna be just fine
+### Resume VoA only created after week 8 (Week 9 - end of season)
+if (as.numeric(week) > 8) {
   Top12 <- VoA_Variables |>
     filter(VoA_Ranking <= 12) |>
     select(season, team, FPI, VoA_Rating, VoA_Ranking)

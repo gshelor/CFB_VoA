@@ -1,14 +1,71 @@
-## colorRampPallette()
+### This script is currently just for beta testing an Offensive VoA metric as I aspire to make my Vortex of Accuracy look more like SP+ (at least in output, I obviously want the actual method to have my own unique touch to it)
 
-##loading packages
+### this function is here because I saw it somewhere and thought it was useful but don't know what to do with it yet
+# colorRampPallette()
+
+## loading packages
 library(pacman)
-p_load(tidyverse, here, cfbfastR, rstan, ModelMetrics)
+p_load(tidyverse, here, cfbfastR, rstan, ModelMetrics, parallel)
 
 ## pulling in games from cfbfastR
-games_2023 <- cfbfastR::cfbd_game_info(2023)
+games_2023 <- cfbd_game_info(2023)
 data <- read_csv(here("Data", "VoA2023", "2023Week16_VoA.csv"))
 games_2023 <- games_2023 |>
-  filter(home_team %in% data$team & away_team %in% data$team)
+  filter(home_team %in% data$team | away_team %in% data$team)
+
+### pulling in stats
+stats <- cfbd_stats_season_team(2023) |>
+  mutate(off_ppg_PY1 = ((pass_TDs * 6) + (rush_TDs * 6)) / games,
+         off_ppg_aboveavg_PY1 = off_ppg_PY1 - mean(off_ppg_PY1),
+         def_pts_allowed_PY1 = 0, .before = 5)
+
+adv_stats <- cfbd_stats_season_advanced(2023) |>
+  filter(team %in% data$team) |>
+  select(-season, -conference)
+
+all_stats <- full_join(stats, adv_stats, by = "team")
+
+### testing out pbp function since I've never done this before
+PBP2021 <- load_cfb_pbp(2021)
+
+PBP2021_TDs <- PBP2021 |>
+  filter(play_type == "Passing Touchdown" | play_type == "Rushing Touchdown")
+
+PBP2022 <- load_cfb_pbp(2022)
+PBP2022_TDs <- PBP2022 |>
+  filter(play_type == "Passing Touchdown" | play_type == "Rushing Touchdown")
+
+PBP2023 <- load_cfb_pbp(2023)
+PBP2023_TDs <- PBP2023 |>
+  filter(play_type == "Passing Touchdown" | play_type == "Rushing Touchdown")
+
+PBP2023_DefTDs <- PBP2023 |>
+  filter(play_type == "Fumble Return Touchdown" | play_type == "Interception Return Touchdown")
+
+PBP2023_2Pt <- PBP2023 |>
+  filter(play_type == "Two Point Rush" | play_type == "Two Point Pass" | play_type == "2pt Conversion")
+
+PBP2023_2ptScorePlays <- PBP2023 |>
+  filter(scoring_play == 1) |>
+  filter(pos_score_pts == 8) |>
+  filter(play_type == "Passing Touchdown" | play_type == "Rushing Touchdown") |>
+  filter(pos_team %in% all_stats$team)
+
+PBP2023_2ptScorePlays <- rbind(PBP2023_2ptScorePlays, PBP2023_2Pt)
+
+
+for (school in 1:nrow(all_stats)){
+  temp_PBP2023_TDs <- PBP2023_TDs |>
+    filter(def_pos_team == stats$team[school])
+  all_stats$def_pts_allowed_PY1[school] = nrow(temp_PBP2023_TDs) * 6
+}
+
+
+all_stats <- all_stats |>
+  mutate(def_ppg_allowed_PY1 = def_pts_allowed_PY1 / games,
+         def_ppg_belowavg_PY1 = def_ppg_allowed_PY1 - mean(def_ppg_allowed_PY1), .before = 8) |>
+  mutate(off_ppg_adj = case_when(off_ppg_aboveavg_PY1 > 0 ~ off_ppg_PY1 + (off_ppg_aboveavg_PY1 / 2),
+                                 TRUE ~ off_ppg_PY1), .before = 5)
 
 
 ## using SRS ratings for FCS teams instead of the randomly sampled VoA rating based on
@@ -21,55 +78,102 @@ FCS <- cfbd_ratings_srs(year = as.numeric(2023)) |>
 
 ##### DUMMY VoA STAN MODEL #####
 ## making list of data to declare what goes into stan model
-VoA_datalist <- list(N = nrow(data), team_strength = data$FPI_SP_SRS_mean, off_ppa = data$off_ppa, off_ypp = data$off_ypp, def_ppa = data$def_ppa, off_success_rate = data$off_success_rate, def_success_rate = data$def_success_rate, off_explosiveness = data$off_explosiveness, def_explosiveness = data$def_explosiveness)
+Off_VoA_datalist <- list(N = nrow(all_stats), off_ppg = all_stats$off_ppg_PY1, off_ppa = all_stats$off_ppa, off_success_rate = all_stats$off_success_rate, off_explosiveness = all_stats$off_explosiveness, off_ppg_aboveavg = all_stats$off_ppg_aboveavg_PY1)
 
-## fitting stan model
+### fitting stan model
 set.seed(802)
 options(mc.cores = parallel::detectCores())
-VoA_fit <- stan(file=here("Stan", "Off_VoA.stan"),data = VoA_datalist, chains = 3, iter = 15000, warmup = 3000)
-VoA_fit
+Off_VoA_fit <- stan(file=here("Scripts","Stan", "Off_VoA.stan"),data = Off_VoA_datalist, chains = 3, iter = 10000, warmup = 3000)
+Off_VoA_fit
 
 
 ## Extracting Parameters
-VoA_pars <- rstan::extract(VoA_fit, c("b0","beta_off_ppa", "beta_off_ypp", "beta_def_ppa", "beta_off_success_rate", "beta_def_success_rate", "beta_off_explosiveness", "beta_def_explosiveness", "sigma"))
+Off_VoA_pars <- rstan::extract(Off_VoA_fit, c("b0","beta_off_ppa", "beta_off_success_rate", "beta_off_explosiveness", "beta_off_ppg_aboveavg", "sigma"))
 
 ## making predictions
 ## adding in process uncertainty
-VoA_Ratings <- matrix(NA, length(VoA_pars$b0), nrow(data))
+Off_VoA_Ratings <- matrix(NA, length(Off_VoA_pars$b0), nrow(all_stats))
 
 ## process error
 set.seed(802)
-for (p in 1:length(VoA_pars$b0)){
-  forage_lbs <- data$lbs_per_acre[1]
-  for(t in 1:nrow(data)){
-    VoA_Rating <- rnorm(1, mean = VoA_pars$b0[p] + VoA_pars$beta_off_ppa[p] * data$off_ppa[t] + VoA_pars$beta_off_ypp[p] * data$off_ypp[t] + VoA_pars$beta_def_ppa[p] * data$def_ppa[t] + VoA_pars$beta_off_success_rate[p] * data$off_success_rate[t] + VoA_pars$beta_def_success_rate[p] * data$def_success_rate[t] + VoA_pars$beta_off_explosiveness[p] * data$off_explosiveness[t] + VoA_pars$beta_def_explosiveness[p] * data$def_explosiveness[t], sd=VoA_pars$sigma[p])
-    VoA_Ratings[p,t] <- VoA_Rating
+for (p in 1:length(Off_VoA_pars$b0)){
+  for(t in 1:nrow(all_stats)){
+    Off_VoA_Rating <- rnorm(1, mean = Off_VoA_pars$b0[p] + Off_VoA_pars$beta_off_ppa[p] * all_stats$off_ppa[t] + Off_VoA_pars$beta_off_success_rate[p] * all_stats$off_success_rate[t] + Off_VoA_pars$beta_off_explosiveness[p] * all_stats$off_explosiveness[t] + Off_VoA_pars$beta_off_ppg_aboveavg[p] * all_stats$off_ppg_aboveavg_PY1[t], sd=Off_VoA_pars$sigma[p])
+    Off_VoA_Ratings[p,t] <- Off_VoA_Rating
   }
 }
 
 
 ## generating forecasts
-MeanPred <- apply(VoA_Ratings,2,mean)
-MedianPred <- apply(VoA_Ratings,2,median)
-Upper <- apply(VoA_Ratings,2,quantile, prob=.95)
-Lower <- apply(VoA_Ratings,2,quantile, prob=.05)
+MeanPred <- apply(Off_VoA_Ratings,2,mean)
+MedianPred <- apply(Off_VoA_Ratings,2,median)
+Upper <- apply(Off_VoA_Ratings,2,quantile, prob=.975)
+Lower <- apply(Off_VoA_Ratings,2,quantile, prob=.025)
 
-data$VoA_StanMeanRating <- MeanPred
-data$VoA_StanMedRating <- MedianPred
-data$VoA_StanUpper <- Upper
-data$VoA_StanLower <- Lower
+all_stats$OffVoA_StanMeanRating <- MeanPred
+all_stats$OffVoA_StanMedRating <- MedianPred
+all_stats$OffVoA_StanUpper <- Upper
+all_stats$OffVoA_StanLower <- Lower
 
-data_stan <- data |>
-  select(season, team, conference, VoA_Output, FPI, FPI_SP_SRS_mean, VoA_Rating, VoA_StanMeanRating, VoA_StanMedRating, VoA_StanUpper, VoA_StanLower)
+# Off_data_stan <- all_stats |>
+#   select(season, team, conference, OffVoA_StanMeanRating, OffVoA_StanMedRating, OffVoA_StanUpper, OffVoA_StanLower)
+
+Off_data_stan_noAdj <- all_stats |>
+  select(season, team, conference, OffVoA_StanMeanRating, OffVoA_StanMedRating, OffVoA_StanUpper, OffVoA_StanLower)
+
+
+##### def VoA testing #####
+## making list of data to declare what goes into stan model
+Def_VoA_datalist <- list(N = nrow(all_stats), def_ppg_allowed = all_stats$def_ppg_allowed_PY1, def_ppa = all_stats$def_ppa, def_success_rate = all_stats$def_success_rate, def_explosiveness = all_stats$def_explosiveness)
+
+## fitting stan model
+set.seed(802)
+options(mc.cores = parallel::detectCores())
+Def_VoA_fit <- stan(file=here("Scripts","Stan", "Def_VoA.stan"),data = Def_VoA_datalist, chains = 3, iter = 10000, warmup = 3000)
+Def_VoA_fit
+
+
+## Extracting Parameters
+Def_VoA_pars <- rstan::extract(Def_VoA_fit, c("b0","beta_def_ppa", "beta_def_success_rate", "beta_def_explosiveness", "sigma"))
+
+## making predictions
+## adding in process uncertainty
+Def_VoA_Ratings <- matrix(NA, length(Def_VoA_pars$b0), nrow(all_stats))
+
+## process error
+set.seed(802)
+for (p in 1:length(Def_VoA_pars$b0)){
+  for(t in 1:nrow(all_stats)){
+    Def_VoA_Rating <- rnorm(1, mean = Def_VoA_pars$b0[p] + Def_VoA_pars$beta_def_ppa[p] * all_stats$def_ppa[t] + Def_VoA_pars$beta_def_success_rate[p] * all_stats$def_success_rate[t] + Def_VoA_pars$beta_def_explosiveness[p] * all_stats$def_explosiveness[t], sd=Def_VoA_pars$sigma[p])
+    Def_VoA_Ratings[p,t] <- Def_VoA_Rating
+  }
+}
+
+
+## generating forecasts
+MeanPred <- apply(Def_VoA_Ratings,2,mean)
+MedianPred <- apply(Def_VoA_Ratings,2,median)
+Upper <- apply(Def_VoA_Ratings,2,quantile, prob=.95)
+Lower <- apply(Def_VoA_Ratings,2,quantile, prob=.05)
+
+all_stats$DefVoA_StanMeanRating <- MeanPred
+all_stats$DefVoA_StanMedRating <- MedianPred
+all_stats$DefVoA_StanUpper <- Upper
+all_stats$DefVoA_StanLower <- Lower
+
+Defdata_stan <- all_stats |>
+  select(team, DefVoA_StanMeanRating, DefVoA_StanMedRating, DefVoA_StanUpper, DefVoA_StanLower)
+
+
 
 ## plotting forecasts against data
-plot(MeanPred, type='l', ylim = c(-40,40), main = "Plotting Ranges of VoA Rating for Each Team", ylab = "VoA Rating")
-lines(Upper,lty=2)
-lines(Lower,lty=2)
-points(data$FPI,col='steelblue')
+# plot(MeanPred, type='l', ylim = c(-40,40), main = "Plotting Ranges of VoA Rating for Each Team", ylab = "VoA Rating")
+# lines(Upper,lty=2)
+# lines(Lower,lty=2)
+# points(data$FPI,col='steelblue')
 
 ## RMSE
-rmse(data$FPI_SP_SRS_mean, MedianPred)
+# rmse(data$FPI_SP_SRS_mean, MedianPred)
 
 
 
