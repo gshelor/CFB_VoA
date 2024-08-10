@@ -77,49 +77,10 @@ FCS <- cfbd_ratings_srs(year = as.numeric(2023)) |>
 
 
 ##### DUMMY VoA STAN MODEL #####
-## making list of data to declare what goes into stan model
-Off_VoA_datalist <- list(N = nrow(all_stats), off_ppg = all_stats$off_ppg_PY1, off_ppa = all_stats$off_ppa, off_success_rate = all_stats$off_success_rate, off_explosiveness = all_stats$off_explosiveness, off_ppg_aboveavg = all_stats$off_ppg_aboveavg_PY1)
 
-### fitting stan model
-set.seed(802)
-options(mc.cores = parallel::detectCores())
-Off_VoA_fit <- stan(file=here("Scripts","Stan", "Off_VoA.stan"),data = Off_VoA_datalist, chains = 3, iter = 10000, warmup = 3000)
-Off_VoA_fit
-
-
-## Extracting Parameters
-Off_VoA_pars <- rstan::extract(Off_VoA_fit, c("b0","beta_off_ppa", "beta_off_success_rate", "beta_off_explosiveness", "beta_off_ppg_aboveavg", "sigma"))
-
-## making predictions
-## adding in process uncertainty
-Off_VoA_Ratings <- matrix(NA, length(Off_VoA_pars$b0), nrow(all_stats))
-
-## process error
-set.seed(802)
-for (p in 1:length(Off_VoA_pars$b0)){
-  for(t in 1:nrow(all_stats)){
-    Off_VoA_Rating <- rnorm(1, mean = Off_VoA_pars$b0[p] + Off_VoA_pars$beta_off_ppa[p] * all_stats$off_ppa[t] + Off_VoA_pars$beta_off_success_rate[p] * all_stats$off_success_rate[t] + Off_VoA_pars$beta_off_explosiveness[p] * all_stats$off_explosiveness[t] + Off_VoA_pars$beta_off_ppg_aboveavg[p] * all_stats$off_ppg_aboveavg_PY1[t], sd=Off_VoA_pars$sigma[p])
-    Off_VoA_Ratings[p,t] <- Off_VoA_Rating
-  }
-}
-
-
-## generating forecasts
-MeanPred <- apply(Off_VoA_Ratings,2,mean)
-MedianPred <- apply(Off_VoA_Ratings,2,median)
-Upper <- apply(Off_VoA_Ratings,2,quantile, prob=.975)
-Lower <- apply(Off_VoA_Ratings,2,quantile, prob=.025)
-
-all_stats$OffVoA_StanMeanRating <- MeanPred
-all_stats$OffVoA_StanMedRating <- MedianPred
-all_stats$OffVoA_StanUpper <- Upper
-all_stats$OffVoA_StanLower <- Lower
 
 # Off_data_stan <- all_stats |>
 #   select(season, team, conference, OffVoA_StanMeanRating, OffVoA_StanMedRating, OffVoA_StanUpper, OffVoA_StanLower)
-
-Off_data_stan_noAdj <- all_stats |>
-  select(season, team, conference, OffVoA_StanMeanRating, OffVoA_StanMedRating, OffVoA_StanUpper, OffVoA_StanLower)
 
 
 ##### def VoA testing #####
@@ -163,18 +124,6 @@ all_stats$DefVoA_StanLower <- Lower
 
 Defdata_stan <- all_stats |>
   select(team, DefVoA_StanMeanRating, DefVoA_StanMedRating, DefVoA_StanUpper, DefVoA_StanLower)
-
-
-
-## plotting forecasts against data
-# plot(MeanPred, type='l', ylim = c(-40,40), main = "Plotting Ranges of VoA Rating for Each Team", ylab = "VoA Rating")
-# lines(Upper,lty=2)
-# lines(Lower,lty=2)
-# points(data$FPI,col='steelblue')
-
-## RMSE
-# rmse(data$FPI_SP_SRS_mean, MedianPred)
-
 
 
 

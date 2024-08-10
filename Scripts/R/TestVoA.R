@@ -12794,13 +12794,13 @@ VoA_Variables_Test <- full_join(VoA_Variables_Test, ResumeVoA, by = "team")
 ## Making values numeric
 # VoA_Variables[,6:ncol(VoA_Variables)] <- VoA_Variables[,6:ncol(VoA_Variables)] |> mutate_if(is.character,as.numeric)
 # 
-# ## nas why
+## nas why
 # nas_why <- data.frame(apply(VoA_Variables, 2, anyNA))
 # colnames(nas_why) <- c("containsNAs")
 # nas_why <- nas_why |>
 #   filter(containsNAs == TRUE)
-# FPI_nas_why <- all_PY_df |>
-#   select(team, FPI_PY1, FPI_PY3)
+# recruit_nas_why <- VoA_Variables |>
+#   filter(is.na(conference))
 # recruit_nas_teams <- anti_join(VoA_Variables, recruit, by = "team")
 # 
 # colnames(VoA_Variables)[apply(VoA_Variables, 2, anyNA)]
