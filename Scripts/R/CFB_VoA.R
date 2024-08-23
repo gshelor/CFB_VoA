@@ -1,4 +1,4 @@
-### The Vortex of Accuracy, Version 4.1.2
+### The Vortex of Accuracy, Version 5.0.0
 ### Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy
 ### Created by Griffin Shelor
 ### Initially intended to use SP+ ratings but due to paywall issues they are unlikely to be consistently accessible via collegefootballdata.com's API and thus they will be inaccessible via cfbfastR, so sections involving current season SP+ will only be included in Vortex of Accuracy if availability is confirmed. Those sections will be commented out in case this accessibility issue ever changes.
@@ -16,6 +16,7 @@ year <- readline(prompt = "What year is it? ")
 week <- readline(prompt = "What week is it? ")
 
 ##### setting strings for table titles, file pathways, unintelligible charts #####
+`%nin%` = Negate(`%in%`)
 output_dir <- here("Outputs", "RVoA", paste0("VoA", year))
 data_dir <- here("Data", paste("VoA", year, sep = ""))
 preseason_text <- "Preseason"
@@ -39,7 +40,7 @@ Pac2_text <- "Pac2"
 SEC_text <- "SEC"
 SunBelt_text <- "SunBelt"
 FBS_text <- "FBS"
-Power_Four_text <- "Power 4"
+Power_Five_text <- "Power 5"
 Group_Five_text <- "Group of 5"
 Rating_text <- "_Ratings_Chart.png"
 Ranking_text <- "_Rankings_Chart.png"
@@ -48,7 +49,7 @@ Output_Rating_Plot_text <- "VoA Outputs vs VoA Ratings"
 Output_Rating_Plot_png <- "Output_Rating.png"
 
 FBS_hist_title <- paste(year, week_text, week, FBS_text, VoA_text, "Ratings")
-Power5_hist_title <- paste(year, week_text, week, Power_Four_text, VoA_text, "Ratings")
+Power5_hist_title <- paste(year, week_text, week, Power_Five_text, VoA_text, "Ratings")
 Group5_hist_title <- paste(year, week_text, week, Group_Five_text, VoA_text, "Ratings")
 Output_Rating_Plot_title <- paste(year, week_text, week, Output_Rating_Plot_text)
 top25_file_pathway <- paste(year,week_text,week,"_",top25_png, sep = "")
@@ -78,7 +79,7 @@ SEC_Ranking_filename <- paste(year,week_text, week, SEC_text, Ranking_text, sep 
 SunBelt_Output_filename <- paste(year,week_text, week, SunBelt_text, Rating_text, sep = "")
 SunBelt_Ranking_filename <- paste(year,week_text, week, SunBelt_text, Ranking_text, sep = "")
 FBS_hist_filename <- paste(year, week_text, week, "_", FBS_text, Histogram_text, sep = "")
-Power4_hist_filename <- paste(year, week_text, week, "_", Power_Four_text, Histogram_text, sep = "")
+Power5_hist_filename <- paste(year, week_text, week, "_", Power_Five_text, Histogram_text, sep = "")
 Group5_hist_filename <- paste(year, week_text, week, "_", Group_Five_text, Histogram_text, sep = "")
 Output_Rating_Plot_filename <- paste(year, week_text, week, "_", Output_Rating_Plot_png, sep = "")
 ### creating string for csv spreadsheet pathway
@@ -489,6 +490,7 @@ if (as.numeric(week) == 0) {
   ## Changing team names in FPI df to match what appears in cfbfastR stats function
   FPI_df_PY1 <- FPI_df_PY1 |>
     mutate(team = case_when(team_name == 'Appalachian St' ~ 'Appalachian State',
+                            team_name == 'App State' ~ 'Appalachian State',
                             team_name == 'C Michigan' ~ 'Central Michigan',
                             team_name == 'Coast Carolina' ~ 'Coastal Carolina',
                             team_name == 'Coastal Car' ~ 'Coastal Carolina',
@@ -535,6 +537,7 @@ if (as.numeric(week) == 0) {
     select(team, fpi, w, l)
   FPI_df_PY2 <- FPI_df_PY2 |>
     mutate(team = case_when(team_name == 'Appalachian St' ~ 'Appalachian State',
+                            team_name == 'App State' ~ 'Appalachian State',
                             team_name == 'C Michigan' ~ 'Central Michigan',
                             team_name == 'Coast Carolina' ~ 'Coastal Carolina',
                             team_name == 'Coastal Car' ~ 'Coastal Carolina',
@@ -581,6 +584,7 @@ if (as.numeric(week) == 0) {
     select(team, fpi, w, l)
   FPI_df_PY3 <- FPI_df_PY3 |>
     mutate(team = case_when(team_name == 'Appalachian St' ~ 'Appalachian State',
+                            team_name == 'App State' ~ 'Appalachian State',
                             team_name == 'C Michigan' ~ 'Central Michigan',
                             team_name == 'Coast Carolina' ~ 'Coastal Carolina',
                             team_name == 'Coastal Car' ~ 'Coastal Carolina',
@@ -748,10 +752,15 @@ if (as.numeric(week) == 0) {
   # }
 } else if (as.numeric(week) == 1) {
   ##### WEEK 1 DATA PULL #####
-  ## reading in data for 3 previous years
+  ### reading in data for 3 previous years
+  ### no need to remove season and conference columns from PY3_df because they are removed before I write the csv in week 0
   PY3_df <- read_csv(here("Data", "VoA2024", "PYData", "PY3.csv"))
   PY2_df <- read_csv(here("Data", "VoA2024", "PYData", "PY2.csv"))
   PY1_df <- read_csv(here("Data", "VoA2024", "PYData", "PY1.csv"))
+  
+  ### reading in previous year's FCS data so it can be referenced when making ppg adjustments
+  FCS_PY2 <- read_csv(here("Data", "VoA2024", "FCSPrevYears", "FCS_PY2.csv"))
+  FCS_PY1 <- read_csv(here("Data", "VoA2024", "FCSPrevYears", "FCS_PY1.csv"))
   
   ### Current season Play by play data
   PBP <- load_cfb_pbp(seasons = as.numeric(year))
@@ -877,6 +886,7 @@ if (as.numeric(week) == 0) {
   ## Changing team names in FPI df to match what appears in cfbfastR stats function
   FPI_df <- FPI_df |>
     mutate(team = case_when(team_name == 'Appalachian St' ~ 'Appalachian State',
+                            team_name == 'App State' ~ 'Appalachian State',
                             team_name == 'C Michigan' ~ 'Central Michigan',
                             team_name == 'Coast Carolina' ~ 'Coastal Carolina',
                             team_name == 'Coastal Car' ~ 'Coastal Carolina',
@@ -918,6 +928,7 @@ if (as.numeric(week) == 0) {
                             team_name == 'GA Southern' ~ 'Georgia Southern',
                             team_name == 'Massachusetts' ~ 'UMass',
                             team_name == "J'Ville St" ~ 'Jacksonville State',
+                            team_name == "Kennesaw St" ~ 'Kennesaw State',
                             TRUE ~ team_name)) |>
     select(team, fpi, w, l)
   ## changing column names here since all of the columns used in the VoA are extracted in the first step
@@ -964,6 +975,10 @@ if (as.numeric(week) == 0) {
   ### reading in Previous year's data as csvs so I don't have to read it in again
   PY2_df <- read_csv(here("Data", "VoA2024", "PYData", "PY2.csv"))
   PY1_df <- read_csv(here("Data", "VoA2024", "PYData", "PY1.csv"))
+  
+  ### reading in previous year's FCS data so it can be referenced when making ppg adjustments
+  FCS_PY2 <- read_csv(here("Data", "VoA2024", "FCSPrevYears", "FCS_PY2.csv"))
+  FCS_PY1 <- read_csv(here("Data", "VoA2024", "FCSPrevYears", "FCS_PY1.csv"))
   
   ### Current season Play by play data
   PBP <- load_cfb_pbp(seasons = as.numeric(year))
@@ -1088,6 +1103,7 @@ if (as.numeric(week) == 0) {
   ### Changing team names in FPI df to match what appears in cfbfastR stats function
   FPI_df <- FPI_df |>
     mutate(team = case_when(team_name == 'Appalachian St' ~ 'Appalachian State',
+                            team_name == 'App State' ~ 'Appalachian State',
                             team_name == 'C Michigan' ~ 'Central Michigan',
                             team_name == 'Coast Carolina' ~ 'Coastal Carolina',
                             team_name == 'Coastal Car' ~ 'Coastal Carolina',
@@ -1129,6 +1145,7 @@ if (as.numeric(week) == 0) {
                             team_name == 'GA Southern' ~ 'Georgia Southern',
                             team_name == 'Massachusetts' ~ 'UMass',
                             team_name == "J'Ville St" ~ 'Jacksonville State',
+                            team_name == "Kennesaw St" ~ 'Kennesaw State',
                             TRUE ~ team_name)) |>
     select(team, fpi, w, l)
   ## changing column names here since all of the columns used in the VoA are extracted in the first step
@@ -1179,6 +1196,10 @@ if (as.numeric(week) == 0) {
   ##### WEEKS 6-8 Data Pull #####
   ### reading in Previous year's data as csvs so I don't have to read it in again
   PY1_df <- read_csv(here("Data", "VoA2024", "PYData", "PY1.csv"))
+  
+  ### reading in previous year's FCS data so it can be referenced when making ppg adjustments
+  FCS_PY2 <- read_csv(here("Data", "VoA2024", "FCSPrevYears", "FCS_PY2.csv"))
+  FCS_PY1 <- read_csv(here("Data", "VoA2024", "FCSPrevYears", "FCS_PY1.csv"))
   
   ### Current season Play by play data
   PBP <- load_cfb_pbp(seasons = as.numeric(year))
@@ -1304,6 +1325,7 @@ if (as.numeric(week) == 0) {
   ## Changing team names in FPI df to match what appears in cfbfastR stats function
   FPI_df <- FPI_df |>
     mutate(team = case_when(team_name == 'Appalachian St' ~ 'Appalachian State',
+                            team_name == 'App State' ~ 'Appalachian State',
                             team_name == 'C Michigan' ~ 'Central Michigan',
                             team_name == 'Coast Carolina' ~ 'Coastal Carolina',
                             team_name == 'Coastal Car' ~ 'Coastal Carolina',
@@ -1345,6 +1367,7 @@ if (as.numeric(week) == 0) {
                             team_name == 'GA Southern' ~ 'Georgia Southern',
                             team_name == 'Massachusetts' ~ 'UMass',
                             team_name == "J'Ville St" ~ 'Jacksonville State',
+                            team_name == "Kennesaw St" ~ 'Kennesaw State',
                             TRUE ~ team_name)) |>
     select(team, fpi, w, l)
   ## changing column names here since all of the columns used in the VoA are extracted in the first step
@@ -1369,6 +1392,9 @@ if (as.numeric(week) == 0) {
   colnames(recruit) <- c("team", "recruit_pts")
 } else {
   ##### CURRENT SEASON STATS ONLY Data Pull #####
+  ### reading in previous year's FCS data so it can be referenced when making ppg adjustments
+  FCS_PY2 <- read_csv(here("Data", "VoA2024", "FCSPrevYears", "FCS_PY2.csv"))
+  FCS_PY1 <- read_csv(here("Data", "VoA2024", "FCSPrevYears", "FCS_PY1.csv"))
   ### Current season Play by play data
   PBP <- load_cfb_pbp(seasons = as.numeric(year))
   
@@ -1495,6 +1521,7 @@ if (as.numeric(week) == 0) {
   ## Changing team names in FPI df to match what appears in cfbfastR stats function
   FPI_df <- FPI_df |>
     mutate(team = case_when(team_name == 'Appalachian St' ~ 'Appalachian State',
+                            team_name == 'App State' ~ 'Appalachian State',
                             team_name == 'C Michigan' ~ 'Central Michigan',
                             team_name == 'Coast Carolina' ~ 'Coastal Carolina',
                             team_name == 'Coastal Car' ~ 'Coastal Carolina',
@@ -1536,6 +1563,7 @@ if (as.numeric(week) == 0) {
                             team_name == 'GA Southern' ~ 'Georgia Southern',
                             team_name == 'Massachusetts' ~ 'UMass',
                             team_name == "J'Ville St" ~ 'Jacksonville State',
+                            team_name == "Kennesaw St" ~ 'Kennesaw State',
                             TRUE ~ team_name)) |>
     select(team, fpi, w, l)
   ## changing column names here since all of the columns used in the VoA are extracted in the first step
@@ -1654,15 +1682,19 @@ if (as.numeric(week) == 0) {
     ### used to calculate off_ppg and def_ppg
     temp_PBP_PY3_OffTDs <- PBP_PY3_TDs |>
       filter(pos_team == PY3_df$team[school])
-    ### going to use this to offset the off_ppg
+    ### going to use this to offset the off_ppg and def_ppg
     ### pos team needs to be the team doing the scoring
     ### so that touchdowns allowed are touchdowns allowed by their opposition
     temp_PBP_PY3_Offplays <- PBP_PY3_Yards |>
       filter(pos_team == PY3_df$team[school])
+    temp_PBP_PY3_Defplays <- PBP_PY3_Yards |>
+      filter(def_pos_team == PY3_df$team[school])
     ### this temp pbp is how average opposition TDs allowed will be calculated
     ### the temp df above is just part of how we get there
     temp_PBP_PY3_OppDefTDs <- PBP_PY3_TDs |>
       filter(def_pos_team %in% temp_PBP_PY3_Offplays$def_pos_team)
+    temp_PBP_PY3_OppOffTDs <- PBP_PY3_TDs |>
+      filter(pos_team %in% temp_PBP_PY3_Defplays$pos_team)
     temp_PBP_PY3_DefTDs <- PBP_PY3_TDs |>
       filter(def_pos_team == PY3_df$team[school])
     temp_PBP_PY3_2Pts <- PBP_PY3_2ptPlays |>
@@ -1715,6 +1747,7 @@ if (as.numeric(week) == 0) {
     PY3_df$st_ppg_PY3[school] = (nrow(temp_PBP_PY3_OffReturnTDs) * 6 / PY3_df$games_PY3[school]) + (nrow(temp_PBP_PY3_XPts) / PY3_df$games_PY3[school]) + (nrow(temp_PBP_PY3_GoodFGs) / PY3_df$games_PY3[school] * 3) 
     PY3_df$st_ppg_allowed_PY3[school] = (nrow(temp_PBP_PY3_ReturnTDs) * 6 / PY3_df$games_PY3[school]) + (nrow(temp_PBP_PY3_DefXPts) / PY3_df$games_PY3[school]) + (nrow(temp_PBP_PY3_DefGoodFGs) / PY3_df$games_PY3[school] * 3)
     PY3_df$oppdef_tds_pg_PY3[school] <- nrow(temp_PBP_PY3_OppDefTDs) / length(unique(temp_PBP_PY3_OppDefTDs$def_pos_team)) / PY3_df$games_PY3[school]
+    PY3_df$oppoff_tds_pg_PY3[school] <- nrow(temp_PBP_PY3_OppOffTDs) / length(unique(temp_PBP_PY3_OppOffTDs$pos_team)) / PY3_df$games_PY3[school]
   }
   
   
@@ -1766,10 +1799,14 @@ if (as.numeric(week) == 0) {
     ### so that touchdowns allowed are touchdowns allowed by their opposition
     temp_PBP_PY2_Offplays <- PBP_PY2_Yards |>
       filter(pos_team == PY2_df$team[school])
+    temp_PBP_PY2_Defplays <- PBP_PY2_Yards |>
+      filter(def_pos_team == PY2_df$team[school])
     ### this temp pbp is how average opposition TDs allowed will be calculated
     ### the temp df above is just part of how we get there
     temp_PBP_PY2_OppDefTDs <- PBP_PY2_TDs |>
       filter(def_pos_team %in% temp_PBP_PY2_Offplays$def_pos_team)
+    temp_PBP_PY2_OppOffTDs <- PBP_PY2_TDs |>
+      filter(pos_team %in% temp_PBP_PY2_Defplays$pos_team)
     temp_PBP_PY2_DefTDs <- PBP_PY2_TDs |>
       filter(def_pos_team == PY2_df$team[school])
     temp_PBP_PY2_2Pts <- PBP_PY2_2ptPlays |>
@@ -1822,6 +1859,7 @@ if (as.numeric(week) == 0) {
     PY2_df$st_ppg_PY2[school] = (nrow(temp_PBP_PY2_OffReturnTDs) * 6 / PY2_df$games_PY2[school]) + (nrow(temp_PBP_PY2_XPts) / PY2_df$games_PY2[school]) + (nrow(temp_PBP_PY2_GoodFGs) / PY2_df$games_PY2[school] * 3)
     PY2_df$st_ppg_allowed_PY2[school] = (nrow(temp_PBP_PY2_ReturnTDs) * 6 / PY2_df$games_PY2[school]) + (nrow(temp_PBP_PY2_DefXPts) / PY2_df$games_PY2[school]) + (nrow(temp_PBP_PY2_DefGoodFGs) / PY2_df$games_PY2[school] * 3)
     PY2_df$oppdef_tds_pg_PY2[school] <- nrow(temp_PBP_PY2_OppDefTDs) / length(unique(temp_PBP_PY2_OppDefTDs$def_pos_team)) / PY2_df$games_PY2[school]
+    PY2_df$oppoff_tds_pg_PY2[school] <- nrow(temp_PBP_PY2_OppOffTDs) / length(unique(temp_PBP_PY2_OppOffTDs$pos_team)) / PY2_df$games_PY2[school]
   }
   
   ### removing temp variables from the environment in the hope it will stop my R session from crashing
@@ -1886,10 +1924,14 @@ if (as.numeric(week) == 0) {
     ### so that touchdowns allowed are touchdowns allowed by their opposition
     temp_PBP_PY1_Offplays <- PBP_PY1_Yards |>
       filter(pos_team == PY1_df$team[school])
+    temp_PBP_PY1_Defplays <- PBP_PY1_Yards |>
+      filter(def_pos_team == PY1_df$team[school])
     ### this temp pbp is how average opposition TDs allowed will be calculated
     ### the temp df above is just part of how we get there
     temp_PBP_PY1_OppDefTDs <- PBP_PY1_TDs |>
       filter(def_pos_team %in% temp_PBP_PY1_Offplays$def_pos_team)
+    temp_PBP_PY1_OppOffTDs <- PBP_PY1_TDs |>
+      filter(pos_team %in% temp_PBP_PY1_Defplays$pos_team)
     temp_PBP_PY1_DefTDs <- PBP_PY1_TDs |>
       filter(def_pos_team == PY1_df$team[school])
     temp_PBP_PY1_2Pts <- PBP_PY1_2ptPlays |>
@@ -1942,6 +1984,7 @@ if (as.numeric(week) == 0) {
     PY1_df$st_ppg_PY1[school] = (nrow(temp_PBP_PY1_OffReturnTDs) * 6 / PY1_df$games_PY1[school]) + (nrow(temp_PBP_PY1_XPts) / PY1_df$games_PY1[school]) + (nrow(temp_PBP_PY1_GoodFGs) / PY1_df$games_PY1[school] * 3)
     PY1_df$st_ppg_allowed_PY1[school] = (nrow(temp_PBP_PY1_ReturnTDs) * 6 / PY1_df$games_PY1[school]) + (nrow(temp_PBP_PY1_DefXPts) / PY1_df$games_PY1[school]) + (nrow(temp_PBP_PY1_DefGoodFGs) / PY1_df$games_PY1[school] * 3)
     PY1_df$oppdef_tds_pg_PY1[school] <- nrow(temp_PBP_PY1_OppDefTDs) / length(unique(temp_PBP_PY1_Offplays$def_pos_team)) / PY1_df$games_PY1[school]
+    PY1_df$oppoff_tds_pg_PY1[school] <- nrow(temp_PBP_PY1_OppOffTDs) / length(unique(temp_PBP_PY1_OppOffTDs$pos_team)) / PY1_df$games_PY1[school]
   }
   
   ### removing temp variables from the environment in the hope it will stop my R session from crashing
@@ -2007,10 +2050,25 @@ if (as.numeric(week) == 0) {
            weighted_net_fg_made_pg = ((fg_made_pg_PY3 - fg_made_pg_allowed_PY3) * 0.1) + ((fg_made_pg_PY2 - fg_made_pg_allowed_PY2) * 0.2) + ((fg_made_pg_PY1 - fg_made_pg_allowed_PY1) * 0.7),
            weighted_net_xpts_pg = ((xpts_pg_PY3 - xpts_allowed_pg_PY3) * 0.1) + ((xpts_pg_PY2 - xpts_allowed_pg_PY2) * 0.2) + ((xpts_pg_PY1 - xpts_allowed_pg_PY1) * 0.7),
            weighted_mean_oppdef_tds_pg = ((oppdef_tds_pg_PY3 * 0.1) + (oppdef_tds_pg_PY2 * 0.2) + (oppdef_tds_pg_PY1 * 0.7)),
-           off_ppg_adj = case_when(weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 3),
-                                   weighted_off_ppg_mean > quantile(weighted_off_ppg_mean, 0.9) & weighted_mean_oppdef_tds_pg < mean(weighted_mean_oppdef_tds_pg) ~ weighted_off_ppg_mean + off_ppg_aboveavg,
+           weighted_mean_oppoff_tds_pg = (oppoff_tds_pg_PY3 * 0.1) + (oppoff_tds_pg_PY2 * 0.2) + (oppoff_tds_pg_PY1 * 0.7),
+           off_ppg_adj = case_when(weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) & team %in% FCS_PY1$team  ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 2) - 8,
+                                   weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) & team %in% FCS_PY2$team  ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 2) - 4,
+                                   team %in% FCS_PY1$team ~ weighted_off_ppg_mean - 10,
+                                   team %in% FCS_PY2$team ~ weighted_off_ppg_mean - 5,
+                                   weighted_off_ppg_mean > quantile(weighted_off_ppg_mean, 0.75) & weighted_mean_oppdef_tds_pg < quantile(weighted_mean_oppdef_tds_pg, 0.25) ~ weighted_off_ppg_mean + (off_ppg_aboveavg * 1.25),
+                                   weighted_off_ppg_mean > quantile(weighted_off_ppg_mean, 0.9) & weighted_mean_oppdef_tds_pg < quantile(weighted_mean_oppdef_tds_pg, 0.9) ~ weighted_off_ppg_mean + off_ppg_aboveavg,
+                                   weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) & weighted_off_ppg_mean < quantile(weighted_off_ppg_mean, 0.75) ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 3),
+                                   weighted_off_ppg_mean > quantile(weighted_off_ppg_mean, 0.8) & weighted_mean_oppdef_tds_pg < mean(weighted_mean_oppdef_tds_pg) ~ weighted_off_ppg_mean + (off_ppg_aboveavg / 2),
                                    TRUE ~ weighted_off_ppg_mean),
-           def_ppg_adj = case_when(weighted_def_ppg_mean > mean(weighted_def_ppg_mean) ~ weighted_def_ppg_mean + (def_ppg_aboveavg / 3),
+           def_ppg_adj = case_when(weighted_mean_oppoff_tds_pg < mean(weighted_mean_oppoff_tds_pg) & weighted_def_ppg_mean < mean(weighted_def_ppg_mean) & team %in% FCS_PY1$team  ~ weighted_def_ppg_mean + (weighted_mean_oppoff_tds_pg * 6 / 2) + 10,
+                                   weighted_mean_oppoff_tds_pg < mean(weighted_mean_oppoff_tds_pg) & weighted_def_ppg_mean < mean(weighted_def_ppg_mean) & team %in% FCS_PY2$team  ~ weighted_def_ppg_mean + (weighted_mean_oppoff_tds_pg * 6 / 2) + 5,
+                                   team %in% FCS_PY1$team ~ weighted_def_ppg_mean + 10,
+                                   team %in% FCS_PY2$team ~ weighted_def_ppg_mean + 5,
+                                   weighted_mean_oppoff_tds_pg < mean(weighted_mean_oppoff_tds_pg) & weighted_def_ppg_mean < mean(weighted_def_ppg_mean) ~ weighted_def_ppg_mean + (weighted_mean_oppoff_tds_pg * 6 / 2),
+                                   weighted_mean_oppoff_tds_pg < quantile(weighted_mean_oppoff_tds_pg, 0.25) & weighted_def_ppg_mean > quantile(weighted_def_ppg_mean, 0.75) ~ weighted_def_ppg_mean + (weighted_mean_oppoff_tds_pg * 6) + (def_ppg_aboveavg * 1.25),
+                                   weighted_mean_oppoff_tds_pg < quantile(weighted_mean_oppoff_tds_pg, 0.25) & weighted_def_ppg_mean > mean(weighted_def_ppg_mean) ~ weighted_def_ppg_mean + (weighted_mean_oppoff_tds_pg * 6) + def_ppg_aboveavg,
+                                   weighted_mean_oppoff_tds_pg < mean(weighted_mean_oppoff_tds_pg) & weighted_def_ppg_mean > mean(weighted_def_ppg_mean) ~ weighted_def_ppg_mean + (weighted_mean_oppoff_tds_pg * 6 / 2) + def_ppg_aboveavg,
+                                   weighted_def_ppg_mean > mean(weighted_def_ppg_mean) ~ weighted_def_ppg_mean + def_ppg_aboveavg,
                                    TRUE ~ weighted_def_ppg_mean))
   
 } else if (as.numeric(week) == 1) {
@@ -2110,6 +2168,7 @@ if (as.numeric(week) == 0) {
     Current_df$st_ppg[school] = (nrow(temp_PBP_OffReturnTDs) * 6 / Current_df$games[school]) + (nrow(temp_PBP_XPts) / Current_df$games[school]) + (nrow(temp_PBP_GoodFGs) / Current_df$games[school] * 3) 
     Current_df$st_ppg_allowed[school] = (nrow(temp_PBP_ReturnTDs) * 6 / Current_df$games[school]) + (nrow(temp_PBP_DefXPts) / Current_df$games[school]) + (nrow(temp_PBP_DefGoodFGs) / Current_df$games[school] * 3)
     Current_df$oppdef_tds_pg[school] <- nrow(temp_PBP_OppDefTDs) / length(unique(temp_PBP_OppDefTDs$def_pos_team)) / Current_df$games[school]
+    Current_df$oppoff_tds_pg[school] <- nrow(temp_PBP_OppOffTDs) / length(unique(temp_PBP_OppOffTDs$pos_team)) / Current_df$games[school]
   }
   
   
@@ -2172,10 +2231,20 @@ if (as.numeric(week) == 0) {
            weighted_net_fg_made_pg = ((fg_made_pg_PY3 - fg_made_pg_allowed_PY3) * 0.05) + ((fg_made_pg_PY2 - fg_made_pg_allowed_PY2) * 0.15) + ((fg_made_pg_PY1 - fg_made_pg_allowed_PY1) * 0.7) + ((fg_made_pg - fg_made_pg_allowed) * 0.1),
            weighted_net_xpts_pg = ((xpts_pg_PY3 - xpts_allowed_pg_PY3) * 0.05) + ((xpts_pg_PY2 - xpts_allowed_pg_PY2) * 0.15) + ((xpts_pg_PY1 - xpts_allowed_pg_PY1) * 0.7) + ((xpts_pg - xpts_allowed_pg) * 0.1),
            weighted_mean_oppdef_tds_pg = (oppdef_tds_pg_PY3 * 0.05) + (oppdef_tds_pg_PY2 * 0.15) + (oppdef_tds_pg_PY1 * 0.7) + (oppdef_tds_pg * 0.1),
-           off_ppg_adj = case_when(weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 3),
+           weighted_mean_oppoff_tds_pg = (oppoff_tds_pg_PY3 * 0.05) + (oppoff_tds_pg_PY2 * 0.15) + (oppoff_tds_pg_PY1 * 0.7) + (oppoff_tds_pg * 0.1),
+           off_ppg_adj = case_when(weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) & team %in% FCS_PY1$team  ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 2) - 8,
+                                   weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) & team %in% FCS_PY2$team  ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 2) - 4,
+                                   weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 2),
                                    weighted_off_ppg_mean > quantile(weighted_off_ppg_mean, 0.9) & weighted_mean_oppdef_tds_pg < mean(weighted_mean_oppdef_tds_pg) ~ weighted_off_ppg_mean + off_ppg_aboveavg,
+                                   team %in% FCS_PY1$team ~ weighted_off_ppg_mean - 8,
+                                   team %in% FCS_PY2$team ~ weighted_off_ppg_mean - 4,
                                    TRUE ~ weighted_off_ppg_mean),
-           def_ppg_adj = case_when(weighted_def_ppg_mean > mean(weighted_def_ppg_mean) ~ weighted_def_ppg_mean + (def_ppg_aboveavg / 3),
+           def_ppg_adj = case_when(weighted_mean_oppoff_tds_pg < mean(weighted_mean_oppoff_tds_pg) & weighted_def_ppg_mean < mean(weighted_def_ppg_mean) & team %in% FCS_PY1$team  ~ weighted_def_ppg_mean + (weighted_mean_oppoff_tds_pg * 6 / 2) + 8,
+                                   weighted_mean_oppoff_tds_pg < mean(weighted_mean_oppoff_tds_pg) & weighted_def_ppg_mean < mean(weighted_def_ppg_mean) & team %in% FCS_PY2$team  ~ weighted_def_ppg_mean + (weighted_mean_oppoff_tds_pg * 6 / 2) + 4,
+                                   weighted_mean_oppoff_tds_pg < mean(weighted_mean_oppoff_tds_pg) & weighted_def_ppg_mean < mean(weighted_def_ppg_mean) ~ weighted_def_ppg_mean + (weighted_mean_oppoff_tds_pg * 6 / 2),
+                                   weighted_def_ppg_mean > mean(weighted_def_ppg_mean) ~ weighted_def_ppg_mean + (def_ppg_aboveavg / 3),
+                                   team %in% FCS_PY1$team ~ weighted_def_ppg_mean + 8,
+                                   team %in% FCS_PY2$team ~ weighted_def_ppg_mean + 4,
                                    TRUE ~ weighted_def_ppg_mean))
 } else if (as.numeric(week) <= 5) {
   ##### WEEKS 2-5 DF Merge #####
@@ -2276,6 +2345,7 @@ if (as.numeric(week) == 0) {
     Current_df$st_ppg[school] = (nrow(temp_PBP_OffReturnTDs) * 6 / Current_df$games[school]) + (nrow(temp_PBP_XPts) / Current_df$games[school]) + (nrow(temp_PBP_GoodFGs) / Current_df$games[school] * 3) 
     Current_df$st_ppg_allowed[school] = (nrow(temp_PBP_ReturnTDs) * 6 / Current_df$games[school]) + (nrow(temp_PBP_DefXPts) / Current_df$games[school]) + (nrow(temp_PBP_DefGoodFGs) / Current_df$games[school] * 3)
     Current_df$oppdef_tds_pg[school] <- nrow(temp_PBP_OppDefTDs) / length(unique(temp_PBP_OppDefTDs$def_pos_team)) / Current_df$games[school]
+    Current_df$oppoff_tds_pg[school] <- nrow(temp_PBP_OppOffTDs) / length(unique(temp_PBP_OppOffTDs$pos_team)) / Current_df$games[school]
   }
   
   
@@ -2334,10 +2404,20 @@ if (as.numeric(week) == 0) {
              weighted_net_fg_made_pg = ((fg_made_pg_PY2 - fg_made_pg_allowed_PY2) * 0.1) + ((fg_made_pg_PY1 - fg_made_pg_allowed_PY1) * 0.5) + ((fg_made_pg - fg_made_pg_allowed) * 0.4),
              weighted_net_xpts_pg = ((xpts_pg_PY2 - xpts_allowed_pg_PY2) * 0.1) + ((xpts_pg_PY1 - xpts_allowed_pg_PY1) * 0.5) + ((xpts_pg - xpts_allowed_pg) * 0.4),
              weighted_mean_oppdef_tds_pg = (oppdef_tds_pg_PY2 * 0.1) + (oppdef_tds_pg_PY1 * 0.5) + (oppdef_tds_pg * 0.4),
-             off_ppg_adj = case_when(weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 3),
+             weighted_mean_oppoff_tds_pg = (oppoff_tds_pg_PY2 * 0.1) + (oppoff_tds_pg_PY1 * 0.5) + (oppoff_tds_pg * 0.4),
+             off_ppg_adj = case_when(weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) & team %in% FCS_PY1$team  ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 2) - 8,
+                                     weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) & team %in% FCS_PY2$team  ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 2) - 4,
+                                     weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 2),
                                      weighted_off_ppg_mean > quantile(weighted_off_ppg_mean, 0.9) & weighted_mean_oppdef_tds_pg < mean(weighted_mean_oppdef_tds_pg) ~ weighted_off_ppg_mean + off_ppg_aboveavg,
+                                     team %in% FCS_PY1$team ~ weighted_off_ppg_mean - 8,
+                                     team %in% FCS_PY2$team ~ weighted_off_ppg_mean - 4,
                                      TRUE ~ weighted_off_ppg_mean),
-             def_ppg_adj = case_when(weighted_def_ppg_mean > mean(weighted_def_ppg_mean) ~ weighted_def_ppg_mean + (def_ppg_aboveavg / 3),
+             def_ppg_adj = case_when(weighted_mean_oppoff_tds_pg < mean(weighted_mean_oppoff_tds_pg) & weighted_def_ppg_mean < mean(weighted_def_ppg_mean) & team %in% FCS_PY1$team  ~ weighted_def_ppg_mean + (weighted_mean_oppoff_tds_pg * 6 / 2) + 8,
+                                     weighted_mean_oppoff_tds_pg < mean(weighted_mean_oppoff_tds_pg) & weighted_def_ppg_mean < mean(weighted_def_ppg_mean) & team %in% FCS_PY2$team  ~ weighted_def_ppg_mean + (weighted_mean_oppoff_tds_pg * 6 / 2) + 4,
+                                     weighted_mean_oppoff_tds_pg < mean(weighted_mean_oppoff_tds_pg) & weighted_def_ppg_mean < mean(weighted_def_ppg_mean) ~ weighted_def_ppg_mean + (weighted_mean_oppoff_tds_pg * 6 / 2),
+                                     weighted_def_ppg_mean > mean(weighted_def_ppg_mean) ~ weighted_def_ppg_mean + (def_ppg_aboveavg / 3),
+                                     team %in% FCS_PY1$team ~ weighted_def_ppg_mean + 8,
+                                     team %in% FCS_PY2$team ~ weighted_def_ppg_mean + 4,
                                      TRUE ~ weighted_def_ppg_mean))
   } else {
     VoA_Variables <- all_df_list |>
@@ -2390,10 +2470,20 @@ if (as.numeric(week) == 0) {
              weighted_net_fg_made_pg = ((fg_made_pg_PY2 - fg_made_pg_allowed_PY2) * 0.1) + ((fg_made_pg_PY1 - fg_made_pg_allowed_PY1) * 0.5) + ((fg_made_pg - fg_made_pg_allowed) * 0.4),
              weighted_net_xpts_pg = ((xpts_pg_PY2 - xpts_allowed_pg_PY2) * 0.1) + ((xpts_pg_PY1 - xpts_allowed_pg_PY1) * 0.5) + ((xpts_pg - xpts_allowed_pg) * 0.4),
              weighted_mean_oppdef_tds_pg = (oppdef_tds_pg_PY2 * 0.1) + (oppdef_tds_pg_PY1 * 0.5) + (oppdef_tds_pg * 0.4),
-             off_ppg_adj = case_when(weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 3),
+             weighted_mean_oppoff_tds_pg = (oppoff_tds_pg_PY2 * 0.1) + (oppoff_tds_pg_PY1 * 0.5) + (oppoff_tds_pg * 0.4),
+             off_ppg_adj = case_when(weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) & team %in% FCS_PY1$team  ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 2) - 8,
+                                     weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) & team %in% FCS_PY2$team  ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 2) - 4,
+                                     weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 2),
                                      weighted_off_ppg_mean > quantile(weighted_off_ppg_mean, 0.9) & weighted_mean_oppdef_tds_pg < mean(weighted_mean_oppdef_tds_pg) ~ weighted_off_ppg_mean + off_ppg_aboveavg,
+                                     team %in% FCS_PY1$team ~ weighted_off_ppg_mean - 8,
+                                     team %in% FCS_PY2$team ~ weighted_off_ppg_mean - 4,
                                      TRUE ~ weighted_off_ppg_mean),
-             def_ppg_adj = case_when(weighted_def_ppg_mean > mean(weighted_def_ppg_mean) ~ weighted_def_ppg_mean + (def_ppg_aboveavg / 3),
+             def_ppg_adj = case_when(weighted_mean_oppoff_tds_pg < mean(weighted_mean_oppoff_tds_pg) & weighted_def_ppg_mean < mean(weighted_def_ppg_mean) & team %in% FCS_PY1$team  ~ weighted_def_ppg_mean + (weighted_mean_oppoff_tds_pg * 6 / 2) + 8,
+                                     weighted_mean_oppoff_tds_pg < mean(weighted_mean_oppoff_tds_pg) & weighted_def_ppg_mean < mean(weighted_def_ppg_mean) & team %in% FCS_PY2$team  ~ weighted_def_ppg_mean + (weighted_mean_oppoff_tds_pg * 6 / 2) + 4,
+                                     weighted_mean_oppoff_tds_pg < mean(weighted_mean_oppoff_tds_pg) & weighted_def_ppg_mean < mean(weighted_def_ppg_mean) ~ weighted_def_ppg_mean + (weighted_mean_oppoff_tds_pg * 6 / 2),
+                                     weighted_def_ppg_mean > mean(weighted_def_ppg_mean) ~ weighted_def_ppg_mean + (def_ppg_aboveavg / 3),
+                                     team %in% FCS_PY1$team ~ weighted_def_ppg_mean + 8,
+                                     team %in% FCS_PY2$team ~ weighted_def_ppg_mean + 4,
                                      TRUE ~ weighted_def_ppg_mean))
   }
   # due to availability issues, SP_Rankings sometimes not included with current data
@@ -2495,6 +2585,7 @@ if (as.numeric(week) == 0) {
     Current_df$st_ppg[school] = (nrow(temp_PBP_OffReturnTDs) * 6 / Current_df$games[school]) + (nrow(temp_PBP_XPts) / Current_df$games[school]) + (nrow(temp_PBP_GoodFGs) / Current_df$games[school] * 3) 
     Current_df$st_ppg_allowed[school] = (nrow(temp_PBP_ReturnTDs) * 6 / Current_df$games[school]) + (nrow(temp_PBP_DefXPts) / Current_df$games[school]) + (nrow(temp_PBP_DefGoodFGs) / Current_df$games[school] * 3)
     Current_df$oppdef_tds_pg[school] <- nrow(temp_PBP_OppDefTDs) / length(unique(temp_PBP_OppDefTDs$def_pos_team)) / Current_df$games[school]
+    Current_df$oppoff_tds_pg[school] <- nrow(temp_PBP_OppOffTDs) / length(unique(temp_PBP_OppOffTDs$pos_team)) / Current_df$games[school]
   }
   
   
@@ -2542,20 +2633,20 @@ if (as.numeric(week) == 0) {
            weighted_net_xpts_pg = ((xpts_pg_PY1 - xpts_allowed_pg_PY1) * 0.3) + ((xpts_pg - xpts_allowed_pg) * 0.7),
            weighted_mean_oppdef_tds_pg = (oppdef_tds_pg_PY1 * 0.3) + (oppdef_tds_pg * 0.7),
            weighted_mean_oppoff_tds_pg = (oppoff_tds_pg_PY1 * 0.3) + (oppoff_tds_pg * 0.7),
-           off_ppg_adj = case_when(weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) & team %in% PY1_df$team  ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 3) - 6,
-                                   weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) & team %in% PY2_df$team  ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 3) - 3,
-                                   weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 3),
+           off_ppg_adj = case_when(weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) & team %in% FCS_PY1$team  ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 2) - 8,
+                                   weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) & team %in% FCS_PY2$team  ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 2) - 4,
+                                   weighted_mean_oppdef_tds_pg > mean(weighted_mean_oppdef_tds_pg) & weighted_off_ppg_mean > mean(weighted_off_ppg_mean) ~ weighted_off_ppg_mean - (weighted_mean_oppdef_tds_pg * 6 / 2),
                                    weighted_off_ppg_mean > quantile(weighted_off_ppg_mean, 0.9) & weighted_mean_oppdef_tds_pg < mean(weighted_mean_oppdef_tds_pg) ~ weighted_off_ppg_mean + off_ppg_aboveavg,
-                                   team %in% PY1_df$team ~ weighted_off_ppg_mean - 6,
-                                   team %in% PY2_df$team ~ weighted_off_ppg_mean - 3,
-                                   TRUE ~ off_ppg),
-           def_ppg_adj = case_when(oppoff_tds_pg < mean(oppoff_tds_pg) & def_ppg < mean(def_ppg) & team %in% PY1_df$team  ~ def_ppg + (oppoff_tds_pg * 6 / 3) + 6,
-                                   oppoff_tds_pg < mean(oppoff_tds_pg) & def_ppg < mean(def_ppg) & team %in% PY2_df$team  ~ def_ppg + (oppoff_tds_pg * 6 / 3) + 3,
-                                   oppoff_tds_pg < mean(oppoff_tds_pg) & def_ppg < mean(def_ppg) ~ def_ppg + (oppoff_tds_pg * 6 / 3),
-                                   def_ppg > mean(def_ppg) ~ def_ppg + (def_ppg_aboveavg / 3),
-                                   team %in% PY1_df$team ~ def_ppg + 6,
-                                   team %in% PY2_df$team ~ def_ppg + 3,
-                                   TRUE ~ def_ppg))
+                                   team %in% FCS_PY1$team ~ weighted_off_ppg_mean - 8,
+                                   team %in% FCS_PY2$team ~ weighted_off_ppg_mean - 4,
+                                   TRUE ~ weighted_off_ppg_mean),
+           def_ppg_adj = case_when(weighted_mean_oppoff_tds_pg < mean(weighted_mean_oppoff_tds_pg) & weighted_def_ppg_mean < mean(weighted_def_ppg_mean) & team %in% FCS_PY1$team  ~ weighted_def_ppg_mean + (weighted_mean_oppoff_tds_pg * 6 / 2) + 8,
+                                   weighted_mean_oppoff_tds_pg < mean(weighted_mean_oppoff_tds_pg) & weighted_def_ppg_mean < mean(weighted_def_ppg_mean) & team %in% FCS_PY2$team  ~ weighted_def_ppg_mean + (weighted_mean_oppoff_tds_pg * 6 / 2) + 4,
+                                   weighted_mean_oppoff_tds_pg < mean(weighted_mean_oppoff_tds_pg) & weighted_def_ppg_mean < mean(weighted_def_ppg_mean) ~ weighted_def_ppg_mean + (weighted_mean_oppoff_tds_pg * 6 / 2),
+                                   weighted_def_ppg_mean > mean(weighted_def_ppg_mean) ~ weighted_def_ppg_mean + (def_ppg_aboveavg / 3),
+                                   team %in% FCS_PY1$team ~ weighted_def_ppg_mean + 8,
+                                   team %in% FCS_PY2$team ~ weighted_def_ppg_mean + 4,
+                                   TRUE ~ weighted_def_ppg_mean))
 } else {
   ##### Week 9-End of Season CURRENT SEASON ONLY DF Merge #####
   ## Current Years data frames
@@ -2675,19 +2766,19 @@ if (as.numeric(week) == 0) {
            net_fg_rate = fg_rate - fg_rate_allowed,
            net_fg_made_pg = fg_made_pg - fg_made_pg_allowed,
            net_xpts_pg = xpts_pg - xpts_allowed_pg,
-           off_ppg_adj = case_when(oppdef_tds_pg > mean(oppdef_tds_pg) & off_ppg > mean(off_ppg) & team %in% PY1_df$team  ~ off_ppg - (oppdef_tds_pg * 6 / 3) - 6,
-                                   oppdef_tds_pg > mean(oppdef_tds_pg) & off_ppg > mean(off_ppg) & team %in% PY2_df$team  ~ off_ppg - (oppdef_tds_pg * 6 / 3) - 3,
-                                   oppdef_tds_pg > mean(oppdef_tds_pg) & off_ppg > mean(off_ppg) ~ off_ppg - (oppdef_tds_pg * 6 / 3),
+           off_ppg_adj = case_when(oppdef_tds_pg > mean(oppdef_tds_pg) & off_ppg > mean(off_ppg) & team %in% FCS_PY1$team  ~ off_ppg - (oppdef_tds_pg * 6 / 2) - 8,
+                                   oppdef_tds_pg > mean(oppdef_tds_pg) & off_ppg > mean(off_ppg) & team %in% FCS_PY2$team  ~ off_ppg - (oppdef_tds_pg * 6 / 2) - 4,
+                                   oppdef_tds_pg > mean(oppdef_tds_pg) & off_ppg > mean(off_ppg) ~ off_ppg - (oppdef_tds_pg * 6 / 2),
                                    off_ppg > quantile(off_ppg, 0.9) & oppdef_tds_pg < mean(oppdef_tds_pg) ~ off_ppg + off_ppg_aboveavg,
-                                   team %in% PY1_df$team ~ off_ppg - 6,
-                                   team %in% PY2_df$team ~ off_ppg - 3,
+                                   team %in% FCS_PY1$team ~ off_ppg - 8,
+                                   team %in% FCS_PY2$team ~ off_ppg - 4,
                                    TRUE ~ off_ppg),
-           def_ppg_adj = case_when(oppoff_tds_pg < mean(oppoff_tds_pg) & def_ppg < mean(def_ppg) & team %in% PY1_df$team  ~ def_ppg + (oppoff_tds_pg * 6 / 3) + 6,
-                                   oppoff_tds_pg < mean(oppoff_tds_pg) & def_ppg < mean(def_ppg) & team %in% PY2_df$team  ~ def_ppg + (oppoff_tds_pg * 6 / 3) + 3,
-                                   oppoff_tds_pg < mean(oppoff_tds_pg) & def_ppg < mean(def_ppg) ~ def_ppg + (oppoff_tds_pg * 6 / 3),
+           def_ppg_adj = case_when(oppoff_tds_pg < mean(oppoff_tds_pg) & def_ppg < mean(def_ppg) & team %in% FCS_PY1$team  ~ def_ppg + (oppoff_tds_pg * 6 / 2) + 8,
+                                   oppoff_tds_pg < mean(oppoff_tds_pg) & def_ppg < mean(def_ppg) & team %in% FCS_PY2$team  ~ def_ppg + (oppoff_tds_pg * 6 / 2) + 4,
+                                   oppoff_tds_pg < mean(oppoff_tds_pg) & def_ppg < mean(def_ppg) ~ def_ppg + (oppoff_tds_pg * 6 / 2),
                                    def_ppg > mean(def_ppg) ~ def_ppg + (def_ppg_aboveavg / 3),
-                                   team %in% PY1_df$team ~ def_ppg + 6,
-                                   team %in% PY2_df$team ~ def_ppg + 3,
+                                   team %in% FCS_PY1$team ~ def_ppg + 8,
+                                   team %in% FCS_PY2$team ~ def_ppg + 4,
                                    TRUE ~ def_ppg))
   
   ## Making values numeric
@@ -2739,9 +2830,9 @@ VoA_Variables <- VoA_Variables |>
 ### if week > 9
 # current will be only data source used, everything weighted "1x" (aside from special variables)
 
-## different stats weighted differently as described below
-## EPA/PPA stats, explosiveness stats, success rates, havoc rates, Yards/Play, pts/scoring opp weighted 2x in PYs, 3x for current season,
-# all #x above refer to weighting being done on top of weighting being done based on which year the data is from
+### different stats weighted differently as described below
+### EPA/PPA stats, explosiveness stats, success rates, havoc rates, Yards/Play, pts/scoring opp weighted 2x in PYs, 3x for current season,
+## all #x above refer to weighting being done on top of weighting being done based on which year the data is from
 ## recruiting 3x in PY3 and PY2, 2x in PY1, 1x for current year
 # recruiting phased out after only current season stats are being used (currently week 7)
 ## talent ranked 1x in PY3 and PY2, 3x in PY1
@@ -5132,7 +5223,7 @@ if (as.numeric(week) == 0) {
       Rank_HavocRt_diff_col2 = dense_rank(desc(HavocRt_diff)),
       Rank_Explosiveness_diff_col2 = dense_rank(desc(Explosiveness_diff)))
 } else if (as.numeric(week) <= 5) {
-  ##### Week 4-5 Variable Ranks #####
+  ##### Weeks 4-5 Variable Ranks #####
   # PY2 weighted 1x, PY1 weighted 1x, current weighted 2x
   ## PY2 ranks
   VoA_Variables <- VoA_Variables |>
@@ -5147,21 +5238,21 @@ if (as.numeric(week) == 0) {
            Rank_Third_Conv_Rate_PY2 = dense_rank(desc(third_conv_rate_PY2)),
            Rank_Fourth_Conv_Rate_PY2 = dense_rank(desc(fourth_conv_rate_PY2)),
            Rank_Penalty_Yds_pg_PY2 = dense_rank(penalty_yds_pg_PY2),
-      Rank_Yds_Per_Penalty_PY2 = dense_rank(yards_per_penalty_PY2),
-      Rank_Kick_Return_Avg_PY2 = dense_rank(desc(kick_return_avg_PY2)),
-      Rank_Punt_Return_Avg_PY2 = dense_rank(desc(punt_return_avg_PY2)),
-      Rank_Total_Yds_pg_PY2 = dense_rank(desc(total_yds_pg_PY2)),
-      Rank_Pass_Yds_pg_PY2 = dense_rank(desc(pass_yds_pg_PY2)),
-      Rank_Rush_Yds_pg_PY2 = dense_rank(desc(rush_yds_pg_PY2)),
-      Rank_First_Downs_pg_PY2 = dense_rank(desc(first_downs_pg_PY2)),
-      Rank_Off_YPP_PY2 = dense_rank(desc(off_ypp_PY2)),
-      Rank_Def_Ints_pg_PY2 = dense_rank(desc(def_interceptions_pg_PY2)),
-      Rank_Off_PPA_PY2 = dense_rank(desc(off_ppa_PY2)),
-      Rank_Off_Success_Rt_PY2 = dense_rank(desc(off_success_rate_PY2)),
-      Rank_Off_Explosiveness_PY2 = dense_rank(desc(off_explosiveness_PY2)),
-      Rank_Off_Pwr_Success_PY2 = dense_rank(desc(off_power_success_PY2)),
-      Rank_Off_Stuff_Rt_PY2 = dense_rank(off_stuff_rate_PY2),
-      Rank_Off_Line_Yds_PY2 = dense_rank(desc(off_line_yds_PY2)),
+           Rank_Yds_Per_Penalty_PY2 = dense_rank(yards_per_penalty_PY2),
+           Rank_Kick_Return_Avg_PY2 = dense_rank(desc(kick_return_avg_PY2)),
+           Rank_Punt_Return_Avg_PY2 = dense_rank(desc(punt_return_avg_PY2)),
+           Rank_Total_Yds_pg_PY2 = dense_rank(desc(total_yds_pg_PY2)),
+           Rank_Pass_Yds_pg_PY2 = dense_rank(desc(pass_yds_pg_PY2)),
+           Rank_Rush_Yds_pg_PY2 = dense_rank(desc(rush_yds_pg_PY2)),
+           Rank_First_Downs_pg_PY2 = dense_rank(desc(first_downs_pg_PY2)),
+           Rank_Off_YPP_PY2 = dense_rank(desc(off_ypp_PY2)),
+           Rank_Def_Ints_pg_PY2 = dense_rank(desc(def_interceptions_pg_PY2)),
+           Rank_Off_PPA_PY2 = dense_rank(desc(off_ppa_PY2)),
+           Rank_Off_Success_Rt_PY2 = dense_rank(desc(off_success_rate_PY2)),
+           Rank_Off_Explosiveness_PY2 = dense_rank(desc(off_explosiveness_PY2)),
+           Rank_Off_Pwr_Success_PY2 = dense_rank(desc(off_power_success_PY2)),
+           Rank_Off_Stuff_Rt_PY2 = dense_rank(off_stuff_rate_PY2),
+           Rank_Off_Line_Yds_PY2 = dense_rank(desc(off_line_yds_PY2)),
       Rank_Off_Second_Lvl_Yds_PY2 = dense_rank(desc(off_second_lvl_yds_PY2)),
       Rank_Off_Open_Field_Yds_PY2 = dense_rank(desc(off_open_field_yds_PY2)),
       Rank_Off_Pts_Per_Opp_PY2 = dense_rank(desc(off_pts_per_opp_PY2)),
@@ -6223,12 +6314,11 @@ if (as.numeric(week) == 1 | as.numeric(week) == 2 | as.numeric(week) == 6 | as.n
 
 
 ##### calculating the mean stat ranking, VoA_Output #####
-## Rank variables start at 320 for Week 0
-## Rank variables start at 321 for Week 1 (MUST BE CHANGED WITH ADDITION OF DIFF VARS)
-## Rank variables start at 260 for Weeks 2-4
-## it will be a different number for the other weeks
-## script wouldn't run properly without a real number in there so I'll have to come back
-# and edit the number in during the season as I figure out how big VoA_Variables gets
+### Rank variables start at 348 for Week 0
+### Rank variables start at 321 for Week 1 (MUST BE CHANGED WITH ADDITION OF DIFF VARS)
+### Rank variables start at 260 for Weeks 2-4
+### it will be a different number for the other weeks
+### script wouldn't run properly without a real number in there so I'll have to come back and edit the number in during the season as I figure out how big VoA_Variables gets
 if (as.numeric(week) == 0) {
   ## correcting "season" column to reflect the season for which these rankings are being produced
   VoA_Variables$season = rep(as.numeric(year), nrow(VoA_Variables))
@@ -6386,7 +6476,7 @@ if (as.numeric(week) <= 8) {
   
   
   ### Extracting Parameters
-  Def_VoA_pars <- rstan::extract(Def_VoA_fit, c("b0", "beta_def_ppa", "beta_def_ypp", "beta_def_success_rate", "beta_def_explosiveness", "beta_def_third_conv_rate", "beta_def_pts_per_opp", "beta_def_plays_pg", "beta_def_ppg_aboveavg", "beta_VoA_Output", "beta_Conference_Strength", "sigma"))
+  Def_VoA_pars <- rstan::extract(Def_VoA_fit, c("b0", "beta_def_ppa", "beta_def_ypp", "beta_def_success_rate", "beta_def_explosiveness", "beta_def_third_conv_rate", "beta_def_pts_per_opp", "beta_def_havoc_total", "beta_def_plays_pg", "beta_def_ppg_aboveavg", "beta_VoA_Output", "beta_Conference_Strength", "sigma"))
   
   ### creating matrix to hold ratings
   ### adding in process uncertainty
@@ -6396,7 +6486,7 @@ if (as.numeric(week) <= 8) {
   set.seed(802)
   for (p in 1:length(Def_VoA_pars$b0)){
     for(t in 1:nrow(VoA_Variables)){
-      Def_VoA_Rating <- rnorm(1, mean = Def_VoA_pars$b0[p] + Def_VoA_pars$beta_def_ppa[p] * VoA_Variables$weighted_def_ppa[t] + Def_VoA_pars$beta_def_ypp[p] * VoA_Variables$weighted_def_ypp[t] + Def_VoA_pars$beta_def_success_rate[p] * VoA_Variables$weighted_def_success_rate[t] + Def_VoA_pars$beta_def_explosiveness[p] * VoA_Variables$weighted_def_explosiveness[t] + Def_VoA_pars$beta_def_third_conv_rate[p] * VoA_Variables$weighted_def_third_conv_rate[t] + Def_VoA_pars$beta_def_pts_per_opp[p] * VoA_Variables$weighted_def_pts_per_opp[t] + Def_VoA_pars$beta_def_plays_pg[p] * VoA_Variables$weighted_def_plays_pg[t] + Def_VoA_pars$beta_def_ppg_aboveavg[p] * VoA_Variables$def_ppg_aboveavg[t] + Def_VoA_pars$beta_VoA_Output[p] * VoA_Variables$VoA_Output[t] + Def_VoA_pars$beta_Conference_Strength[p] * VoA_Variables$Conference_Strength[t], sd = Def_VoA_pars$sigma[p])
+      Def_VoA_Rating <- rnorm(1, mean = Def_VoA_pars$b0[p] + Def_VoA_pars$beta_def_ppa[p] * VoA_Variables$weighted_def_ppa[t] + Def_VoA_pars$beta_def_ypp[p] * VoA_Variables$weighted_def_ypp[t] + Def_VoA_pars$beta_def_success_rate[p] * VoA_Variables$weighted_def_success_rate[t] + Def_VoA_pars$beta_def_explosiveness[p] * VoA_Variables$weighted_def_explosiveness[t] + Def_VoA_pars$beta_def_third_conv_rate[p] * VoA_Variables$weighted_def_third_conv_rate[t] + Def_VoA_pars$beta_def_pts_per_opp[p] * VoA_Variables$weighted_def_pts_per_opp[t] + Def_VoA_pars$beta_def_havoc_total[p] * VoA_Variables$weighted_def_havoc_total[t] + Def_VoA_pars$beta_def_plays_pg[p] * VoA_Variables$weighted_def_plays_pg[t] + Def_VoA_pars$beta_def_ppg_aboveavg[p] * VoA_Variables$def_ppg_aboveavg[t] + Def_VoA_pars$beta_VoA_Output[p] * VoA_Variables$VoA_Output[t] + Def_VoA_pars$beta_Conference_Strength[p] * VoA_Variables$Conference_Strength[t], sd = Def_VoA_pars$sigma[p])
       Def_VoA_Ratings[p,t] <- Def_VoA_Rating
     }
   }
@@ -6501,7 +6591,7 @@ if (as.numeric(week) <= 8) {
   
   
   ### Extracting Parameters
-  Def_VoA_pars <- rstan::extract(Def_VoA_fit, c("b0", "beta_def_ppa", "beta_def_ypp", "beta_def_success_rate", "beta_def_explosiveness", "beta_def_third_conv_rate", "beta_def_pts_per_opp", "beta_def_plays_pg", "beta_def_ppg_aboveavg", "beta_VoA_Output", "beta_Conference_Strength", "sigma"))
+  Def_VoA_pars <- rstan::extract(Def_VoA_fit, c("b0", "beta_def_ppa", "beta_def_ypp", "beta_def_success_rate", "beta_def_explosiveness", "beta_def_third_conv_rate", "beta_def_pts_per_opp", "beta_def_havoc_total", "beta_def_plays_pg", "beta_def_ppg_aboveavg", "beta_VoA_Output", "beta_Conference_Strength", "sigma"))
   
   ### creating matrix to hold ratings
   ### adding in process uncertainty
@@ -6511,7 +6601,7 @@ if (as.numeric(week) <= 8) {
   set.seed(802)
   for (p in 1:length(Def_VoA_pars$b0)){
     for(t in 1:nrow(VoA_Variables)){
-      Def_VoA_Rating <- rnorm(1, mean = Def_VoA_pars$b0[p] + Def_VoA_pars$beta_def_ppa[p] * VoA_Variables$def_ppa[t] + Def_VoA_pars$beta_def_ypp[p] * VoA_Variables$def_ypp[t] + Def_VoA_pars$beta_def_success_rate[p] * VoA_Variables$def_success_rate[t] + Def_VoA_pars$beta_def_explosiveness[p] * VoA_Variables$def_explosiveness[t] + Def_VoA_pars$beta_def_third_conv_rate[p] * VoA_Variables$def_third_conv_rate[t] + Def_VoA_pars$beta_def_pts_per_opp[p] * VoA_Variables$def_pts_per_opp[t] + Def_VoA_pars$beta_def_plays_pg[p] * VoA_Variables$def_plays_pg[t] + Def_VoA_pars$beta_def_ppg_aboveavg[p] * VoA_Variables$def_ppg_aboveavg[t] + Def_VoA_pars$beta_VoA_Output[p] * VoA_Variables$VoA_Output[t] + Def_VoA_pars$beta_Conference_Strength[p] * VoA_Variables$Conference_Strength[t], sd = Def_VoA_pars$sigma[p])
+      Def_VoA_Rating <- rnorm(1, mean = Def_VoA_pars$b0[p] + Def_VoA_pars$beta_def_ppa[p] * VoA_Variables$def_ppa[t] + Def_VoA_pars$beta_def_ypp[p] * VoA_Variables$def_ypp[t] + Def_VoA_pars$beta_def_success_rate[p] * VoA_Variables$def_success_rate[t] + Def_VoA_pars$beta_def_explosiveness[p] * VoA_Variables$def_explosiveness[t] + Def_VoA_pars$beta_def_third_conv_rate[p] * VoA_Variables$def_third_conv_rate[t] + Def_VoA_pars$beta_def_pts_per_opp[p] * VoA_Variables$def_pts_per_opp[t] + Def_VoA_pars$beta_def_havoc_total[p] * VoA_Variables$def_havoc_total[t]  + Def_VoA_pars$beta_def_plays_pg[p] * VoA_Variables$def_plays_pg[t] + Def_VoA_pars$beta_def_ppg_aboveavg[p] * VoA_Variables$def_ppg_aboveavg[t] + Def_VoA_pars$beta_VoA_Output[p] * VoA_Variables$VoA_Output[t] + Def_VoA_pars$beta_Conference_Strength[p] * VoA_Variables$Conference_Strength[t], sd = Def_VoA_pars$sigma[p])
       Def_VoA_Ratings[p,t] <- Def_VoA_Rating
     }
   }
@@ -6575,11 +6665,13 @@ VoA_Variables <- VoA_Variables |>
          DefVoA_Ranking = dense_rank(DefVoA_MedRating),
          STVoA_Ranking = dense_rank(desc(STVoA_MedRating)))
 
-### creating data frame with just team, VoA ranking, and VoA output
+### creating data frame with just team, VoA ratings, VoA Rankings, and VoA output
 FinalTable <- VoA_Variables |>
   select(team, conference, CFB_Week, VoA_Output, VoA_Rating_Ovr, VoA_Ranking_Ovr, OffVoA_MedRating, OffVoA_Ranking, DefVoA_MedRating, DefVoA_Ranking, STVoA_MedRating, STVoA_Ranking, Conference_Strength) |>
   arrange(VoA_Ranking_Ovr)
-FinalVoATop25 <- FinalTable |> filter(VoA_Ranking_Ovr < 26)
+### separating out top 25
+FinalVoATop25 <- FinalTable |> 
+  filter(VoA_Ranking_Ovr < 26)
 
 ##### Creating Top 25 and Full Tables Arranged by VoA Rating #####
 if (as.numeric(week) == 0) {
@@ -6594,29 +6686,65 @@ if (as.numeric(week) == 0) {
     ## tab_style(style = cell_fill("bisque"),
     ##           locations = cells_body()) |>  # add fill color to table
     fmt_number( # A column (numeric data)
-      columns = c(VoA_Rating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 5 # With four decimal places
-    ) |> 
+      columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number( # A column (numeric data)
+      columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number( # A column (numeric data)
+      columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number( # A column (numeric data)
+      columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
     fmt_number( # Another column (also numeric data)
-      columns = c(VoA_Ranking), # What column variable? FinalVoATop25$VoA_Ranking
+      columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
       decimals = 0 # I want this column to have zero decimal places
     ) |>
     data_color( # Update cell colors, testing different color palettes
-      columns = c(VoA_Rating),
+      columns = c(VoA_Rating_Ovr),
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "Reds"), # A color scheme (gradient)
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
     ) |>
-    cols_label(VoA_Rating = "VoA Rating", VoA_Ranking = "VoA Ranking") |> # Update labels
-    cols_move_to_end(columns = "VoA_Rating") |>
-    cols_hide(c(conference, CFB_Week, VoA_Output)) |>
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(OffVoA_MedRating), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(DefVoA_MedRating), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = TRUE
+      )
+    ) |>
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(STVoA_MedRating), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
+    # cols_move_to_end(columns = "VoA_Rating") |>
+    cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
     tab_footnote(
       footnote = "Table by @gshelor, Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org"
     )
   
-  ## Full 130 teams table
+  ## Full 134 teams table
   # adding title and subtitle
   VoA_Full_Table <- FinalTable |>
     gt() |> # use 'gt' to make an awesome table...
@@ -6627,24 +6755,60 @@ if (as.numeric(week) == 0) {
     ##tab_style(style = cell_fill("bisque"),
     ##        locations = cells_body()) |>  # add fill color to table
     fmt_number( # A column (numeric data)
-      columns = c(VoA_Rating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 5 # With four decimal places
-    ) |> 
+      columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number( # A column (numeric data)
+      columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number( # A column (numeric data)
+      columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number( # A column (numeric data)
+      columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
     fmt_number( # Another column (also numeric data)
-      columns = c(VoA_Ranking), # What column variable? FinalVoATop25$VoA_Ranking
+      columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
       decimals = 0 # I want this column to have zero decimal places
     ) |> 
     data_color( # Update cell colors, testing different color palettes
-      columns = c(VoA_Rating), # ...for dose column
+      columns = c(VoA_Rating_Ovr), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdBu"), # A color scheme (gradient)
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(OffVoA_MedRating), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(DefVoA_MedRating), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = TRUE
       )
     ) |>
-    cols_label(VoA_Rating = "VoA Rating", VoA_Ranking = "VoA Ranking") |> # Update labels
-    cols_move_to_end(columns = "VoA_Rating") |>
-    cols_hide(c(conference, CFB_Week, VoA_Output)) |>
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(STVoA_MedRating), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
+    # cols_move_to_end(columns = "VoA_Rating_Ovr") |>
+    cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
     tab_footnote(
       footnote = "Table by @gshelor, Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org"
     )
@@ -6660,29 +6824,65 @@ if (as.numeric(week) == 0) {
     ## tab_style(style = cell_fill("bisque"),
     ##           locations = cells_body()) |>  # add fill color to table
     fmt_number( # A column (numeric data)
-      columns = c(VoA_Rating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 5 # With four decimal places
-    ) |> 
+      columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number( # A column (numeric data)
+      columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number( # A column (numeric data)
+      columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number( # A column (numeric data)
+      columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
     fmt_number( # Another column (also numeric data)
-      columns = c(VoA_Ranking), # What column variable? FinalVoATop25$VoA_Ranking
+      columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
       decimals = 0 # I want this column to have zero decimal places
     ) |>
     data_color( # Update cell colors, testing different color palettes
-      columns = c(VoA_Rating), # ...for dose column
+      columns = c(VoA_Rating_Ovr),
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "Reds"), # A color scheme (gradient)
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
     ) |>
-    cols_label(VoA_Rating = "VoA Rating", VoA_Ranking = "VoA Ranking") |> # Update labels
-    cols_move_to_end(columns = "VoA_Rating") |>
-    cols_hide(c(conference, CFB_Week, VoA_Output)) |>
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(OffVoA_MedRating), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(DefVoA_MedRating), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = TRUE
+      )
+    ) |>
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(STVoA_MedRating), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
+    # cols_move_to_end(columns = "VoA_Rating") |>
+    cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
     tab_footnote(
       footnote = "Table by @gshelor, Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org"
     )
   
-  ## Full 130 teams table
+  ## Full 134 teams table
   # adding title and subtitle
   VoA_Full_Table <- FinalTable |>
     gt() |> # use 'gt' to make an awesome table...
@@ -6693,24 +6893,60 @@ if (as.numeric(week) == 0) {
     ##tab_style(style = cell_fill("bisque"),
     ##        locations = cells_body()) |>  # add fill color to table
     fmt_number( # A column (numeric data)
-      columns = c(VoA_Rating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 5 # With four decimal places
-    ) |> 
+      columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number( # A column (numeric data)
+      columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number( # A column (numeric data)
+      columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number( # A column (numeric data)
+      columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
     fmt_number( # Another column (also numeric data)
-      columns = c(VoA_Ranking), # What column variable? FinalVoATop25$VoA_Ranking
+      columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
       decimals = 0 # I want this column to have zero decimal places
     ) |> 
     data_color( # Update cell colors, testing different color palettes
-      columns = c(VoA_Rating), # ...for dose column
+      columns = c(VoA_Rating_Ovr), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdBu"), # A color scheme (gradient)
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(OffVoA_MedRating), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(DefVoA_MedRating), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = TRUE
       )
     ) |>
-    cols_label(VoA_Rating = "VoA Rating", VoA_Ranking = "VoA Ranking") |> # Update labels
-    cols_move_to_end(columns = "VoA_Rating") |>
-    cols_hide(c(conference, CFB_Week, VoA_Output)) |>
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(STVoA_MedRating), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
+    # cols_move_to_end(columns = "VoA_Rating_Ovr") |>
+    cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
     tab_footnote(
       footnote = "Table by @gshelor, Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org"
     )
@@ -6726,29 +6962,65 @@ if (as.numeric(week) == 0) {
     ## tab_style(style = cell_fill("bisque"),
     ##           locations = cells_body()) |>  # add fill color to table
     fmt_number( # A column (numeric data)
-      columns = c(VoA_Rating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 5 # With four decimal places
-    ) |> 
+      columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number( # A column (numeric data)
+      columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number( # A column (numeric data)
+      columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number( # A column (numeric data)
+      columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
     fmt_number( # Another column (also numeric data)
-      columns = c(VoA_Ranking), # What column variable? FinalVoATop25$VoA_Ranking
+      columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
       decimals = 0 # I want this column to have zero decimal places
     ) |>
     data_color( # Update cell colors, testing different color palettes
-      columns = c(VoA_Rating), # ...for dose column
+      columns = c(VoA_Rating_Ovr),
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "Reds"), # A color scheme (gradient)
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
     ) |>
-    cols_label(VoA_Rating = "VoA Rating", VoA_Ranking = "VoA Ranking") |> # Update labels
-    cols_move_to_end(columns = "VoA_Rating") |>
-    cols_hide(c(conference, CFB_Week, VoA_Output)) |>
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(OffVoA_MedRating), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(DefVoA_MedRating), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = TRUE
+      )
+    ) |>
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(STVoA_MedRating), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
+    # cols_move_to_end(columns = "VoA_Rating") |>
+    cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
     tab_footnote(
       footnote = "Table by @gshelor, Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org"
     )
   
-  ## Full 130 teams table
+  ## Full 134 teams table
   # adding title and subtitle
   VoA_Full_Table <- FinalTable |>
     gt() |> # use 'gt' to make an awesome table...
@@ -6759,24 +7031,60 @@ if (as.numeric(week) == 0) {
     ##tab_style(style = cell_fill("bisque"),
     ##        locations = cells_body()) |>  # add fill color to table
     fmt_number( # A column (numeric data)
-      columns = c(VoA_Rating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 5 # With four decimal places
-    ) |> 
+      columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number( # A column (numeric data)
+      columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number( # A column (numeric data)
+      columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number( # A column (numeric data)
+      columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
     fmt_number( # Another column (also numeric data)
-      columns = c(VoA_Ranking), # What column variable? FinalVoATop25$VoA_Ranking
+      columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
       decimals = 0 # I want this column to have zero decimal places
     ) |> 
     data_color( # Update cell colors, testing different color palettes
-      columns = c(VoA_Rating), # ...for dose column
+      columns = c(VoA_Rating_Ovr), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdBu"), # A color scheme (gradient)
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(OffVoA_MedRating), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(DefVoA_MedRating), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = TRUE
       )
     ) |>
-    cols_label(VoA_Rating = "VoA Rating", VoA_Ranking = "VoA Ranking") |> # Update labels
-    cols_move_to_end(columns = "VoA_Rating") |>
-    cols_hide(c(conference, CFB_Week, VoA_Output)) |>
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(STVoA_MedRating), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
+    # cols_move_to_end(columns = "VoA_Rating") |>
+    cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
     tab_footnote(
       footnote = "Table by @gshelor, Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org"
     )
@@ -6794,15 +7102,14 @@ if (as.numeric(week) > 9) {
   Top12_mean <- mean(Top12$VoA_Rating)
   
   
-  ## pulling in completed games
+  ### pulling in completed games
   completed_games <- cfbd_game_info(as.numeric(year)) |>
     filter(home_team %in% VoA_Variables$team | away_team %in% VoA_Variables$team) |>
     select(game_id, season, week, neutral_site, completed, home_team, home_points, away_team, away_points) |>
     filter(completed == TRUE)
   
-  ## using SRS ratings for FCS teams instead of the randomly sampled VoA rating based on
-  # bottom half of VoA ratings as done during 2022 CFB season
-  `%nin%` = Negate(`%in%`)
+  ### using SRS ratings for FCS teams instead of the randomly sampled VoA rating based on
+  ## bottom half of VoA ratings as done during 2022 CFB season
   FCS <- cfbd_ratings_srs(year = as.numeric(year)) |>
     filter(team %nin% VoA_Variables$team) |>
     filter(team %in% completed_games$home_team | team %in% completed_games$away_team)
@@ -12461,7 +12768,7 @@ if (as.numeric(week) > 5) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(Resume_VoA), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "Reds"), # A color scheme (gradient)
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -12494,7 +12801,7 @@ if (as.numeric(week) > 5) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(Resume_VoA), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdBu"), # A color scheme (gradient)
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = TRUE
       )
@@ -12527,7 +12834,7 @@ if (as.numeric(week) > 5) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(Resume_VoA), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "Reds"), # A color scheme (gradient)
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -12539,8 +12846,8 @@ if (as.numeric(week) > 5) {
       footnote = "Table by @gshelor, Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org"
     )
   
-  ## Full 130 teams table
-  # adding title and subtitle
+  ### Full 134 teams table
+  ### adding title and subtitle
   Resume_VoA_Table <- FinalResumeTable |>
     gt() |> # use 'gt' to make an awesome table...
     gt_theme_538() |>
@@ -12560,7 +12867,7 @@ if (as.numeric(week) > 5) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(Resume_VoA), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdBu"), # A color scheme (gradient)
+        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = TRUE
       )
@@ -12579,7 +12886,7 @@ if (as.numeric(week) > 5) {
 
 
 ##### Saving tables and final VoA_Variables csv #####
-## viewing and saving the gt tables outside the if statement so that I can see them in the RStudio viewer
+### viewing and saving the gt tables outside the if statement so that I can see them in the RStudio viewer
 VoATop25Table
 VoATop25Table |>
   gtsave(
@@ -12593,8 +12900,8 @@ VoA_Full_Table |>
     path = output_dir
   )
 
-## Resume VoA not produced until Week 6, so not saved until Week 6
-if (as.numeric(week) > 5) {
+## Resume VoA not produced until Week 10
+if (as.numeric(week) > 9) {
   ## Resume tables
   ResumeVoATop25Table
   ResumeVoATop25Table |>
@@ -12617,80 +12924,80 @@ write_csv(VoA_Variables, file_pathway)
 ## Tracks VoA Ratings and Rankings by week
 ## now reading in and merging VoA rating and ranking data up to current week
 if (as.numeric(week) == 2) {
-  Week0_VoA <- read_csv(here("Data", "VoA2023", "2023Week0_VoA.csv")) |>
+  Week0_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, "Week0_VoA.csv"))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking, VoA_Rating)
-  Week1_VoA <- read_csv(here("Data", "VoA2023", "2023Week1_VoA.csv")) |>
+  Week1_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, "Week1_VoA.csv"))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking, VoA_Rating)
   Full_Ratings_Rks <- rbind(Week0_VoA, Week1_VoA)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_2Ratings_Rks.csv", sep = ""))
 } else if (as.numeric(week) == 3) {
-  Full_Ratings_Rks <- read_csv(here("Data", "VoA2023", "TrackingChartCSVs", paste(year, week_text, "0_2Ratings_Rks.csv", sep = ""))) |>
+  Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_2Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking, VoA_Rating)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_3Ratings_Rks.csv", sep = ""))
 } else if (as.numeric(week) == 4) {
-  Full_Ratings_Rks <- read_csv(here("Data", "VoA2023", "TrackingChartCSVs", paste(year, week_text, "0_3Ratings_Rks.csv", sep = ""))) |>
+  Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_3Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking, VoA_Rating)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_4Ratings_Rks.csv", sep = ""))
 } else if (as.numeric(week) == 5) {
-  Full_Ratings_Rks <- read_csv(here("Data", "VoA2023", "TrackingChartCSVs", paste(year, week_text, "0_4Ratings_Rks.csv", sep = ""))) |>
+  Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_4Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking, VoA_Rating)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_5Ratings_Rks.csv", sep = ""))
 } else if (as.numeric(week) == 6) {
-  Full_Ratings_Rks <- read_csv(here("Data", "VoA2023", "TrackingChartCSVs", paste(year, week_text, "0_5Ratings_Rks.csv", sep = ""))) |>
+  Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_5Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking, VoA_Rating)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_6Ratings_Rks.csv", sep = ""))
 } else if (as.numeric(week) == 7) {
-  Full_Ratings_Rks <- read_csv(here("Data", "VoA2023", "TrackingChartCSVs", paste(year, week_text, "0_6Ratings_Rks.csv", sep = ""))) |>
+  Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_6Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking, VoA_Rating)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_7Ratings_Rks.csv", sep = ""))
 } else if (as.numeric(week) == 8) {
-  Full_Ratings_Rks <- read_csv(here("Data", "VoA2023", "TrackingChartCSVs", paste(year, week_text, "0_7Ratings_Rks.csv", sep = ""))) |>
+  Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_7Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking, VoA_Rating)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_8Ratings_Rks.csv", sep = ""))
 } else if (as.numeric(week) == 9) {
-  Full_Ratings_Rks <- read_csv(here("Data", "VoA2023", "TrackingChartCSVs", paste(year, week_text, "0_8Ratings_Rks.csv", sep = ""))) |>
+  Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_8Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking, VoA_Rating)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_9Ratings_Rks.csv", sep = ""))
 } else if (as.numeric(week) == 10) {
-  Full_Ratings_Rks <- read_csv(here("Data", "VoA2023", "TrackingChartCSVs", paste(year, week_text, "0_9Ratings_Rks.csv", sep = ""))) |>
+  Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_9Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking, VoA_Rating)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_10Ratings_Rks.csv", sep = ""))
 } else if (as.numeric(week) == 11) {
-  Full_Ratings_Rks <- read_csv(here("Data", "VoA2023", "TrackingChartCSVs", paste(year, week_text, "0_10Ratings_Rks.csv", sep = ""))) |>
+  Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_10Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking, VoA_Rating)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_11Ratings_Rks.csv", sep = ""))
 } else if (as.numeric(week) == 12) {
-  Full_Ratings_Rks <- read_csv(here("Data", "VoA2023", "TrackingChartCSVs", paste(year, week_text, "0_11Ratings_Rks.csv", sep = ""))) |>
+  Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_11Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking, VoA_Rating)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_12Ratings_Rks.csv", sep = ""))
 } else if (as.numeric(week) == 13) {
-  Full_Ratings_Rks <- read_csv(here("Data", "VoA2023", "TrackingChartCSVs", paste(year, week_text, "0_12Ratings_Rks.csv", sep = ""))) |>
+  Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_12Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking, VoA_Rating)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_13Ratings_Rks.csv", sep = ""))
 } else if (as.numeric(week) == 14) {
-  Full_Ratings_Rks <- read_csv(here("Data", "VoA2023", "TrackingChartCSVs", paste(year, week_text, "0_13Ratings_Rks.csv", sep = ""))) |>
+  Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_13Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking, VoA_Rating)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_14Ratings_Rks.csv", sep = ""))
 } else if (as.numeric(week) == 15) {
-  Full_Ratings_Rks <- read_csv(here("Data", "VoA2023", "TrackingChartCSVs", paste(year, week_text, "0_14Ratings_Rks.csv", sep = ""))) |>
+  Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_14Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking, VoA_Rating)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_15Ratings_Rks.csv", sep = ""))
 } else if (as.numeric(week) == 16) {
-  Full_Ratings_Rks <- read_csv(here("Data", "VoA2023", "TrackingChartCSVs", paste(year, week_text, "0_15Ratings_Rks.csv", sep = ""))) |>
+  Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_15Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking, VoA_Rating)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   ## no need to write out a new tracking csv since "week 16" is the postseason VoA
@@ -12702,7 +13009,8 @@ if (as.numeric(week) == 2) {
 
 ### Filtering by conference for unintelligible charts
 if (as.numeric(week) >= 2) {
-  ## Subsetting by team, each conference (including independents) gets separate charts
+  ### each conference (including independents) gets separate charts
+  ### given that the Pac12 is now really the 2Pac, they get lumped in with the Indies
   AAC_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "American Athletic")
   ACC_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "ACC")
   Big12_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Big 12")
@@ -12718,23 +13026,23 @@ if (as.numeric(week) >= 2) {
   
   ##### Creating Charts #####
   ### charting VoA_Rating and VoA_Ranking for each week from week 2 on
-  AAC_VoA_Rating_Chart <- ggplot(AAC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating, group = team)) +
+  AAC_VoA_Rating_Chart <- ggplot(AAC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
     xlab("Week") +
-    ylab("VoA Rating") +
+    ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
-    ggtitle("American Conference Vortex of Accuracy Ratings by Week") +
-    expand_limits(y = c(floor(floor(min(AAC_Ratings_Rks$VoA_Rating)) / 10) * 10, ceiling((ceiling(max(AAC_Ratings_Rks$VoA_Rating)) / 10)) * 10)) +
-    scale_y_continuous(breaks = seq((floor((floor(min(AAC_Ratings_Rks$VoA_Rating)) / 10)) * 10), (ceiling((ceiling(max(AAC_Ratings_Rks$VoA_Rating)) / 10)) * 10), by = 5)) +
+    ggtitle("American Conference Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(y = c(floor(floor(min(AAC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(AAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
+    scale_y_continuous(breaks = seq((floor((floor(min(AAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(AAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   AAC_VoA_Rating_Chart
   ggsave(AAC_Output_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  AAC_VoA_Ranking_Chart <- ggplot(AAC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking, group = team)) +
+  AAC_VoA_Ranking_Chart <- ggplot(AAC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
@@ -12743,30 +13051,30 @@ if (as.numeric(week) >= 2) {
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
     ggtitle("American Conference Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
-    scale_y_continuous(breaks = c(0,20,40,60,80,100,130)) +
+    scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   AAC_VoA_Ranking_Chart
   ggsave(AAC_Ranking_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  ACC_VoA_Rating_Chart <- ggplot(ACC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating, group = team)) +
+  ACC_VoA_Rating_Chart <- ggplot(ACC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
     xlab("Week") +
-    ylab("VoA Rating") +
+    ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
-    ggtitle("ACC Vortex of Accuracy Ratings by Week") +
-    expand_limits(y = c(floor(floor(min(ACC_Ratings_Rks$VoA_Rating)) / 10) * 10, ceiling((ceiling(max(ACC_Ratings_Rks$VoA_Rating)) / 10)) * 10)) +
-    scale_y_continuous(breaks = seq((floor((floor(min(ACC_Ratings_Rks$VoA_Rating)) / 10)) * 10), (ceiling((ceiling(max(ACC_Ratings_Rks$VoA_Rating)) / 10)) * 10), by = 5)) +
+    ggtitle("ACC Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(y = c(floor(floor(min(ACC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(ACC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
+    scale_y_continuous(breaks = seq((floor((floor(min(ACC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(ACC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   ACC_VoA_Rating_Chart
   ggsave(ACC_Output_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  ACC_VoA_Ranking_Chart <- ggplot(ACC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking, group = team)) +
+  ACC_VoA_Ranking_Chart <- ggplot(ACC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
@@ -12775,30 +13083,30 @@ if (as.numeric(week) >= 2) {
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
     ggtitle("ACC Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
-    scale_y_continuous(breaks = c(0,20,40,60,80,100,130)) +
+    scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   ACC_VoA_Ranking_Chart
   ggsave(ACC_Ranking_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  Big12_VoA_Rating_Chart <- ggplot(Big12_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating, group = team)) +
+  Big12_VoA_Rating_Chart <- ggplot(Big12_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
     xlab("Week") +
-    ylab("VoA Rating") +
+    ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
-    ggtitle("Big 12 Vortex of Accuracy Ratings by Week") +
-    expand_limits(y = c(floor(floor(min(Big12_Ratings_Rks$VoA_Rating)) / 10) * 10, ceiling((ceiling(max(Big12_Ratings_Rks$VoA_Rating)) / 10)) * 10)) +
-    scale_y_continuous(breaks = seq((floor((floor(min(Big12_Ratings_Rks$VoA_Rating)) / 10)) * 10), (ceiling((ceiling(max(Big12_Ratings_Rks$VoA_Rating)) / 10)) * 10), by = 5)) +
+    ggtitle("Big 12 Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(y = c(floor(floor(min(Big12_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(Big12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
+    scale_y_continuous(breaks = seq((floor((floor(min(Big12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(Big12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   Big12_VoA_Rating_Chart
   ggsave(Big12_Output_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  Big12_VoA_Ranking_Chart <- ggplot(Big12_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking, group = team)) +
+  Big12_VoA_Ranking_Chart <- ggplot(Big12_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
@@ -12807,62 +13115,62 @@ if (as.numeric(week) >= 2) {
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
     ggtitle("Big 12 Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
-    scale_y_continuous(breaks = c(0,20,40,60,80,100,130)) +
+    scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   Big12_VoA_Ranking_Chart
   ggsave(Big12_Ranking_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  Big10_VoA_Rating_Chart <- ggplot(Big10_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating, group = team)) +
+  Big10_VoA_Rating_Chart <- ggplot(Big10_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
     xlab("Week") +
-    ylab("VoA Rating") +
+    ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
-    ggtitle("Big 10 Vortex of Accuracy Ratings by Week") +
-    expand_limits(y = c(floor(floor(min(Big10_Ratings_Rks$VoA_Rating)) / 10) * 10, ceiling((ceiling(max(Big10_Ratings_Rks$VoA_Rating)) / 10)) * 10)) +
-    scale_y_continuous(breaks = seq((floor((floor(min(Big10_Ratings_Rks$VoA_Rating)) / 10)) * 10), (ceiling((ceiling(max(Big10_Ratings_Rks$VoA_Rating)) / 10)) * 10), by = 5)) +
+    ggtitle("Big 10 Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(y = c(floor(floor(min(Big10_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(Big10_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
+    scale_y_continuous(breaks = seq((floor((floor(min(Big10_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(Big10_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   Big10_VoA_Rating_Chart
   ggsave(Big10_Output_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  Big10_VoA_Ranking_Chart <- ggplot(Big10_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking, group = team)) +
+  Big10_VoA_Ranking_Chart <- ggplot(Big10_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
     xlab("Week") +
-    ylab("VoA Rating") +
+    ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
     ggtitle("Big 10 Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
-    scale_y_continuous(breaks = c(0,20,40,60,80,100,130)) +
+    scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   Big10_VoA_Ranking_Chart
   ggsave(Big10_Ranking_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  CUSA_VoA_Rating_Chart <- ggplot(CUSA_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating, group = team)) +
+  CUSA_VoA_Rating_Chart <- ggplot(CUSA_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
     xlab("Week") +
-    ylab("VoA Rating") +
+    ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
-    ggtitle("CUSA Vortex of Accuracy Ratings by Week") +
-    expand_limits(y = c(floor(floor(min(CUSA_Ratings_Rks$VoA_Rating)) / 10) * 10, ceiling((ceiling(max(CUSA_Ratings_Rks$VoA_Rating)) / 10)) * 10)) +
-    scale_y_continuous(breaks = seq((floor((floor(min(CUSA_Ratings_Rks$VoA_Rating)) / 10)) * 10), (ceiling((ceiling(max(CUSA_Ratings_Rks$VoA_Rating)) / 10)) * 10), by = 5)) +
+    ggtitle("CUSA Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(y = c(floor(floor(min(CUSA_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(CUSA_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
+    scale_y_continuous(breaks = seq((floor((floor(min(CUSA_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(CUSA_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   CUSA_VoA_Rating_Chart
   ggsave(CUSA_Output_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  CUSA_VoA_Ranking_Chart <- ggplot(CUSA_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking, group = team)) +
+  CUSA_VoA_Ranking_Chart <- ggplot(CUSA_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
@@ -12871,30 +13179,30 @@ if (as.numeric(week) >= 2) {
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
     ggtitle("CUSA Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
-    scale_y_continuous(breaks = c(0,20,40,60,80,100,130)) +
+    scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   CUSA_VoA_Ranking_Chart
   ggsave(CUSA_Ranking_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  Indy_VoA_Rating_Chart <- ggplot(Indy_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating, group = team)) +
+  Indy_VoA_Rating_Chart <- ggplot(Indy_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
     xlab("Week") +
-    ylab("VoA Rating") +
+    ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
-    ggtitle("Independents Vortex of Accuracy Ratings by Week") +
-    expand_limits(y = c(floor(floor(min(Indy_Ratings_Rks$VoA_Rating)) / 10) * 10, ceiling((ceiling(max(Indy_Ratings_Rks$VoA_Rating)) / 10)) * 10)) +
-    scale_y_continuous(breaks = seq((floor((floor(min(Indy_Ratings_Rks$VoA_Rating)) / 10)) * 10), (ceiling((ceiling(max(Indy_Ratings_Rks$VoA_Rating)) / 10)) * 10), by = 5)) +
+    ggtitle("Independents Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(y = c(floor(floor(min(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
+    scale_y_continuous(breaks = seq((floor((floor(min(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   Indy_VoA_Rating_Chart
   ggsave(Indy_Output_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  Indy_VoA_Ranking_Chart <- ggplot(Indy_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking, group = team)) +
+  Indy_VoA_Ranking_Chart <- ggplot(Indy_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
@@ -12903,30 +13211,30 @@ if (as.numeric(week) >= 2) {
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
     ggtitle("Independents Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
-    scale_y_continuous(breaks = c(0,20,40,60,80,100,130)) +
+    scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   Indy_VoA_Ranking_Chart
   ggsave(Indy_Ranking_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  MAC_VoA_Rating_Chart <- ggplot(MAC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating, group = team)) +
+  MAC_VoA_Rating_Chart <- ggplot(MAC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
     xlab("Week") +
-    ylab("VoA Rating") +
+    ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
-    ggtitle("MAC Vortex of Accuracy Ratings by Week") +
-    expand_limits(y = c(floor(floor(min(MAC_Ratings_Rks$VoA_Rating)) / 10) * 10, ceiling((ceiling(max(MAC_Ratings_Rks$VoA_Rating)) / 10)) * 10)) +
-    scale_y_continuous(breaks = seq((floor((floor(min(MAC_Ratings_Rks$VoA_Rating)) / 10)) * 10), (ceiling((ceiling(max(MAC_Ratings_Rks$VoA_Rating)) / 10)) * 10), by = 5)) +
+    ggtitle("MAC Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(y = c(floor(floor(min(MAC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(MAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
+    scale_y_continuous(breaks = seq((floor((floor(min(MAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(MAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   MAC_VoA_Rating_Chart
   ggsave(MAC_Output_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  MAC_VoA_Ranking_Chart <- ggplot(MAC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking, group = team)) +
+  MAC_VoA_Ranking_Chart <- ggplot(MAC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
@@ -12935,30 +13243,30 @@ if (as.numeric(week) >= 2) {
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
     ggtitle("MAC Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
-    scale_y_continuous(breaks = c(0,20,40,60,80,100,130)) +
+    scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   MAC_VoA_Ranking_Chart
   ggsave(MAC_Ranking_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  MWC_VoA_Rating_Chart <- ggplot(MWC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating, group = team)) +
+  MWC_VoA_Rating_Chart <- ggplot(MWC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
     xlab("Week") +
-    ylab("VoA Rating") +
+    ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
-    ggtitle("Mountain West Vortex of Accuracy Ratings by Week") +
-    expand_limits(y = c(floor(floor(min(MWC_Ratings_Rks$VoA_Rating)) / 10) * 10, ceiling((ceiling(max(MWC_Ratings_Rks$VoA_Rating)) / 10)) * 10)) +
-    scale_y_continuous(breaks = seq((floor((floor(min(MWC_Ratings_Rks$VoA_Rating)) / 10)) * 10), (ceiling((ceiling(max(MWC_Ratings_Rks$VoA_Rating)) / 10)) * 10), by = 5)) +
+    ggtitle("Mountain West Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(y = c(floor(floor(min(MWC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(MWC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
+    scale_y_continuous(breaks = seq((floor((floor(min(MWC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(MWC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   MWC_VoA_Rating_Chart
   ggsave(MWC_Output_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  MWC_VoA_Ranking_Chart <- ggplot(MWC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking, group = team)) +
+  MWC_VoA_Ranking_Chart <- ggplot(MWC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
@@ -12967,30 +13275,30 @@ if (as.numeric(week) >= 2) {
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
     ggtitle("Mountain West Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
-    scale_y_continuous(breaks = c(0,20,40,60,80,100,130)) +
+    scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   MWC_VoA_Ranking_Chart
   ggsave(MWC_Ranking_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  # Pac12_VoA_Rating_Chart <- ggplot(Pac12_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating, group = team)) +
+  # Pac12_VoA_Rating_Chart <- ggplot(Pac12_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
   #   theme_bw() +
   #   geom_line(linewidth = 1.5) +
   #   geom_point(size = 5) +
   #   xlab("Week") +
-  #   ylab("VoA Rating") +
+  #   ylab("VoA Overall Rating") +
   #   labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
-  #   ggtitle("Pac 12 Vortex of Accuracy Ratings by Week") +
-  #   expand_limits(y = c(floor(floor(min(Pac12_Ratings_Rks$VoA_Rating)) / 10) * 10, ceiling((ceiling(max(Pac12_Ratings_Rks$VoA_Rating)) / 10)) * 10)) +
-  #   scale_y_continuous(breaks = seq((floor((floor(min(Pac12_Ratings_Rks$VoA_Rating)) / 10)) * 10), (ceiling((ceiling(max(Pac12_Ratings_Rks$VoA_Rating)) / 10)) * 10), by = 5)) +
+  #   ggtitle("Pac 12 Vortex of Accuracy Overall Ratings by Week") +
+  #   expand_limits(y = c(floor(floor(min(Pac12_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(Pac12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
+  #   scale_y_continuous(breaks = seq((floor((floor(min(Pac12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(Pac12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
   #   scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
   #   geom_cfb_logos(aes(team = team, width = 0.035)) +
   #   theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   # Pac12_VoA_Rating_Chart
   # ggsave(Pac12_Output_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   # 
-  # Pac12_VoA_Ranking_Chart <- ggplot(Pac12_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking, group = team)) +
+  # Pac12_VoA_Ranking_Chart <- ggplot(Pac12_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
   #   theme_bw() +
   #   geom_line(linewidth = 1.5) +
   #   geom_point(size = 5) +
@@ -12999,30 +13307,30 @@ if (as.numeric(week) >= 2) {
   #   labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
   #   ggtitle("Pac 12 Vortex of Accuracy Rankings by Week") +
   #   expand_limits(y = c(0,130)) +
-  #   scale_y_continuous(breaks = c(0,20,40,60,80,100,130)) +
+  #   scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
   #   scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
   #   geom_cfb_logos(aes(team = team, width = 0.035)) +
   #   theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   # Pac12_VoA_Ranking_Chart
   # ggsave(Pac12_Ranking_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  SEC_VoA_Rating_Chart <- ggplot(SEC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating, group = team)) +
+  SEC_VoA_Rating_Chart <- ggplot(SEC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
     xlab("Week") +
-    ylab("VoA Rating") +
+    ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
-    ggtitle("SEC Vortex of Accuracy Ratings by Week") +
-    expand_limits(y = c(floor(floor(min(SEC_Ratings_Rks$VoA_Rating)) / 10) * 10, ceiling((ceiling(max(SEC_Ratings_Rks$VoA_Rating)) / 10)) * 10)) +
-    scale_y_continuous(breaks = seq((floor((floor(min(SEC_Ratings_Rks$VoA_Rating)) / 10)) * 10), (ceiling((ceiling(max(SEC_Ratings_Rks$VoA_Rating)) / 10)) * 10), by = 5)) +
+    ggtitle("SEC Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(y = c(floor(floor(min(SEC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(SEC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
+    scale_y_continuous(breaks = seq((floor((floor(min(SEC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(SEC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   SEC_VoA_Rating_Chart
   ggsave(SEC_Output_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  SEC_VoA_Ranking_Chart <- ggplot(SEC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking, group = team)) +
+  SEC_VoA_Ranking_Chart <- ggplot(SEC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
@@ -13031,30 +13339,30 @@ if (as.numeric(week) >= 2) {
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
     ggtitle("SEC Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
-    scale_y_continuous(breaks = c(0,20,40,60,80,100,130)) +
+    scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   SEC_VoA_Ranking_Chart
   ggsave(SEC_Ranking_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  SunBelt_VoA_Rating_Chart <- ggplot(SunBelt_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating, group = team)) +
+  SunBelt_VoA_Rating_Chart <- ggplot(SunBelt_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
     xlab("Week") +
-    ylab("VoA Rating") +
+    ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
-    ggtitle("Sun Belt Vortex of Accuracy Ratings by Week") +
-    expand_limits(y = c(floor(floor(min(SunBelt_Ratings_Rks$VoA_Rating)) / 10) * 10, ceiling((ceiling(max(SunBelt_Ratings_Rks$VoA_Rating)) / 10)) * 10)) +
-    scale_y_continuous(breaks = seq((floor((floor(min(SunBelt_Ratings_Rks$VoA_Rating)) / 10)) * 10), (ceiling((ceiling(max(SunBelt_Ratings_Rks$VoA_Rating)) / 10)) * 10), by = 5)) +
+    ggtitle("Sun Belt Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(y = c(floor(floor(min(SunBelt_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(SunBelt_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
+    scale_y_continuous(breaks = seq((floor((floor(min(SunBelt_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(SunBelt_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   SunBelt_VoA_Rating_Chart
   ggsave(SunBelt_Output_filename, path = output_dir, width = 50, height = 40, units = 'cm')
   
-  SunBelt_VoA_Ranking_Chart <- ggplot(SunBelt_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking, group = team)) +
+  SunBelt_VoA_Ranking_Chart <- ggplot(SunBelt_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
@@ -13063,7 +13371,7 @@ if (as.numeric(week) >= 2) {
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
     ggtitle("Sun Belt Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
-    scale_y_continuous(breaks = c(0,20,40,60,80,100,130)) +
+    scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
@@ -13076,7 +13384,7 @@ if (as.numeric(week) >= 2) {
 ## Creating Histograms of VoA Output for all teams, and separate plots for power 5 and group of 5 teams subsetted out
 # plots will be made for each week, not just after week 2 like Unintelligble Charts will
 ## subsetting teams
-Power4_VoA <- VoA_Variables |>
+Power5_VoA <- VoA_Variables |>
   filter(conference == "ACC" | conference == "Big 12" | conference == "Big Ten" | conference == "FBS Independents" | conference == "Pac-12" | conference == "SEC") |>
   filter(team != "Connecticut" & team != "UMass")
 
@@ -13084,7 +13392,7 @@ Group5_VoA <- VoA_Variables |>
   filter(conference == "American Athletic" | conference == "Conference USA" | conference == "FBS Independents" | conference == "Mid-American" | conference == "Mountain West" | conference == "Sun Belt") |>
   filter(team != "Notre Dame")
 
-FBS_Rating_histogram <- ggplot(VoA_Variables, aes(VoA_Rating)) +
+FBS_Rating_histogram <- ggplot(VoA_Variables, aes(VoA_Rating_Ovr)) +
   geom_histogram(binwidth = 5,
                  col = "black",
                  fill = "orange") +
@@ -13098,7 +13406,7 @@ FBS_Rating_histogram <- ggplot(VoA_Variables, aes(VoA_Rating)) +
 FBS_Rating_histogram
 ggsave(FBS_hist_filename, path = output_dir, width = 50, height = 40, units = 'cm')
 
-Power4_Rating_histogram <- ggplot(Power4_VoA, aes(VoA_Rating)) +
+Power5_Rating_histogram <- ggplot(Power5_VoA, aes(VoA_Rating_Ovr)) +
   geom_histogram(binwidth = 5,
                  col = "black",
                  fill = "blue") +
@@ -13112,7 +13420,7 @@ Power4_Rating_histogram <- ggplot(Power4_VoA, aes(VoA_Rating)) +
 Power5_Rating_histogram
 ggsave(Power5_hist_filename, path = output_dir, width = 50, height = 40, units = 'cm')
 
-Group5_Rating_histogram <- ggplot(Group5_VoA, aes(VoA_Rating)) +
+Group5_Rating_histogram <- ggplot(Group5_VoA, aes(VoA_Rating_Ovr)) +
   geom_histogram(binwidth = 5,
                  col = "black",
                  fill = "pink") +
@@ -13127,14 +13435,14 @@ Group5_Rating_histogram
 ggsave(Group5_hist_filename, path = output_dir, width = 50, height = 40, units = 'cm')
 
 ## Creating Scatterplot of VoA_Output vs VoA_Rating
-VoA_Output_Rating_plot <- ggplot(VoA_Variables, aes(x = VoA_Output, y = VoA_Rating)) +
+VoA_Output_Rating_plot <- ggplot(VoA_Variables, aes(x = VoA_Output, y = VoA_Rating_Ovr)) +
   geom_point(size = 5) +
   geom_smooth() +
   scale_x_continuous(breaks = seq(0,130,10)) +
   scale_y_continuous(breaks = seq(-40,40,5)) +
   ggtitle(Output_Rating_Plot_title) +
   xlab("VoA Output") +
-  ylab("VoA Rating") +
+  ylab("VoA Overall Rating") +
   labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
   theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
 VoA_Output_Rating_plot
