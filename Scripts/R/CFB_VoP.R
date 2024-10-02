@@ -3,7 +3,7 @@
 ### It will take the VoA Ratings from that csv and use them to project scoring margins for upcoming FBS games
 ### loading packages
 library(pacman)
-p_load(tidyverse, gt, cfbfastR, here, gtExtras, RColorBrewer, cfbplotR, webshot2)
+p_load(tidyverse, gt, cfbfastR, here, gtExtras, RColorBrewer, cfbplotR, webshot2, betareg)
 ### Inputting year
 year <- readline(prompt = "What Year is it? ")
 ### Inputting upcoming week number
@@ -27,7 +27,7 @@ PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_tex
 ##### pulling SRS ratings for just FCS teams since I don't have VoA ratings for them #####
 ### using last year's until SRS ratings are available for current season
 ## expectation is that this will be sometime between weeks 4 and 6, based on 2023 season
-if (as.numeric(upcoming) < 4) {
+if (as.numeric(upcoming) < 5) {
   FCS_ratings <- cfbd_ratings_srs(as.numeric(year) - 1) |>
     filter(conference != "ACC" & conference != "American Athletic" & conference != "Big 12" & conference != "Big Ten" & conference != "Conference USA" & conference != "FBS Independents" & conference != "Mid-American" & conference != "Mountain West" & conference != "Pac-12" & conference != "SEC" & conference != "Sun Belt") |>
     filter(team != "Kennesaw State") |>
@@ -155,6 +155,21 @@ fcs_margin_projection <- function(away, home, neutral) {
 ##### Evaluating VoP's projected winner and their respective win probability #####
 ### coefficients for calculating win probability aren't just random long decimal numbers, I fit a model using lm() to Bill Connelly's projected win probs and just took them out and wrote them into this script instead of just fitting that model over and over every week
 ### it's a lazy way of "calculating" win prob but it works well enough for my purposes
+SP_WPdata <- read_csv(here("Data", "SP_Projections", "All_SP.csv")) |>
+  separate(col = "Game", into = c("away_team", "home_team"), sep = " at ") |>
+  drop_na(away_team, home_team) |>
+  filter(home_team == Proj_winner | away_team == Proj_winner) |>
+  mutate(home_WP_pct = case_when(Proj_winner == home_team ~ WP_pct,
+                                 TRUE ~ 1 - WP_pct),
+         Proj_Margin = case_when(Proj_winner == home_team ~ Proj_margin,
+                                 TRUE ~ -1 * Proj_margin))
+
+
+### I wanted to fit a stan model but that didn't work so I'm trying a beta regression model with betareg to do something different, see how it goes
+WP_betareg <- betareg(home_WP_pct ~ Proj_Margin, data = SP_WPdata)
+
+summary(WP_betareg)
+
 if (as.numeric(upcoming) == 1){
   ### adding projected winner, projected win margin, and win probability
   ### home field advantage of 2 points when neutral_site == FALSE
@@ -173,7 +188,7 @@ if (as.numeric(upcoming) == 1){
   FullSeason_Games <- FullSeason_Games |>
     mutate(Win_Prob = case_when((Initial_Win_Prob < 50) ~ 50.01,
                                 Initial_Win_Prob > 100 ~ 100,
-                                Proj_Margin > 45 ~ 100,
+                                Proj_Margin > 44.5 ~ 100,
                                 TRUE ~ Initial_Win_Prob)) |>
     select(game_id, season, week, neutral_site, home_team, home_VoA_Rating, away_team, away_VoA_Rating, Proj_Winner, Proj_Margin, Win_Prob)
   upcoming_games_df <- FullSeason_Games |>

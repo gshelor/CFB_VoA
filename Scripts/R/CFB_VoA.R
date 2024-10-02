@@ -3,7 +3,7 @@
 ### Created by Griffin Shelor
 ### Initially intended to use SP+ ratings but due to paywall issues they are unlikely to be consistently accessible via collegefootballdata.com's API and thus they will be inaccessible via cfbfastR, so sections involving current season SP+ will only be included in Vortex of Accuracy if availability is confirmed. Those sections will be commented out in case this accessibility issue ever changes.
 ### installing packages
-# install.packages(c("devtools", "tidyverse", "matrixStats", "gt", "viridis", "webshot", "rvest", "cfbfastR", "here", "ggsci", "RColorBrewer", "ggpubr", "remotes", "pacman", "gtExtras", cfbplotR))
+# install.packages(c("devtools", "tidyverse", "matrixStats", "gt", "viridis", "webshot", "rvest", "cfbfastR", "here", "ggsci", "RColorBrewer", "ggpubr", "remotes", "pacman", "gtExtras", "cfbplotR", "betareg"))
 ## Load Packages for Ranking Variables
 start_time <- Sys.time()
 library(pacman)
@@ -1194,10 +1194,13 @@ if (as.numeric(week) == 0) {
   
   ### Current SRS
   ## current SRS is only available after Week 4 at the earliest
-  if (as.numeric(week) == 4) {
+  if (as.numeric(week) >= 4) {
     SRS <- cfbd_ratings_srs(year = as.numeric(year)) |>
       select(team, rating) |>
       filter(team %in% Stats$team)
+    ##### ANNOYING DUPLICATE ISSUE #####
+    SRS <- unique(SRS)
+    ##### END OF DUPLICATE ISSUE, HOPEFULLY #####
     colnames(SRS) <- c("team", "SRS_rating")
     #IFF SRS data for PY1 is missing due to whatever issue
     missing_SRS_teams <- anti_join(Stats, SRS)
@@ -6411,7 +6414,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(VoA_Rating_Ovr),
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -6419,7 +6422,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(OffVoA_MedRating), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -6427,7 +6430,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(DefVoA_MedRating), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = TRUE
       )
@@ -6435,7 +6438,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(STVoA_MedRating), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -6480,7 +6483,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(VoA_Rating_Ovr), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -6488,7 +6491,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(OffVoA_MedRating), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -6496,7 +6499,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(DefVoA_MedRating), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = TRUE
       )
@@ -6504,7 +6507,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(STVoA_MedRating), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -6549,7 +6552,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(VoA_Rating_Ovr),
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -6557,7 +6560,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(OffVoA_MedRating), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -6565,7 +6568,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(DefVoA_MedRating), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = TRUE
       )
@@ -6573,7 +6576,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(STVoA_MedRating), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -6618,7 +6621,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(VoA_Rating_Ovr), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -6626,7 +6629,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(OffVoA_MedRating), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -6634,7 +6637,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(DefVoA_MedRating), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = TRUE
       )
@@ -6642,7 +6645,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(STVoA_MedRating), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -6687,7 +6690,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(VoA_Rating_Ovr),
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -6695,7 +6698,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(OffVoA_MedRating), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -6703,7 +6706,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(DefVoA_MedRating), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = TRUE
       )
@@ -6711,7 +6714,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(STVoA_MedRating), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -6756,7 +6759,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(VoA_Rating_Ovr), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -6764,7 +6767,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(OffVoA_MedRating), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -6772,7 +6775,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(DefVoA_MedRating), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = TRUE
       )
@@ -6780,7 +6783,7 @@ if (as.numeric(week) == 0) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(STVoA_MedRating), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -6801,8 +6804,8 @@ if (as.numeric(week) == 0) {
 if (as.numeric(week) > 9) {
   Top12 <- VoA_Variables |>
     filter(VoA_Ranking <= 12) |>
-    select(season, team, FPI, VoA_Rating, VoA_Ranking)
-  Top12_mean <- mean(Top12$VoA_Rating)
+    select(season, team, FPI, VoA_Rating_Ovr, VoA_Ranking_Ovr)
+  Top12_mean <- mean(Top12$VoA_Rating_Ovr)
   
   
   ### pulling in completed games
@@ -12471,7 +12474,7 @@ if (as.numeric(week) > 5) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(Resume_VoA), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -12504,7 +12507,7 @@ if (as.numeric(week) > 5) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(Resume_VoA), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = TRUE
       )
@@ -12537,7 +12540,7 @@ if (as.numeric(week) > 5) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(Resume_VoA), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -12570,7 +12573,7 @@ if (as.numeric(week) > 5) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(Resume_VoA), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = TRUE
       )
@@ -12582,7 +12585,7 @@ if (as.numeric(week) > 5) {
       footnote = "Table by @gshelor, Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org"
     )
 } else {
-  print("No Resume VoA until Week 6!")
+  print("No Resume VoA until Week 10!")
 }
 
 
@@ -12634,7 +12637,7 @@ if (as.numeric(week) == 3) {
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
   Week1_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, "Week1_VoA.csv"))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
-  Week2_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, "Week2VoA.csv"))) |>
+  Week2_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, "Week2_VoA.csv"))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
   Full_Ratings_Rks <- rbind(Week0_VoA, rbind(Week1_VoA, rbind(Week2_VoA, FinalTable)))
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_3Ratings_Rks.csv", sep = ""))
@@ -12705,7 +12708,7 @@ if (as.numeric(week) == 3) {
   ## no need to write out a new tracking csv since "week 16" is the postseason VoA
   ## write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_16Ratings_Rks.csv", sep = ""))
 } else {
-  print("No charts until Week 2!")
+  print("No charts until Week 3!")
 }
 ### end of if statement
 
@@ -13080,12 +13083,12 @@ if (as.numeric(week) >= 3) {
   SunBelt_VoA_Ranking_Chart
   ggsave(SunBelt_Ranking_filename, path = output_dir, width = 50, height = 40, units = 'cm')
 } else {
-  print("No charts until Week 2!")
+  print("No charts until Week 3!")
 }
 
-## Creating Histograms of VoA Output for all teams, and separate plots for power 5 and group of 5 teams subsetted out
-# plots will be made for each week, not just after week 2 like Unintelligble Charts will
-## subsetting teams
+### Creating Histograms of VoA Output for all teams, and separate plots for power 5 and group of 5 teams subsetted out
+## plots will be made for each week, not just after week 2 like Unintelligble Charts will
+### subsetting teams
 Power5_VoA <- VoA_Variables |>
   filter(conference == "ACC" | conference == "Big 12" | conference == "Big Ten" | conference == "FBS Independents" | conference == "Pac-12" | conference == "SEC") |>
   filter(team != "Connecticut" & team != "UMass")
@@ -13140,7 +13143,8 @@ ggsave(Group5_hist_filename, path = output_dir, width = 50, height = 40, units =
 VoA_Output_Rating_plot <- ggplot(VoA_Variables, aes(x = VoA_Output, y = VoA_Rating_Ovr)) +
   geom_point(size = 5) +
   geom_smooth() +
-  scale_x_continuous(breaks = seq(0,130,10)) +
+  geom_cfb_logos(aes(team = team), width = 0.035) +
+  scale_x_continuous(breaks = seq(0,135,10)) +
   scale_y_continuous(breaks = seq(-40,40,5)) +
   ggtitle(Output_Rating_Plot_title) +
   xlab("VoA Output") +
