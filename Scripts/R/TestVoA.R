@@ -12795,15 +12795,15 @@ break
 # VoA_Variables[,6:ncol(VoA_Variables)] <- VoA_Variables[,6:ncol(VoA_Variables)] |> mutate_if(is.character,as.numeric)
 # 
 ## nas why
-# nas_why <- data.frame(apply(VoA_Variables, 2, anyNA))
-# colnames(nas_why) <- c("containsNAs")
-# nas_why <- nas_why |>
-#   filter(containsNAs == TRUE)
-# recruit_nas_why <- VoA_Variables |>
-#   filter(is.na(conference))
-# recruit_nas_teams <- anti_join(VoA_Variables, recruit, by = "team")
-# 
-# colnames(VoA_Variables)[apply(VoA_Variables, 2, anyNA)]
+nas_why <- data.frame(apply(VoA_Variables, 2, anyNA))
+colnames(nas_why) <- c("containsNAs")
+nas_why <- nas_why |>
+  filter(containsNAs == TRUE)
+recruit_nas_why <- VoA_Variables |>
+  filter(is.na(fg_rate_allowed))
+recruit_nas_teams <- anti_join(VoA_Variables, recruit, by = "team")
+
+colnames(VoA_Variables)[apply(VoA_Variables, 2, anyNA)]
 
 
 ########## END OF DEBUGGING

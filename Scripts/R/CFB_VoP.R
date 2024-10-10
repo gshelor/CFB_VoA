@@ -159,14 +159,14 @@ SP_WPdata <- read_csv(here("Data", "SP_Projections", "All_SP.csv")) |>
   separate(col = "Game", into = c("away_team", "home_team"), sep = " at ") |>
   drop_na(away_team, home_team) |>
   filter(home_team == Proj_winner | away_team == Proj_winner) |>
-  mutate(home_WP_pct = case_when(Proj_winner == home_team ~ WP_pct,
+  mutate(away_WP_pct = case_when(Proj_winner == away_team ~ WP_pct,
                                  TRUE ~ 1 - WP_pct),
-         Proj_Margin = case_when(Proj_winner == home_team ~ Proj_margin,
+         Proj_Margin = case_when(Proj_winner == away_team ~ Proj_margin,
                                  TRUE ~ -1 * Proj_margin))
 
 
 ### I wanted to fit a stan model but that didn't work so I'm trying a beta regression model with betareg to do something different, see how it goes
-WP_betareg <- betareg(home_WP_pct ~ Proj_Margin, data = SP_WPdata)
+WP_betareg <- betareg(away_WP_pct ~ Proj_Margin, data = SP_WPdata)
 
 summary(WP_betareg)
 
@@ -180,17 +180,11 @@ if (as.numeric(upcoming) == 1){
                                    neutral_site == TRUE & away_VoA_Rating > home_VoA_Rating ~ away_team, 
                                    TRUE ~ "TIE"),
            Proj_Margin = case_when(neutral_site == FALSE ~ abs(away_VoA_Rating - (home_VoA_Rating + 2)), 
-                                   TRUE ~ abs(away_VoA_Rating - home_VoA_Rating)), 
-           Initial_Win_Prob = 50.37036489 + (2.38892221 * Proj_Margin) + (-0.02809534 * (Proj_Margin^2))) |>
-    select(game_id, season, week, neutral_site, home_team, home_VoA_Rating, away_team, away_VoA_Rating, Proj_Winner, Proj_Margin, Initial_Win_Prob) ## |>
-  # arrange(desc(Proj_Margin))
-  ### making sure no game has win probability for projected winner lower than 50 or higher than 100
+                                   TRUE ~ abs(away_VoA_Rating - home_VoA_Rating)))
   FullSeason_Games <- FullSeason_Games |>
-    mutate(Win_Prob = case_when((Initial_Win_Prob < 50) ~ 50.01,
-                                Initial_Win_Prob > 100 ~ 100,
-                                Proj_Margin > 44.5 ~ 100,
-                                TRUE ~ Initial_Win_Prob)) |>
-    select(game_id, season, week, neutral_site, home_team, home_VoA_Rating, away_team, away_VoA_Rating, Proj_Winner, Proj_Margin, Win_Prob)
+    mutate(win_prob = predict(WP_betareg, newdata = FullSeason_Games)) |>
+    select(game_id, season, week, neutral_site, home_team, home_VoA_Rating, away_team, away_VoA_Rating, Proj_Winner, Proj_Margin, win_prob) ## |>
+  # arrange(desc(Proj_Margin))
   upcoming_games_df <- FullSeason_Games |>
     filter(week == as.numeric(upcoming))
 } else{
@@ -202,17 +196,12 @@ if (as.numeric(upcoming) == 1){
                                    neutral_site == TRUE & away_VoA_Rating > home_VoA_Rating ~ away_team, 
                                    TRUE ~ "TIE"),
            Proj_Margin = case_when(neutral_site == FALSE ~ abs(away_VoA_Rating - (home_VoA_Rating + 2)), 
-                                   TRUE ~ abs(away_VoA_Rating - home_VoA_Rating)), 
-           Initial_Win_Prob = 50.37036489 + (2.38892221 * Proj_Margin) + (-0.02809534 * (Proj_Margin^2))) |>
-    select(game_id, season, week, neutral_site, home_team, home_VoA_Rating, away_team, away_VoA_Rating, Proj_Winner, Proj_Margin, Initial_Win_Prob) ## |>
-  ## arrange(desc(Proj_Margin))
-  ### making sure no game has win probability for projected winner lower than 50 or higher than 100
+                                   TRUE ~ abs(away_VoA_Rating - home_VoA_Rating)))
+  ### calculating win probability based on model built with betareg
   upcoming_games_df <- upcoming_games_df |>
-    mutate(Win_Prob = case_when((Initial_Win_Prob < 50) ~ 50.01,
-                                Initial_Win_Prob > 100 ~ 100,
-                                Proj_Margin > 45 ~ 100,
-                                TRUE ~ Initial_Win_Prob)) |>
-    select(game_id, season, week, neutral_site, home_team, home_VoA_Rating, away_team, away_VoA_Rating, Proj_Winner, Proj_Margin, Win_Prob)
+    mutate(win_prob = predict(WP_betareg, newdata = upcoming_games_df)) |>
+    select(game_id, season, week, neutral_site, home_team, home_VoA_Rating, away_team, away_VoA_Rating, Proj_Winner, Proj_Margin, win_prob) #|>
+  ## arrange(desc(Proj_Margin))
 }
 
 
@@ -230,7 +219,7 @@ if (as.numeric(upcoming) == 1){
       filter(Proj_Winner == FBS_VoA$team[school])
     temp_losses_df <- temp_games_df |>
       filter(Proj_Winner != FBS_VoA$team[school])
-    temp_proj_wins <- (sum(temp_wins_df$Win_Prob) / 100) + (nrow(temp_losses_df) - (sum(temp_losses_df$Win_Prob) / 100))
+    temp_proj_wins <- (sum(temp_wins_df$win_prob) / 100) + (nrow(temp_losses_df) - (sum(temp_losses_df$win_prob) / 100))
     FBS_VoA$proj_wins[school] = temp_proj_wins
   }
   
@@ -275,7 +264,7 @@ if (as.numeric(upcoming) == 1){
     fmt_number( # Another numeric column
       columns = c(proj_wins),
       decimals = 1
-    ) |>  
+    ) |>
     data_color( # Update cell colors, testing different color palettes
       columns = c(VoA_Rating_Ovr), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
@@ -293,7 +282,7 @@ if (as.numeric(upcoming) == 1){
       )
     ) |>
     cols_label(team = "Team", VoA_Rating_Ovr = "VoA Overall Rating", proj_wins = "Median Projected Wins") |> # Update labels
-    # cols_move_to_end(columns = "Win_Prob") |>
+    # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
       footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
@@ -341,7 +330,7 @@ if (as.numeric(upcoming) == 1){
       )
     ) |>
     cols_label(team = "Team", VoA_Rating_Ovr = "VoA Overall Rating", proj_wins = "Median Projected Wins") |> # Update labels
-    # cols_move_to_end(columns = "Win_Prob") |>
+    # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
       footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
@@ -388,7 +377,7 @@ if (as.numeric(upcoming) == 1){
       )
     ) |>
     cols_label(team = "Team", VoA_Rating_Ovr = "VoA Overall Rating", proj_wins = "Median Projected Wins") |> # Update labels
-    # cols_move_to_end(columns = "Win_Prob") |>
+    # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
       footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
@@ -435,7 +424,7 @@ if (as.numeric(upcoming) == 1){
       )
     ) |>
     cols_label(team = "Team", VoA_Rating_Ovr = "VoA Overall Rating", proj_wins = "Median Projected Wins") |> # Update labels
-    # cols_move_to_end(columns = "Win_Prob") |>
+    # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
       footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
@@ -482,7 +471,7 @@ if (as.numeric(upcoming) == 1){
       )
     ) |>
     cols_label(team = "Team", VoA_Rating_Ovr = "VoA Overall Rating", proj_wins = "Median Projected Wins") |> # Update labels
-    # cols_move_to_end(columns = "Win_Prob") |>
+    # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
       footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
@@ -529,7 +518,7 @@ if (as.numeric(upcoming) == 1){
       )
     ) |>
     cols_label(team = "Team", VoA_Rating_Ovr = "VoA Overall Rating", proj_wins = "Median Projected Wins") |> # Update labels
-    # cols_move_to_end(columns = "Win_Prob") |>
+    # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
       footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
@@ -576,7 +565,7 @@ if (as.numeric(upcoming) == 1){
       )
     ) |>
     cols_label(team = "Team", VoA_Rating_Ovr = "VoA Overall Rating", proj_wins = "Median Projected Wins") |> # Update labels
-    # cols_move_to_end(columns = "Win_Prob") |>
+    # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
       footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
@@ -623,7 +612,7 @@ if (as.numeric(upcoming) == 1){
       )
     ) |>
     cols_label(team = "Team", VoA_Rating_Ovr = "VoA Overall Rating", proj_wins = "Median Projected Wins") |> # Update labels
-    # cols_move_to_end(columns = "Win_Prob") |>
+    # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
       footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
@@ -670,7 +659,7 @@ if (as.numeric(upcoming) == 1){
       )
     ) |>
     cols_label(team = "Team", VoA_Rating_Ovr = "VoA Overall Rating", proj_wins = "Median Projected Wins") |> # Update labels
-    # cols_move_to_end(columns = "Win_Prob") |>
+    # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
       footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
@@ -717,7 +706,7 @@ if (as.numeric(upcoming) == 1){
       )
     ) |>
     cols_label(team = "Team", VoA_Rating_Ovr = "VoA Overall Rating", proj_wins = "Median Projected Wins") |> # Update labels
-    # cols_move_to_end(columns = "Win_Prob") |>
+    # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
       footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
@@ -767,6 +756,10 @@ if (as.numeric(upcoming) == 16) {
       columns = c(away_VoA_Rating),
       decimals = 3
     ) |>  
+    fmt_number( # Another numeric column
+      columns = c(win_prob),
+      decimals = 3
+    ) |> 
     data_color( # Update cell colors, testing different color palettes
       columns = c(Proj_Margin), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
@@ -776,15 +769,15 @@ if (as.numeric(upcoming) == 16) {
       )
     ) |>
     data_color( # Update cell colors, testing different color palettes
-      columns = c(Win_Prob), # ...for dose column
+      columns = c(win_prob), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
         palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
     ) |>
-    cols_label(home_team = "Home", away_team = "Away", home_VoA_Rating = "Home VoA Rating", away_VoA_Rating = "Away VoA Rating", Proj_Winner = "Projected Winner", Proj_Margin = "Projected Margin", Win_Prob = "Win Probability") |> # Update labels
-    cols_move_to_end(columns = "Win_Prob") |>
+    cols_label(home_team = "Home", away_team = "Away", home_VoA_Rating = "Home VoA Rating", away_VoA_Rating = "Away VoA Rating", Proj_Winner = "Projected Winner", Proj_Margin = "Projected Margin", win_prob = "Win Probability") |> # Update labels
+    cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(game_id, season, week, neutral_site)) |>
     tab_footnote(
       footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
@@ -814,7 +807,11 @@ if (as.numeric(upcoming) == 16) {
     fmt_number( # Another numeric column
       columns = c(away_VoA_Rating),
       decimals = 3
-    ) |>  
+    ) |>
+    fmt_number( # Another numeric column
+      columns = c(win_prob),
+      decimals = 3
+    ) |>
     data_color( # Update cell colors, testing different color palettes
       columns = c(Proj_Margin), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
@@ -824,15 +821,15 @@ if (as.numeric(upcoming) == 16) {
       )
     ) |>
     data_color( # Update cell colors, testing different color palettes
-      columns = c(Win_Prob), # ...for dose column
+      columns = c(win_prob), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
         palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
     ) |>
-    cols_label(home_team = "Home", away_team = "Away", home_VoA_Rating = "Home VoA Rating", away_VoA_Rating = "Away VoA Rating", Proj_Winner = "Projected Winner", Proj_Margin = "Projected Margin", Win_Prob = "Win Probability") |> # Update labels
-    cols_move_to_end(columns = "Win_Prob") |>
+    cols_label(home_team = "Home", away_team = "Away", home_VoA_Rating = "Home VoA Rating", away_VoA_Rating = "Away VoA Rating", Proj_Winner = "Projected Winner", Proj_Margin = "Projected Margin", win_prob = "Win Probability") |> # Update labels
+    cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(game_id, season, week, neutral_site)) |>
     tab_footnote(
       footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
