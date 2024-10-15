@@ -2942,11 +2942,11 @@ VoA_Variables <- VoA_Variables |>
 
 
 ##### break point for checking which column to start ranking at #####
-# if (as.numeric(week) == 1 | as.numeric(week) == 2 | as.numeric(week) == 6 | as.numeric(week) == 9){
-#   break
-# } else{
-#   print("Same number of VoA columns this week as last week, or it's preseason and this is being done section by section to make sure it works")
-# }
+if (as.numeric(week) == 1 | as.numeric(week) == 2 | as.numeric(week) == 6 | as.numeric(week) == 9){
+  break
+} else{
+  print("Same number of VoA columns this week as last week, or it's preseason and this is being done section by section to make sure it works")
+}
 
 
 ##### Adding Rank Columns #####

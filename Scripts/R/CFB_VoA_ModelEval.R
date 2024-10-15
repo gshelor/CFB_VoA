@@ -13,10 +13,15 @@ cfb_week <- readline("What week just occurred? ")
 VoP_text <- "VoP"
 week_text <- "Week"
 
+### Reading in VoA to filter games to only be between FBS teams since VoA only rates/ranks FBS teams
+PrevWeekVoA <- read_csv(here("Data", paste0("VoA", season), paste0(season, week_text, as.character(as.numeric(cfb_week) - 1), "_VoA.csv")))
+
 ### reading in previous week's data
 PrevWeekVoP <- read_csv(here("Data", paste0("VoA", season), "Projections", paste0(season, VoP_text, week_text, cfb_week, "Games.csv"))) |>
+  filter(home %in% PrevWeekVoA$team & away %in% PrevWeekVoA$team) |>
   select(id, predicted)
 colnames(PrevWeekVoP) <- c("game_id", "proj_margin")
+
 
 ### reading in completed games
 LastWeekGames <- cfbd_game_info(as.numeric(season)) |>
@@ -42,23 +47,14 @@ LastWeekSpreads <- LastWeekSpreads_temp |>
   summarise(mean_spread = mean(spread))
 
 
-### filtering out projections just to include games where there's a spread available
-PrevWeekVoP_spread <- PrevWeekVoP |>
-  filter(game_id %in% LastWeekSpreads$game_id)
-### filtering out game info to only include games where spread is available
-LastWeekGames_spread <- LastWeekGames |>
-  filter(game_id %in% LastWeekSpreads$game_id)
-
-
 ### merging df with all completed games that have projections, does not include spread
-LastWeekGames <- full_join(LastWeekGames, PrevWeekVoP, by = "game_id")
-
-spread_games_list <- list(LastWeekGames_spread, LastWeekSpreads, PrevWeekVoP_spread)
-LastWeekGames_spread <- spread_games_list |>
-  reduce(full_join, by = "game_id")
-
-### calculating error metrics for both my projections and betting spreads
-LastWeekGames_spread <- LastWeekGames_spread |>
+spread_games_list <- list(LastWeekGames, LastWeekSpreads, PrevWeekVoP)
+LastWeekGames <- spread_games_list |>
+  reduce(full_join, by = "game_id") |>
+  ### just gonna ignore games that have NAs for anything interesting
+  ### will also be useful if a game gets cancelled like AppSt/Liberty in 2024
+  drop_na() |>
+  ### calculating error metrics for both my projections and betting spreads
   mutate(abs_error = Metrics::ae(result, proj_margin),
          vegas_abs_error = Metrics::ae(result, mean_spread),
          sqd_error = Metrics::se(result, proj_margin),
@@ -72,71 +68,47 @@ LastWeekGames_spread <- LastWeekGames_spread |>
          AE_ATS_win = case_when(abs_error < vegas_abs_error ~ 1,
                                 TRUE ~ 0))
 
-### calculating error metrics for all games, not just games with betting spreads
-LastWeekGames <- LastWeekGames |>
-  mutate(abs_error = Metrics::ae(result, proj_margin),
-         sqd_error = Metrics::se(result, proj_margin),
-         straight_up_win = case_when(result >= 0 & proj_margin >= 0 ~ 1,
-                                     result <= 0 & proj_margin <= 0 ~ 1,
-                                     TRUE ~ 0))
-
 ### calculating weekly average error metrics for games with spread info available
-WeekMeanAccuracyMetrics_spread <- data.frame(week = as.numeric(cfb_week),
-                                      mean_ae = mean(LastWeekGames_spread$abs_error),
-                                      mean_vegas_ae = mean(LastWeekGames_spread$vegas_abs_error),
-                                      mean_se = mean(LastWeekGames_spread$sqd_error),
-                                      mean_vegas_se = mean(LastWeekGames_spread$vegas_sqd_error),
-                                      RMSE = rmse(LastWeekGames_spread$result, LastWeekGames_spread$proj_margin),
-                                      vegas_RMSE = rmse(LastWeekGames_spread$result, LastWeekGames_spread$mean_spread),
-                                      straight_up_win_pct = sum(LastWeekGames_spread$straight_up_win) / nrow(LastWeekGames_spread),
-                                      ATS_win_pct = sum(LastWeekGames_spread$ATS_win) / nrow(LastWeekGames_spread),
-                                      AE_ATS_win_pct = sum(LastWeekGames_spread$AE_ATS_win) / nrow(LastWeekGames_spread))
-
-### calculating weekly average error metrics for all games
 WeekMeanAccuracyMetrics <- data.frame(week = as.numeric(cfb_week),
-                                             mean_ae = mean(LastWeekGames$abs_error),
-                                             mean_se = mean(LastWeekGames$sqd_error),
-                                             RMSE = rmse(LastWeekGames$result, LastWeekGames$proj_margin),
-                                             straight_up_win_pct = sum(LastWeekGames$straight_up_win) / nrow(LastWeekGames))
+                                      mean_ae = mean(LastWeekGames$abs_error),
+                                      mean_vegas_ae = mean(LastWeekGames$vegas_abs_error),
+                                      mean_se = mean(LastWeekGames$sqd_error),
+                                      mean_vegas_se = mean(LastWeekGames$vegas_sqd_error),
+                                      RMSE = rmse(LastWeekGames$result, LastWeekGames$proj_margin),
+                                      vegas_RMSE = rmse(LastWeekGames$result, LastWeekGames$mean_spread),
+                                      straight_up_win_pct = sum(LastWeekGames$straight_up_win) / nrow(LastWeekGames),
+                                      ATS_win_pct = sum(LastWeekGames$ATS_win) / nrow(LastWeekGames),
+                                      AE_ATS_win_pct = sum(LastWeekGames$AE_ATS_win) / nrow(LastWeekGames))
 
 
 if (as.numeric(cfb_week) == 1){
   ### writing csv with individual games + accuracy metrics
-  write_csv(LastWeekGames, here("Data", paste0("VoA", season), "AccuracyMetrics", paste0("VoA", season, week_text, "1", week_text, cfb_week, "GameAccuracyMetrics.csv")))
-  
-  ### writing csv with individual games + accuracy metrics + spread
-  write_csv(LastWeekGames_spread, here("Data", paste0("VoA", season), "AccuracyMetrics", "SpreadGames", paste0("VoA", season, week_text, "1", week_text, cfb_week, "SpreadGameAccuracyMetrics.csv")))
+  write_csv(LastWeekGames, here("Data", paste0("VoA", season), "AccuracyMetrics", "Games", paste0("VoA", season, week_text, "1", week_text, cfb_week, "GameAccuracyMetrics.csv")))
   
   ### writing csv with just weekly average calculated for accuracy metrics
   write_csv(WeekMeanAccuracyMetrics, here("Data", paste0("VoA", season), "AccuracyMetrics", paste0("VoA", season, week_text, "1", week_text, cfb_week, "WeekAccuracyMetrics.csv")))
   
-  ### writing csv with just weekly average calculated for accuracy metrics but only for games with spread
-  write_csv(WeekMeanAccuracyMetrics, here("Data", paste0("VoA", season), "AccuracyMetrics", "SpreadGames", paste0("VoA", season, week_text, "1", week_text, cfb_week, "WeekAccuracyMetricsSpread.csv")))
 } else if (as.numeric(cfb_week) >= 2){
   ### reading in csv of previous games with error calculated, binding current week's games to that 
-  PrevWeekGameAccuracyMetrics <- read_csv(here("Data", paste0("VoA", season), "AccuracyMetrics", paste0("VoA", season, week_text, "1", week_text, as.character(as.numeric(cfb_week) - 1), "GameAccuracyMetrics.csv")))
+  PrevWeekGameAccuracyMetrics <- read_csv(here("Data", paste0("VoA", season), "AccuracyMetrics", "Games", paste0("VoA", season, week_text, "1", week_text, as.character(as.numeric(cfb_week) - 1), "GameAccuracyMetrics.csv")))
   CompletedGames <- rbind(PrevWeekGameAccuracyMetrics, LastWeekGames)
   
-  ### reading in csv of previous games with spread available and with error calculated, binding current week's games to that 
-  PrevWeekGameAccuracyMetrics_spread <- read_csv(here("Data", paste0("VoA", season), "AccuracyMetrics", paste0("VoA", season, week_text, "1", week_text, as.character(as.numeric(cfb_week) - 1), "SpreadGameAccuracyMetrics.csv")))
-  CompletedGames_spread <- rbind(PrevWeekGameAccuracyMetrics_spread, LastWeekGames_spread)
-  
   ### writing csv with individual games + accuracy metrics
-  write_csv(CompletedGames, here("Data", paste0("VoA", season), "AccuracyMetrics", "SpreadGames", paste0("VoA", season, week_text, "1", week_text, cfb_week, "SpreadGameAccuracyMetrics.csv")))
+  write_csv(CompletedGames, here("Data", paste0("VoA", season), "AccuracyMetrics", "Games", paste0("VoA", season, week_text, "1", week_text, cfb_week, "GameAccuracyMetrics.csv")))
   
   ### reading in csv of weekly average, binding current week to it
-  PrevWeeklyAvgAccuracyMetrics <- read_csv(here("Data", paste0("VoA", season), "AccuracyMetrics", paste0("VoA", season, "WeekAccuracyMetrics.csv")))
+  PrevWeeklyAvgAccuracyMetrics <- read_csv(here("Data", paste0("VoA", season), "AccuracyMetrics", paste0("VoA", season, week_text, "1", week_text, as.character(as.numeric(cfb_week) - 1), "WeekAccuracyMetrics.csv")))
   CompletedWeeks <- rbind(PrevWeeklyAvgAccuracyMetrics, WeekMeanAccuracyMetrics)
   
   ### writing csv with just weekly average calculated for accuracy metrics
-  write_csv(CompletedWeeks, here("Data", paste0("VoA", season), "AccuracyMetrics", paste0("VoA", season, "WeekAccuracyMetrics.csv")))
+  write_csv(CompletedWeeks, here("Data", paste0("VoA", season), "AccuracyMetrics", paste0("VoA", season, week_text, "1", week_text, cfb_week, "WeekAccuracyMetrics.csv")))
 } else{
   print("week not properly entered")
 }
 
 
 if (as.numeric(cfb_week) >= 5){
-  SeasonMetrics_spread <- CompletedGames_spread |>
+  SeasonMetrics <- CompletedGames |>
     group_by(season) |>
     summarize(mean_ae = mean(abs_error),
               mean_vegas_ae = mean(vegas_abs_error),
@@ -144,14 +116,12 @@ if (as.numeric(cfb_week) >= 5){
               mean_vegas_se = mean(vegas_sqd_error),
               RMSE = rmse(result, proj_margin),
               vegas_RMSE = rmse(result, mean_spread),
-              straight_up_win_pct = sum(straight_up_win) / nrow(CompletedGames_spread),
-              ATS_win_pct = sum(ATS_win) / nrow(CompletedGames_spread),
-              AE_ATS_win_pct = sum(AE_ATS_win) / nrow(CompletedGames_spread))
+              straight_up_win_pct = sum(straight_up_win) / nrow(CompletedGames),
+              ATS_win_pct = sum(ATS_win) / nrow(CompletedGames),
+              AE_ATS_win_pct = sum(AE_ATS_win) / nrow(CompletedGames)) |>
+    drop_na()
   
-  SeasonMetrics <- CompletedGames |>
-    group_by(season) |>
-    summarize(mean_ae = mean(abs_error),
-              mean_se = mean(sqd_error),
-              RMSE = rmse(result, proj_margin),
-              straight_up_win_pct = sum(straight_up_win) / nrow(CompletedGames_spread))
+  write_csv(SeasonMetrics, here("Data", paste0("VoA", season), "AccuracyMetrics", paste0("VoA", season, "SeasonAccuracyMetrics.csv")))
+} else{
+  print("season metrics not being calculated yet!")
 }
