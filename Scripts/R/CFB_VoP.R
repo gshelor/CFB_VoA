@@ -140,9 +140,6 @@ margin_projection <- function(away, home, neutral) {
   return(margin_proj)
 }
 ### FCS version of above function
-# srs <- cfbd_ratings_srs(year = as.numeric(year))
-## above line produces an error message "Error: The API returned an error"
-## below line is exactly the same, but works for some reason
 # srs <- cfbd_ratings_srs(as.numeric(year))
 fcs_margin_projection <- function(away, home, neutral) {
   margin_proj = srs$rating[srs$team == away] -  srs$rating[srs$team == home]
@@ -155,6 +152,7 @@ fcs_margin_projection <- function(away, home, neutral) {
 ##### Evaluating VoP's projected winner and their respective win probability #####
 ### coefficients for calculating win probability aren't just random long decimal numbers, I fit a model using lm() to Bill Connelly's projected win probs and just took them out and wrote them into this script instead of just fitting that model over and over every week
 ### it's a lazy way of "calculating" win prob but it works well enough for my purposes
+### I wanted to fit a stan model but that didn't work so I'm trying a beta regression model with betareg to do something different, see how it goes
 SP_WPdata <- read_csv(here("Data", "SP_Projections", "All_SP.csv")) |>
   separate(col = "Game", into = c("away_team", "home_team"), sep = " at ") |>
   drop_na(away_team, home_team) |>
@@ -164,8 +162,7 @@ SP_WPdata <- read_csv(here("Data", "SP_Projections", "All_SP.csv")) |>
          Proj_Margin = case_when(Proj_winner == away_team ~ Proj_margin,
                                  TRUE ~ -1 * Proj_margin))
 
-
-### I wanted to fit a stan model but that didn't work so I'm trying a beta regression model with betareg to do something different, see how it goes
+### fitting betareg model
 WP_betareg <- betareg(away_WP_pct ~ Proj_Margin, data = SP_WPdata)
 
 summary(WP_betareg)
@@ -268,7 +265,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(VoA_Rating_Ovr), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdBu"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdBu"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -276,7 +273,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(proj_wins), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -316,7 +313,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(VoA_Rating_Ovr), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdBu"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdBu"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -324,7 +321,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(proj_wins), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -363,7 +360,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(VoA_Rating_Ovr), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdBu"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdBu"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -371,7 +368,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(proj_wins), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -410,7 +407,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(VoA_Rating_Ovr), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdBu"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdBu"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -418,7 +415,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(proj_wins), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -457,7 +454,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(VoA_Rating_Ovr), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdBu"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdBu"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -465,7 +462,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(proj_wins), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -504,7 +501,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(VoA_Rating_Ovr), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdBu"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdBu"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -512,7 +509,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(proj_wins), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -551,7 +548,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(VoA_Rating_Ovr), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdBu"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdBu"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -559,7 +556,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(proj_wins), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -598,7 +595,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(VoA_Rating_Ovr), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdBu"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdBu"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -606,7 +603,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(proj_wins), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -645,7 +642,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(VoA_Rating_Ovr), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdBu"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdBu"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -653,7 +650,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(proj_wins), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -692,7 +689,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(VoA_Rating_Ovr), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdBu"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdBu"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -700,7 +697,7 @@ if (as.numeric(upcoming) == 1){
     data_color( # Update cell colors, testing different color palettes
       columns = c(proj_wins), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -763,7 +760,7 @@ if (as.numeric(upcoming) == 16) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(Proj_Margin), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdBu"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdBu"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -771,7 +768,7 @@ if (as.numeric(upcoming) == 16) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(win_prob), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -815,7 +812,7 @@ if (as.numeric(upcoming) == 16) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(Proj_Margin), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdBu"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdBu"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
@@ -823,7 +820,7 @@ if (as.numeric(upcoming) == 16) {
     data_color( # Update cell colors, testing different color palettes
       columns = c(win_prob), # ...for dose column
       fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(9, "RdYlGn"), # A color scheme (gradient)
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
         domain = c(), # Column scale endpoints
         reverse = FALSE
       )
