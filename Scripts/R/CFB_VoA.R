@@ -1198,9 +1198,8 @@ if (as.numeric(week) == 0) {
     SRS <- cfbd_ratings_srs(year = as.numeric(year)) |>
       select(team, rating) |>
       filter(team %in% Stats$team)
-    ##### ANNOYING DUPLICATE ISSUE #####
+    ### removing duplicates because for some reason this keeps being an issue
     SRS <- unique(SRS)
-    ##### END OF DUPLICATE ISSUE, HOPEFULLY #####
     colnames(SRS) <- c("team", "SRS_rating")
     #IFF SRS data for PY1 is missing due to whatever issue
     missing_SRS_teams <- anti_join(Stats, SRS)
@@ -1641,6 +1640,8 @@ if (as.numeric(week) == 0) {
   SRS <- cfbd_ratings_srs(year = as.numeric(year)) |>
     select(team, rating) |>
     filter(team %in% Stats$team)
+  ### removing duplicates because for some reason this keeps being an issue
+  SRS <- unique(SRS)
   colnames(SRS) <- c("team", "SRS_rating")
   ## IFF SRS data for PY1 is missing due to whatever issue
   # missing_SRS_teams <- anti_join(Stats, SRS)
@@ -2885,6 +2886,9 @@ if (as.numeric(week) == 0) {
            net_fg_rate = fg_rate - fg_rate_allowed,
            net_fg_made_pg = fg_made_pg - fg_made_pg_allowed,
            net_xpts_pg = xpts_pg - xpts_allowed_pg,
+           net_st_ppg = st_ppg - st_ppg_allowed,
+           off_ppg_aboveavg = off_ppg - mean(off_ppg),
+           def_ppg_aboveavg = def_ppg - mean(def_ppg),
            off_ppg_adj = case_when(oppdef_tds_pg > mean(oppdef_tds_pg) & off_ppg > mean(off_ppg) & team %in% FCS_PY1$team  ~ off_ppg - (oppdef_tds_pg * 6 / 2) - 8,
                                    oppdef_tds_pg > mean(oppdef_tds_pg) & off_ppg > mean(off_ppg) & team %in% FCS_PY2$team  ~ off_ppg - (oppdef_tds_pg * 6 / 2) - 4,
                                    team %in% FCS_PY1$team ~ off_ppg - 10,
@@ -2918,7 +2922,7 @@ if (as.numeric(week) == 0) {
 ### leaving this outside an if statement because this could be an issue regardless of season or CFB_Week
 ### currently commented out because I added this fix to each individual stat pull in function
 ### uncommented it because I must once again ask that Florida International University go fuck itself
-VoA_Variables$recruit_pts[is.na(VoA_Variables$recruit_pts)] = 0
+# VoA_Variables$recruit_pts[is.na(VoA_Variables$recruit_pts)] = 0
 # VoA_Variables$recruit_pts_PY2[is.na(VoA_Variables$recruit_pts_PY2)] = 0
 ### above code useful for Week 0, not necessary now that current season data is available
 ### Fixing conference errors for Week 0 (Preseason)
@@ -2942,11 +2946,11 @@ VoA_Variables <- VoA_Variables |>
 
 
 ##### break point for checking which column to start ranking at #####
-if (as.numeric(week) == 1 | as.numeric(week) == 2 | as.numeric(week) == 6 | as.numeric(week) == 9){
-  break
-} else{
-  print("Same number of VoA columns this week as last week, or it's preseason and this is being done section by section to make sure it works")
-}
+# if (as.numeric(week) == 1 | as.numeric(week) == 2 | as.numeric(week) == 6 | as.numeric(week) == 9){
+#   break
+# } else{
+#   print("Same number of VoA columns this week as last week, or it's preseason and this is being done section by section to make sure it works")
+# }
 
 
 ##### Adding Rank Columns #####
@@ -5740,7 +5744,7 @@ if (as.numeric(week) == 0) {
            Rank_Pass_YPA = dense_rank(desc(pass_ypa)),
            Rank_Pass_YPR = dense_rank(desc(pass_ypr)),
            Rank_Int_Pct = dense_rank(int_pct),
-      Rank_Rush_YPC = dense_rank(desc(rush_ypc)),
+           Rank_Rush_YPC = dense_rank(desc(rush_ypc)),
       Rank_Turnovers_pg = dense_rank(turnovers_pg),
       Rank_Third_Conv_Rate = dense_rank(desc(third_conv_rate)),
       Rank_Fourth_Conv_Rate = dense_rank(desc(fourth_conv_rate)),
@@ -5909,7 +5913,7 @@ if (as.numeric(week) == 0) {
 } else {
   ## Append new column of Model output, which is the mean of all variables in VoARanks
   VoA_Variables <- VoA_Variables |>
-    mutate(VoA_Output = (rowMeans(VoA_Variables[,87:ncol(VoA_Variables)])))
+    mutate(VoA_Output = (rowMeans(VoA_Variables[,117:ncol(VoA_Variables)])))
   ## Append column of VoA Final Rankings
   # VoA_Variables <- VoA_Variables |>
   #   mutate(VoA_Ranking = dense_rank(VoA_Output))
@@ -5954,19 +5958,19 @@ if (as.numeric(week) == 0) {
 } else if (as.numeric(week) == 1) {
   ## Append new column of Model output, which is the mean of all variables in VoARanks
   VoA_Variables <- VoA_Variables |>
-    mutate(VoA_Output = (rowMeans(VoA_Variables[,321:ncol(VoA_Variables)])))
+    mutate(VoA_Output = (rowMeans(VoA_Variables[,450:ncol(VoA_Variables)])))
 } else if (as.numeric(week) <= 5) {
   ## Append new column of Model output, which is the mean of all variables in VoARanks
   VoA_Variables <- VoA_Variables |>
-    mutate(VoA_Output = (rowMeans(VoA_Variables[,260:ncol(VoA_Variables)])))
+    mutate(VoA_Output = (rowMeans(VoA_Variables[,351:ncol(VoA_Variables)])))
 } else if (as.numeric(week) <= 8) {
   ## Append new column of Model output, which is the mean of all variables in VoARanks
   VoA_Variables <- VoA_Variables |>
-    mutate(VoA_Output = (rowMeans(VoA_Variables[,174:ncol(VoA_Variables)])))
+    mutate(VoA_Output = (rowMeans(VoA_Variables[,242:ncol(VoA_Variables)])))
 } else {
   ## Append new column of Model output, which is the mean of all variables in VoARanks
   VoA_Variables <- VoA_Variables |>
-    mutate(VoA_Output = (rowMeans(VoA_Variables[,87:ncol(VoA_Variables)])))
+    mutate(VoA_Output = (rowMeans(VoA_Variables[,117:ncol(VoA_Variables)])))
   ## Append column of VoA Final Rankings
   # VoA_Variables <- VoA_Variables |>
   #   mutate(VoA_Ranking = dense_rank(VoA_Output))
@@ -6134,7 +6138,7 @@ if (as.numeric(week) <= 8) {
   
   ### VoA Defensive Rating Model
   ### making list of data to declare what goes into stan model
-  Def_VoA_datalist <- list(N = nrow(VoA_Variables), def_ppg = VoA_Variables$def_ppg_adj, def_ppa = VoA_Variables$def_ppa, def_ypp = VoA_Variables$def_ypp, def_success_rate = VoA_Variables$def_success_rate, def_explosiveness = VoA_Variables$def_explosiveness, def_third_conv_rate = VoA_Variables$def_third_conv_rate, def_pts_per_opp = VoA_Variables$def_pts_per_opp, def_plays_pg = VoA_Variables$def_plays_pg, def_ppg_aboveavg = VoA_Variables$def_ppg_aboveavg, VoA_Output = VoA_Variables$VoA_Output, Conference_Strength = VoA_Variables$Conference_Strength)
+  Def_VoA_datalist <- list(N = nrow(VoA_Variables), def_ppg = VoA_Variables$def_ppg_adj, def_ppa = VoA_Variables$def_ppa, def_ypp = VoA_Variables$def_ypp, def_success_rate = VoA_Variables$def_success_rate, def_explosiveness = VoA_Variables$def_explosiveness, def_third_conv_rate = VoA_Variables$def_third_conv_rate, def_pts_per_opp = VoA_Variables$def_pts_per_opp, def_havoc_total = VoA_Variables$def_havoc_total, def_plays_pg = VoA_Variables$def_plays_pg, def_ppg_aboveavg = VoA_Variables$def_ppg_aboveavg, VoA_Output = VoA_Variables$VoA_Output, Conference_Strength = VoA_Variables$Conference_Strength)
   
   ### fitting stan model
   set.seed(802)
@@ -6173,11 +6177,11 @@ if (as.numeric(week) <= 8) {
   
   ### Special Teams VoA
   ### making list of data to declare what goes into Stan model
-  ST_VoA_datalist <- list(N = nrow(VoA_Variables), net_st_ppg = VoA_Variables$net_st_ppg, kick_return_avg = VoA_Variables$net_kick_return_avg, punt_return_avg = VoA_Variables$net_punt_return_avg, fg_rate = VoA_Variables$net_fg_rate, fg_made_pg = VoA_Variables$net_fg_made_pg, xpts_pg = VoA_Variables$net_xpts_pg)
+  ST_VoA_datalist <- list(N = nrow(VoA_Variables), net_st_ppg = VoA_Variables$net_st_ppg, net_kick_return_avg = VoA_Variables$net_kick_return_avg, net_punt_return_avg = VoA_Variables$net_punt_return_avg, net_fg_rate = VoA_Variables$net_fg_rate, net_fg_made_pg = VoA_Variables$net_fg_made_pg, net_xpts_pg = VoA_Variables$net_xpts_pg)
   
   ### fitting special teams Stan model
   set.seed(802)
-  options(mc.cores = parallel::detectCores())
+  # options(mc.cores = parallel::detectCores())
   ST_VoA_fit <- stan(file = here("Scripts", "Stan", "ST_VoA.stan"), data = ST_VoA_datalist, chains = 3, iter = 25000, warmup = 10000, seed = 802)
   ST_VoA_fit
   
@@ -7387,7 +7391,7 @@ FBS_Rating_histogram <- ggplot(VoA_Variables, aes(VoA_Rating_Ovr)) +
   geom_histogram(binwidth = 5,
                  col = "black",
                  fill = "orange") +
-  scale_x_continuous(breaks = seq(-40,40,5)) +
+  scale_x_continuous(breaks = seq(-50,40,5)) +
   scale_y_continuous(breaks = seq(0,50,5)) +
   ggtitle(FBS_hist_title) +
   xlab("VoA Rating") +
@@ -7401,7 +7405,7 @@ Power5_Rating_histogram <- ggplot(Power5_VoA, aes(VoA_Rating_Ovr)) +
   geom_histogram(binwidth = 5,
                  col = "black",
                  fill = "blue") +
-  scale_x_continuous(breaks = seq(-40,40,5)) +
+  scale_x_continuous(breaks = seq(-50,40,5)) +
   scale_y_continuous(breaks = seq(0,50,5)) +
   ggtitle(Power5_hist_title) +
   xlab("VoA Rating") +
@@ -7415,7 +7419,7 @@ Group5_Rating_histogram <- ggplot(Group5_VoA, aes(VoA_Rating_Ovr)) +
   geom_histogram(binwidth = 5,
                  col = "black",
                  fill = "pink") +
-  scale_x_continuous(breaks = seq(-40,40,5)) +
+  scale_x_continuous(breaks = seq(-50,40,5)) +
   scale_y_continuous(breaks = seq(0,50,5)) +
   ggtitle(Group5_hist_title) +
   xlab("VoA Rating") +
@@ -7431,7 +7435,7 @@ VoA_Output_Rating_plot <- ggplot(VoA_Variables, aes(x = VoA_Output, y = VoA_Rati
   geom_smooth() +
   geom_cfb_logos(aes(team = team), width = 0.035) +
   scale_x_continuous(breaks = seq(0,135,10)) +
-  scale_y_continuous(breaks = seq(-40,40,5)) +
+  scale_y_continuous(breaks = seq(-50,40,5)) +
   ggtitle(Output_Rating_Plot_title) +
   xlab("VoA Output") +
   ylab("VoA Overall Rating") +
