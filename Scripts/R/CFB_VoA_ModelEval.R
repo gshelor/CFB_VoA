@@ -73,6 +73,7 @@ LastWeekGames <- spread_games_list |>
 
 ### calculating weekly average error metrics for games with spread info available
 WeekMeanAccuracyMetrics <- data.frame(week = as.numeric(cfb_week),
+                                      games = nrow(LastWeekGames),
                                       mean_ae = mean(LastWeekGames$abs_error),
                                       mean_vegas_ae = mean(LastWeekGames$vegas_abs_error),
                                       mean_se = mean(LastWeekGames$sqd_error),
@@ -114,7 +115,8 @@ if (as.numeric(cfb_week) == 1){
 if (as.numeric(cfb_week) >= 5){
   SeasonMetrics <- CompletedGames |>
     group_by(season) |>
-    summarize(mean_ae = mean(abs_error),
+    summarize(games = nrow(CompletedGames),
+              mean_ae = mean(abs_error),
               mean_vegas_ae = mean(vegas_abs_error),
               mean_se = mean(sqd_error),
               mean_vegas_se = mean(vegas_sqd_error),
