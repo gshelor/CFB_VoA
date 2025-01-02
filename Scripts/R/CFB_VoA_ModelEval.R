@@ -24,19 +24,35 @@ colnames(PrevWeekVoP) <- c("game_id", "proj_margin")
 
 
 ### reading in completed games
-LastWeekGames <- cfbd_game_info(as.numeric(season)) |>
-  filter(completed == TRUE) |>
-  filter(week == as.numeric(cfb_week)) |>
-  filter(game_id %in% PrevWeekVoP$game_id) |>
-  select(game_id, season, week, completed, home_team, home_points, away_team, away_points) |>
-  mutate(result = away_points - home_points,
-         winner = case_when(result > 0 ~ away_team,
-                            TRUE ~ home_team))
-
-LastWeekSpreads_temp <- cfbd_betting_lines(year = as.numeric(season)) |>
-  filter(week == as.numeric(cfb_week)) |>
-  filter(game_id %in% PrevWeekVoP$game_id) |>
-  select(game_id, spread)
+if (as.numeric(cfb_week) == 17){
+  LastWeekGames <- cfbd_game_info(as.numeric(season), season_type = "postseason") |>
+    filter(completed == TRUE) |>
+    filter(week == as.numeric(cfb_week)) |>
+    filter(game_id %in% PrevWeekVoP$game_id) |>
+    select(game_id, season, week, completed, home_team, home_points, away_team, away_points) |>
+    mutate(result = away_points - home_points,
+           winner = case_when(result > 0 ~ away_team,
+                              TRUE ~ home_team))
+  
+  LastWeekSpreads_temp <- cfbd_betting_lines(year = as.numeric(season), season_type = "postseason") |>
+    filter(week == as.numeric(cfb_week)) |>
+    filter(game_id %in% PrevWeekVoP$game_id) |>
+    select(game_id, spread)
+} else{
+  LastWeekGames <- cfbd_game_info(as.numeric(season)) |>
+    filter(completed == TRUE) |>
+    filter(week == as.numeric(cfb_week)) |>
+    filter(game_id %in% PrevWeekVoP$game_id) |>
+    select(game_id, season, week, completed, home_team, home_points, away_team, away_points) |>
+    mutate(result = away_points - home_points,
+           winner = case_when(result > 0 ~ away_team,
+                              TRUE ~ home_team))
+  
+  LastWeekSpreads_temp <- cfbd_betting_lines(year = as.numeric(season)) |>
+    filter(week == as.numeric(cfb_week)) |>
+    filter(game_id %in% PrevWeekVoP$game_id) |>
+    select(game_id, spread)
+}
 ### converting spread to number (why isn't already a number???)
 LastWeekSpreads_temp$spread <- as.numeric(LastWeekSpreads_temp$spread)
 

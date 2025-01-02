@@ -18,10 +18,24 @@ gameprojections_filename <- paste(year, week_text, upcoming, gameprojections_png
 if (as.numeric(upcoming) == 1){
   FBS_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.character(as.numeric(upcoming) - 1), "_VoA.csv"))) |>
     select(team, conference, VoA_Rating_Ovr)
+} else if (as.numeric(upcoming) == 16){
+  week16_run <- readline(prompt = "Is this the first week 16 run of week 16 projections? (y/n) ")
+  if (week16_run == "y"){
+    PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.character(as.numeric(upcoming) - 1), "_VoA.csv"))) |>
+      select(team, VoA_Rating_Ovr)
+  } else if (week16_run == "n"){
+    PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.character(as.numeric(upcoming)), "_VoA.csv"))) |>
+      select(team, VoA_Rating_Ovr)
+  } else{
+    print("Error, need 'y' or 'n'")
+    break
+  }
+} else{
+  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.character(as.numeric(upcoming) - 1), "_VoA.csv"))) |>
+    select(team, VoA_Rating_Ovr)
 }
 
-PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.character(as.numeric(upcoming) - 1), "_VoA.csv"))) |>
-    select(team, VoA_Rating_Ovr)
+
 
 
 ##### pulling SRS ratings for just FCS teams since I don't have VoA ratings for them #####
@@ -44,7 +58,7 @@ if (as.numeric(upcoming) < 5) {
 ### Binding most recent VoA (PrevWeek_VoA) and FCS_ratings as if rating systems are the same
 PrevWeek_VoA <- rbind(PrevWeek_VoA, FCS_ratings)
 
-### reading in upcoming games to create df of games and VoA projected margins
+##### reading in upcoming games to create df of games and VoA projected margins #####
 if (as.numeric(upcoming) == 16) {
   upcoming_games_df <- cfbd_game_info(as.numeric(year), season_type = "postseason") |>
     filter(home_team %in% PrevWeek_VoA$team | away_team %in% PrevWeek_VoA$team) |>
