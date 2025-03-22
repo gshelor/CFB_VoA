@@ -1,0 +1,734 @@
+﻿Week,Home_Team,Home_Score,Away_Team,Away_Score,Spread,Prediction,Actual
+1,Clemson,3,Georgia,10,-2.5,-1.5,7
+1,Louisville,24,Ole Miss,43,9,14,19
+1,Charlotte,31,Duke,28,6.5,8,-3
+1,Illinois,30,Nebraska,22,7,9,-8
+1,Wake Forest,42,Old Dominion,10,-33,-28,-32
+1,Michigan,47,Western Michigan,14,-16.5,-19.5,-33
+1,Rutgers,61,Temple,14,-14,-10,-47
+1,Wisconsin,10,Penn State,16,-5.5,-8.5,6
+1,Purdue,30,Oregon State,21,-7,2.5,-9
+1,UCLA,38,LSU,27,2.5,3.5,-11
+1,UCLA,44,Hawai'i,10,-18,-14,-34
+1,New Mexico State,3,UTEP,30,10,7.5,27
+1,Florida State,38,Notre Dame,41,7.5,11,3
+1,Iowa,34,Indiana,6,-3.5,3,-28
+1,Miami,13,Alabama,44,19.5,20.5,31
+1,NC State,45,South Florida,0,-20,-18.5,-45
+1,Appalachian State,33,East Carolina,19,-9.5,-12.5,-14
+1,Fresno State,45,Connecticut,0,-28,-21,-45
+1,Minnesota,31,Ohio State,45,14,17,14
+1,Tennessee,38,Bowling Green,6,-37,-24,-32
+1,UCF,36,Boise State,31,-6.5,-6.5,-5
+1,Houston,21,Texas Tech,38,-2.5,-2,17
+1,Georgia Tech,7,Northern Illinois,14,-19,-20,7
+1,Florida,35,Florida Atlantic,14,-23.5,-29,-21
+1,South Alabama,31,Southern Mississippi,7,-2,3,-24
+1,Texas A&M,41,Kent State,10,-29.5,-38,-31
+1,San Diego State,28,New Mexico State,10,-31,-31,-18
+1,Northwestern,21,Michigan State,38,-3,4.5,17
+1,California,17,Nevada,22,-3,-6.5,5
+1,Arizona,16,BYU,24,12.5,12,8
+1,Washington State,23,Utah State,26,-17.5,-4,3
+1,Kansas State,24,Stanford,7,-3.5,6,-17
+1,Georgia State,10,Army,43,-2.5,-8,33
+1,Kentucky,45,Louisiana Monroe,10,-31,-35,-35
+1,Tulane,35,Oklahoma,40,31.5,31,5
+1,Oregon,31,Fresno State,24,-20,-21,-7
+1,Virginia Tech,17,North Carolina,10,6,10,-7
+1,Arkansas,38,Rice,17,-20,-24.5,-21
+1,Navy,7,Marshall,49,3,5.5,42
+1,Cincinnati,49,Miami (OH),14,-22.5,-24,-35
+1,Maryland,30,West Virginia,24,2.5,8.5,-6
+1,Pittsburgh,51,UMass,7,-37.5,-41,-44
+1,Mississippi State,35,Louisiana Tech,34,-21.5,-23,-1
+1,Missouri,34,Central Michigan,24,-14,-10,-10
+1,Texas,38,Louisiana,18,-8.5,3,-20
+1,USC,30,San José State,7,-14,-12,-23
+1,Ohio,9,Syracuse,29,-2,-3.5,20
+1,Auburn,60,Akron,10,-37,-42,-50
+1,Texas State,22,Baylor,29,14,-1,7
+1,Illinois,30,UT San Antonio,37,-4.5,-10,7
+3,Hawai'i,13,San José State,17,7,10.5,4
+3,Iowa,30,Kent State,7,-23,-19.5,-23
+3,UNLV,3,Iowa State,48,32.5,31,45
+3,Air Force,45,Utah State,49,-9,-10,4
+3,Texas,58,Rice,0,-26.5,-28.5,-58
+3,Army,52,Connecticut,21,-35,-28,-31
+3,North Texas,6,UAB,40,13,11,34
+3,Temple,3,Boston College,28,15,15,25
+3,Vanderbilt,23,Stanford,41,13,18,18
+3,North Carolina,59,Virginia,39,-7.5,7.5,-20
+3,Liberty,45,Old Dominion,17,-27.5,-17,-28
+3,UMass,28,Eastern Michigan,42,22,16,14
+3,Memphis,31,Mississippi State,29,3.5,10,-2
+3,Toledo,6,Colorado State,22,-14.5,-17,16
+3,Oklahoma,23,Nebraska,16,-23,-25.5,-7
+3,Clemson,14,Georgia Tech,8,-28,-38.5,-6
+3,Louisiana,49,Ohio,14,-19,-18,-35
+3,Washington State,14,USC,45,7.5,14,31
+3,Indiana,24,Cincinnati,38,4,15.5,14
+3,Florida,29,Alabama,31,14.5,21,2
+3,UT San Antonio,27,Middle Tennessee,13,-11,-14.5,-14
+3,Notre Dame,27,Purdue,13,-7.5,-14.5,-14
+3,Penn State,28,Auburn,20,-5,-8,-8
+3,Duke,30,Northwestern,23,2.5,3.5,-7
+3,San Diego State,33,Utah,31,8,15,-2
+3,Texas Tech,54,Florida International,21,-20,-28,-33
+3,Texas A&M,34,New Mexico,0,-30.5,-26.5,-34
+3,Pittsburgh,41,Western Michigan,44,-14.5,-14.5,3
+3,Colorado,0,Minnesota,30,-2.5,-3.5,30
+3,Washington,52,Arkansas State,3,-17,-10,-49
+3,Boise State,20,Oklahoma State,21,-3.5,-3.5,1
+3,Louisville,42,UCF,35,7,15.5,-7
+3,Wyoming,45,Ball State,12,-7,-7,-33
+3,Miami,17,Michigan State,38,-7,-11.5,21
+3,Georgia,40,South Carolina,13,-31.5,-35,-27
+3,Southern Mississippi,9,Troy,21,11,7,12
+3,Ohio State,41,Tulsa,20,-25.5,-29.5,-21
+3,Ole Miss,61,Tulane,21,-14.5,-19,-40
+3,UCLA,37,Fresno State,40,-11,-17.5,3
+3,Kansas State,38,Nevada,17,1.5,-5.5,-21
+3,Arkansas,45,Georgia Southern,10,-23,-24.5,-35
+3,Kansas,7,Baylor,45,17.5,20.5,38
+3,Georgia State,20,Charlotte,9,-4.5,-6,-11
+3,Louisiana Tech,37,SMU,39,11,15.5,2
+3,West Virginia,27,Virginia Tech,21,-2,10.5,-6
+3,Wake Forest,35,Florida State,14,-4.5,8.5,-21
+3,Marshall,38,East Carolina,42,-10,-14,4
+3,Michigan,63,Northern Illinois,10,-27.5,-29,-53
+3,BYU,27,Arizona State,17,3.5,-3.5,-10
+3,South Alabama,28,Alcorn State,21,-21,-28,-7
+3,Arizona,19,Northern Arizona,21,-26.5,-31.5,2
+3,Illinois,17,Maryland,20,7.5,16.5,3
+3,Buffalo,25,Coastal Carolina,28,14,17.5,3
+3,Houston,45,Grambling,0,-40,-45,-45
+3,NC State,45,Furman,7,-27.5,-31,-38
+3,South Florida,38,Florida A&M,17,-22.5,-30,-21
+3,Texas State,34,Incarnate Word,42,-11,-15.5,8
+3,LSU,49,Central Michigan,21,-19.5,-23,-28
+3,Oregon,48,Stony Brook,7,-41.5,-45,-41
+3,New Mexico State,43,South Carolina State,35,-1,-10,-8
+3,Louisiana Monroe,12,Jackson State,7,-4.5,3.5,-5
+4,Western Michigan,23,San José State,3,-3,-3.5,-20
+4,Coastal Carolina,53,UMass,3,-36,-35,-50
+4,Central Michigan,31,Florida International,27,-12.5,8.5,-4
+4,Louisiana Monroe,29,Troy,16,24,24,-13
+4,Alabama,63,Southern Mississippi,14,-45,-49.5,-49
+4,Memphis,28,UT San Antonio,31,-3,3,3
+4,Utah,24,Washington State,13,-15,-17,-11
+4,Utah State,3,Boise State,27,9.5,14.5,24
+4,Georgia Tech,45,North Carolina,22,14,22.5,-23
+4,Florida State,23,Louisville,31,1,7.5,8
+4,Charlotte,42,Middle Tennessee,39,-3,-11,-3
+4,Connecticut,22,Wyoming,24,31.5,31,2
+4,Auburn,34,Georgia State,24,-27.5,-22,-10
+4,TCU,34,SMU,42,-9.5,-10.5,8
+4,Houston,28,Navy,20,-19,-24,-8
+4,Maryland,37,Kent State,16,-13.5,3,-21
+4,Oregon,41,Arizona,19,-29.5,-31,-22
+4,Eastern Michigan,59,Texas State,21,-7.5,-8,-38
+4,Western Kentucky,31,Indiana,33,9,13.5,2
+4,Mississippi State,25,LSU,28,1,7.5,3
+4,BYU,35,South Florida,27,-23.5,-21,-8
+4,Michigan State,23,Nebraska,20,-4,4.5,-3
+4,Syracuse,24,Liberty,21,7,15,-3
+4,Minnesota,10,Bowling Green,14,-31,-32,4
+4,Baylor,31,Iowa State,29,7,12.5,-2
+4,Tulane,21,UAB,28,-3,9,7
+4,Washington,31,California,24,-7,-14.5,-7
+4,Florida,38,Tennessee,14,-19,-20.5,-24
+4,Air Force,31,Florida Atlantic,7,-4,-8.5,-24
+4,Purdue,13,Illinois,9,-11,-15,-4
+4,NC State,27,Clemson,21,10.5,17,-6
+4,Boston College,41,Missouri,34,-1,-6,-7
+4,Stanford,24,UCLA,35,4,8,11
+4,Michigan,20,Rutgers,13,-20,-13.5,-7
+4,Northwestern,35,Ohio,6,-14,-13.5,-29
+4,UTEP,20,New Mexico,13,2,-3.5,-7
+4,Vanderbilt,0,Georgia,62,37,38,62
+4,Wisconsin,13,Notre Dame,41,-6,8,28
+4,Old Dominion,34,Buffalo,35,13,19,1
+4,Oklahoma State,31,Kansas State,20,-5,-14.5,-11
+4,Oklahoma,16,West Virginia,13,-17,-13.5,-3
+4,Tulsa,41,Arkansas State,34,-14.5,-13,-7
+4,Arizona State,35,Colorado,13,-14,-19.5,-22
+4,Georgia Southern,20,Louisiana,28,14.5,16,8
+4,Army,23,Miami (OH),10,-8,-10,-13
+4,South Carolina,10,Kentucky,16,5,10,6
+4,New Mexico State,21,Hawai'i,41,17,19,20
+4,Virginia,17,Wake Forest,37,-3.5,-13.5,20
+4,Ohio State,59,Akron,7,-48,-50,-52
+4,USC,27,Oregon State,45,-11,-10.5,18
+4,Fresno State,38,UNLV,30,-30,-28.5,-8
+4,Ball State,12,Toledo,22,5,10.5,10
+4,Texas,70,Texas Tech,35,-9,-17.5,-35
+4,Louisiana Tech,24,North Texas,17,-11,-10.5,-7
+4,Duke,52,Kansas,33,-16,-14,-19
+4,Arkansas,20,Texas A&M,10,4,10,-10
+4,Iowa,24,Colorado State,14,-23.5,-24,-10
+5,San José State,37,New Mexico State,31,-25.5,-28,-6
+5,Middle Tennessee,34,Marshall,28,11.5,15,-6
+5,North Carolina,38,Duke,7,-19.5,-28,-31
+5,Clemson,19,Boston College,13,-14.5,-14.5,-6
+5,Purdue,13,Minnesota,20,-2.5,-2.5,7
+5,Tulsa,10,Houston,45,-3.5,6.5,35
+5,Colorado,14,USC,37,9,7.5,23
+5,Maryland,14,Iowa,51,3,8,37
+5,Kent State,27,Bowling Green,20,-16.5,-14.5,-7
+5,Georgia State,16,Appalachian State,45,10,14.5,29
+5,Coastal Carolina,59,Louisiana Monroe,6,-34,-35,-53
+5,Rutgers,13,Ohio State,52,15,20,39
+5,Penn State,24,Indiana,0,-12.5,-11.5,-24
+5,Northern Illinois,27,Eastern Michigan,20,0,7,-7
+5,TCU,27,Texas,32,4,10.5,5
+5,UT San Antonio,24,UNLV,17,-21.5,-20,-7
+5,Kentucky,20,Florida,13,7.5,12,-7
+5,NC State,34,Louisiana Tech,27,-18,-21,-7
+5,Notre Dame,13,Cincinnati,24,2,4,11
+5,New Mexico,10,Air Force,38,11.5,15,28
+5,California,6,Washington State,21,-7.5,-7.5,15
+5,Akron,17,Ohio,34,9.5,6.5,17
+5,Oregon State,27,Washington,24,-2,-1.5,-3
+5,Georgia,37,Arkansas,0,-16,-17,-37
+5,East Carolina,52,Tulane,29,3,5,-23
+5,Boise State,31,Nevada,41,-4.5,-8,10
+5,Florida Atlantic,58,Florida International,21,-10.5,-12,-37
+5,Florida State,33,Syracuse,30,-5.5,3.5,-3
+5,West Virginia,20,Texas Tech,23,-7,-14,3
+5,Miami,28,Virginia,30,-3.5,-8,2
+5,Navy,34,UCF,30,16,19.5,-4
+5,Miami (OH),28,Central Michigan,17,1.5,4,-11
+5,Kansas State,31,Oklahoma,37,13,12.5,6
+5,Buffalo,17,Western Michigan,24,7,-7,7
+5,Georgia Tech,21,Pittsburgh,52,3,10.5,31
+5,LSU,19,Auburn,24,-3,7.5,5
+5,Rice,24,Southern Mississippi,19,-1,-3,-5
+5,Illinois,24,Charlotte,14,-10,-12.5,-10
+5,Wisconsin,17,Michigan,38,-1.5,4.5,21
+5,UMass,7,Toledo,45,27,28.5,38
+5,Texas A&M,22,Mississippi State,26,-7,-6.5,4
+5,Iowa State,59,Kansas,7,-34.5,-28.5,-52
+5,Missouri,24,Tennessee,62,-2.5,-3.5,38
+5,SMU,41,South Florida,17,-21,-24,-24
+5,Alabama,42,Ole Miss,21,-14.5,-17.5,-21
+5,UAB,12,Liberty,36,-3,7,24
+5,Temple,34,Memphis,31,11.5,14,-3
+5,Wake Forest,37,Louisville,34,-7,-9,-3
+5,Stanford,31,Oregon,24,8.5,13.5,-7
+5,Oklahoma State,24,Baylor,14,-4,-5.5,-10
+5,Ball State,28,Army,16,10.5,15,-12
+5,South Carolina,23,Troy,14,-6.5,6.5,-9
+5,Georgia Southern,59,Arkansas State,33,-2,-3,-26
+5,Nebraska,56,Northwestern,7,-11,-6.5,-49
+5,Vanderbilt,30,Connecticut,28,-15,-1.5,-2
+5,South Alabama,18,Louisiana,20,12,14.5,2
+5,Michigan State,48,Western Kentucky,31,-11,-10.5,-17
+5,UTEP,28,Old Dominion,21,-5.5,-5.5,-7
+5,UCLA,23,Arizona State,42,-3,1,19
+5,Hawai'i,27,Fresno State,24,11,14.5,-3
+6,Kentucky,42,LSU,21,-2.5,-4,-21
+6,Virginia Tech,29,Notre Dame,32,0,1.5,3
+6,Nebraska,29,Michigan,32,3,6.5,3
+6,USC,26,Utah,42,-3,-4,16
+6,Louisiana Monroe,21,Georgia State,55,16,-2,34
+6,Texas A&M,41,Alabama,38,18.5,24,-3
+6,San Diego State,31,New Mexico,7,-19.5,-21,-24
+6,Tulsa,35,Memphis,29,-3,7.5,-6
+6,Louisville,33,Virginia,34,-2.5,6,1
+6,Liberty,41,Middle Tennessee,13,-19.5,-24,-28
+6,North Carolina,25,Florida State,35,-17.5,-21,10
+6,Auburn,10,Georgia,34,15.5,17,24
+6,BYU,17,Boise State,26,-6.5,-10.5,9
+6,UCF,20,East Carolina,16,-10,-10,-4
+6,Air Force,24,Wyoming,14,-5.5,-8.5,-10
+6,Kent State,48,Buffalo,38,-7,4.5,-10
+6,Arizona,16,UCLA,34,16,18.5,18
+6,Nevada,55,New Mexico State,28,-28,-27,-27
+6,Tennessee,45,South Carolina,20,-11,-14,-25
+6,Baylor,45,West Virginia,20,-1,-6,-25
+6,Ole Miss,52,Arkansas,51,-5,-8,-1
+6,Bowling Green,20,Akron,35,-14,-14.5,15
+6,Texas,48,Oklahoma,54,4,-7,6
+6,Illinois,0,Wisconsin,24,12,14,24
+6,Navy,24,SMU,31,13.5,17.5,7
+6,Eastern Michigan,13,Miami (OH),12,2,-4.5,-1
+6,Western Michigan,20,Ball State,45,-12.5,-14,25
+6,UAB,31,Florida Atlantic,14,-3.5,5.5,-17
+6,Washington State,31,Oregon State,24,4,12.5,-7
+6,Syracuse,37,Wake Forest,40,6,10.5,3
+6,Missouri,48,North Texas,35,-19,-15.5,-13
+6,Rutgers,13,Michigan State,31,4.5,7.5,18
+6,Florida,42,Vanderbilt,0,-39,-45,-42
+6,Ohio State,66,Maryland,17,-22,-24,-49
+6,Toledo,20,Northern Illinois,22,-13,-14.5,2
+6,Duke,27,Georgia Tech,31,4.5,3.5,4
+6,Iowa,23,Penn State,20,-2.5,-2.5,-3
+6,Ohio,27,Central Michigan,30,5,14,3
+6,Colorado State,32,San José State,14,-3.5,6,-18
+6,Marshall,20,Old Dominion,13,-21,-20,-7
+6,Southern Mississippi,13,UTEP,26,2,3.5,13
+6,UMass,27,Connecticut,13,3,7,-14
+6,Troy,27,Georgia Southern,24,-5.5,-7.5,-3
+6,Tulane,22,Houston,40,7,10.5,18
+6,Arkansas State,20,Coastal Carolina,52,20.5,25,32
+6,Cincinnati,52,Temple,3,-30,-28.5,-49
+6,Florida International,33,Charlotte,45,3.5,6.5,12
+6,Arizona State,28,Stanford,10,-13.5,-10.5,-18
+6,Texas Tech,31,TCU,52,2.5,-4,21
+6,Western Kentucky,46,UT San Antonio,52,-3.5,7.5,6
+6,Texas State,33,South Alabama,31,4,9.5,-2
+7,Western Michigan,64,Kent State,31,-6.5,-7,-33
+7,UT San Antonio,45,Rice,0,-17,-17.5,-45
+7,New Mexico,7,Colorado State,36,11.5,14,29
+7,Louisiana Monroe,31,Liberty,28,33,35,-3
+7,San José State,13,San Diego State,19,10,13.5,6
+7,LSU,49,Florida,42,13,17.5,-7
+7,Virginia,48,Duke,0,-10.5,-17.5,-48
+7,North Texas,21,Marshall,49,11,14.5,28
+7,Syracuse,14,Clemson,17,13.5,17,3
+7,Oregon,24,California,17,-13.5,-14,-7
+7,Eastern Michigan,31,Ball State,38,1,-6,7
+7,Texas State,28,Troy,31,7.5,10.5,3
+7,Virginia Tech,7,Pittsburgh,28,6.5,9.5,21
+7,Memphis,35,Navy,17,-10.5,-7,-18
+7,Wyoming,0,Fresno State,17,3,6.5,17
+7,South Alabama,41,Georgia Southern,14,-2.5,-6.5,-27
+7,Colorado,34,Arizona,0,-6,-7,-34
+7,Northern Illinois,34,Bowling Green,26,-9,-6.5,-8
+7,Baylor,38,BYU,24,-5,-10,-14
+7,Iowa,7,Purdue,24,-11,-10,17
+7,Buffalo,27,Ohio,26,-7.5,-10,-1
+7,Minnesota,30,Nebraska,23,4.5,5.5,-7
+7,North Carolina,45,Miami,42,-7.5,-6.5,-3
+7,Kansas,14,Texas Tech,41,18.5,17.5,27
+7,Arkansas,23,Auburn,38,-4.5,3.5,15
+7,South Carolina,21,Vanderbilt,20,-18.5,-20,-1
+7,South Florida,31,Tulsa,32,7,10,1
+7,Mississippi State,9,Alabama,49,17.5,24,40
+7,Missouri,14,Texas A&M,35,11.5,13.5,21
+7,Cincinnati,56,UCF,21,-22.5,-19,-35
+7,Boston College,7,NC State,33,3,-2,26
+7,Wisconsin,20,Army,14,-14,0.5,-6
+7,Utah,35,Arizona State,21,-1.5,2.5,-14
+7,Indiana,15,Michigan State,20,4,14.5,5
+7,Kansas State,20,Iowa State,33,6.5,8.5,13
+7,Louisiana,41,Appalachian State,13,4.5,7.5,-28
+7,Nevada,34,Hawai'i,17,-14.5,-10.5,-17
+7,Boise State,17,Air Force,24,-3.5,3.5,7
+7,UTEP,19,Louisiana Tech,3,6.5,3.5,-16
+7,Tennessee,26,Ole Miss,31,1,-3.5,5
+7,Washington,17,UCLA,24,-1.5,4.5,7
+7,Oklahoma,52,TCU,31,-13.5,-17,-21
+7,Washington State,34,Stanford,31,-1,4,-3
+7,UNLV,24,Utah State,28,7,10,4
+7,Northwestern,21,Rutgers,7,2.5,7,-14
+7,Texas,24,Oklahoma State,32,-3,-7.5,8
+7,Miami (OH),34,Akron,21,-20,-14.5,-13
+7,Southern Mississippi,0,UAB,34,16.5,17,34
+7,Old Dominion,20,Western Kentucky,43,13.5,15,23
+7,Georgia,30,Kentucky,13,-21.5,-21.5,-17
+7,Central Michigan,26,Toledo,23,5,10.5,-3
+8,Iowa State,24,Oklahoma State,21,-7,-7.5,-3
+8,Appalachian State,30,Coastal Carolina,27,5,9.5,-3
+8,Charlotte,9,Florida Atlantic,38,6.5,10.5,29
+8,Arkansas State,27,Louisiana,28,18,19.5,1
+8,SMU,55,Tulane,26,-14,-17,-29
+8,UNLV,20,San José State,27,5.5,3.5,7
+8,Arizona,16,Washington,21,17.5,17,5
+8,Connecticut,13,Middle Tennessee,44,14,14,31
+8,Florida State,59,UMass,3,-35.5,-28,-56
+8,Penn State,18,Illinois,20,-24.5,-27,2
+8,Georgia State,28,Texas State,16,-10.5,-4.5,-12
+8,Akron,10,Buffalo,45,12.5,14,35
+8,Toledo,34,Western Michigan,15,1.5,3,-19
+8,Utah State,26,Colorado State,24,3,7,-2
+8,Indiana,7,Ohio State,54,21,25,47
+8,Oregon State,42,Utah,34,3,-3,-8
+8,Virginia,48,Georgia Tech,40,-6.5,-8.5,-8
+8,Miami,31,NC State,30,3.5,5.5,-1
+8,Houston,31,East Carolina,24,-13.5,-14,-7
+8,Hawai'i,48,New Mexico State,34,-19,-19,-14
+8,Kansas,23,Oklahoma,35,39,40.5,12
+8,Bowling Green,24,Eastern Michigan,55,4,7,31
+8,Michigan,33,Northwestern,7,-23.5,-24.5,-26
+8,Navy,20,Cincinnati,27,29.5,28,7
+8,Army,56,Wake Forest,70,3,7,14
+8,UCF,24,Memphis,7,1.5,3,-17
+8,Central Michigan,38,Northern Illinois,39,-6,0.5,1
+8,Virginia Tech,36,Syracuse,41,-3.5,1,5
+8,Ohio,27,Kent State,34,5,6,7
+8,Purdue,13,Wisconsin,30,3.5,-0.5,17
+8,Texas Tech,24,Kansas State,25,1,-2,1
+8,Wyoming,3,New Mexico,14,-20,-21,11
+8,Ball State,17,Miami (OH),24,-3.5,1,7
+8,California,26,Colorado,3,-8,-7,-23
+8,Washington State,19,BYU,21,4,7.5,2
+8,Minnesota,34,Maryland,16,-4,-7,-18
+8,Ole Miss,31,LSU,17,-9,-10,-14
+8,Louisville,28,Boston College,14,-5,1.5,-14
+8,UAB,24,Rice,30,-24,-24.5,6
+8,Vanderbilt,6,Mississippi State,45,20.5,21,39
+8,UCLA,31,Oregon,34,-1,3,3
+8,North Texas,26,Liberty,35,21,20,9
+8,South Florida,34,Temple,14,-1.5,2,-20
+8,Louisiana Monroe,41,South Alabama,31,13.5,12,-10
+8,Air Force,14,San Diego State,20,-2.5,-4.5,6
+8,Florida International,19,Western Kentucky,34,16,14,15
+8,Louisiana Tech,16,UT San Antonio,45,6,8.5,29
+8,Alabama,52,Tennessee,24,-25.5,-21.5,-28
+8,Notre Dame,31,USC,16,-7.5,-7.5,-15
+8,Texas A&M,44,South Carolina,14,-19.5,-19,-30
+8,TCU,17,West Virginia,29,-4.5,-2.5,12
+8,Fresno State,34,Nevada,32,-3.5,-4,-2
+9,Utah State,51,Hawai'i,31,-5,-4,-20
+9,Florida Atlantic,28,UTEP,25,-11,-7.5,-3
+9,East Carolina,29,South Florida,14,-9.5,-9.5,-15
+9,Syracuse,21,Boston College,6,-6.5,-5,-15
+9,Baylor,31,Texas,24,-2.5,-7,-7
+9,Pittsburgh,34,Miami,38,-10,-11.5,4
+9,Vanderbilt,28,Missouri,37,16.5,18,9
+9,Marshall,38,Florida International,0,-21.5,-24,-38
+9,Oklahoma,52,Texas Tech,21,-19,-21,-31
+9,Georgia Southern,14,Georgia State,21,6,7,7
+9,Mississippi State,31,Kentucky,17,-1.5,6,-14
+9,Colorado State,19,Boise State,28,2.5,3.5,9
+9,Stanford,13,Washington,20,-3,2,7
+9,San Diego State,20,Fresno State,30,1.5,2.5,10
+9,Coastal Carolina,35,Troy,28,-17,-18.5,-7
+9,Western Kentucky,45,Charlotte,13,-17.5,-19,-32
+9,Liberty,62,UMass,17,-35.5,-35,-45
+9,Old Dominion,23,Louisiana Tech,20,4,4.5,-3
+9,Rice,24,North Texas,30,-1.5,-2,6
+9,Temple,7,UCF,49,12,11,42
+9,Appalachian State,59,Louisiana Monroe,28,-27,-24,-31
+9,Nevada,51,UNLV,20,-19,-21,-31
+9,Kansas State,31,TCU,12,-3.5,1,-19
+9,USC,41,Arizona,34,-21.5,-19.5,-7
+9,Michigan State,37,Michigan,33,4,3.5,-4
+9,West Virginia,38,Iowa State,31,7.5,9,-7
+9,Utah,44,UCLA,24,-6.5,-5,-20
+9,California,39,Oregon State,25,2,5.5,-14
+9,Arizona State,21,Washington State,34,-16,-17,13
+9,Tulsa,17,Navy,20,-11,-8,3
+9,Louisiana,45,Texas State,0,-21,-20,-45
+9,Wake Forest,45,Duke,7,-16.5,-23.5,-38
+9,Tulane,12,Cincinnati,31,28.5,27,19
+9,Nebraska,23,Purdue,28,-7.5,-10,5
+9,Oklahoma State,55,Kansas,3,-29,-25.5,-52
+9,Northwestern,14,Minnesota,41,7.5,14,27
+9,Wisconsin,27,Iowa,7,-3,1.5,-20
+9,Notre Dame,44,North Carolina,34,-3.5,-4,-10
+9,San José State,27,Wyoming,21,-3,3,-6
+9,Buffalo,44,Bowling Green,56,-13.5,-12,12
+9,South Alabama,31,Arkansas State,13,-9,-11.5,-18
+9,Houston,44,SMU,37,0,-1,-7
+9,Oregon,52,Colorado,29,-24.5,-28,-23
+9,NC State,28,Louisville,13,-6,-7,-15
+9,Florida,7,Georgia,34,14.5,14,27
+9,Clemson,30,Florida State,20,-9,-8,-10
+9,Middle Tennessee,35,Southern Mississippi,10,-13,-14,-25
+9,Illinois,14,Rutgers,20,1.5,2,6
+9,Maryland,38,Indiana,35,-4,-6.5,-3
+9,Ohio State,33,Penn State,24,-19.5,-17,-9
+9,Auburn,31,Ole Miss,20,-3,-2.5,-11
+9,BYU,66,Virginia,49,-2.5,4,-17
+9,Georgia Tech,17,Virginia Tech,26,-3.5,-3,9
+10,Colorado,37,Oregon State,34,11.5,13,-3
+10,Louisiana,21,Georgia State,17,-13.5,-14,-4
+10,Western Michigan,30,Central Michigan,42,-9,-10.5,12
+10,West Virginia,3,Oklahoma State,24,3.5,4,21
+10,Troy,31,South Alabama,24,-4,1.5,-7
+10,Kent State,52,Northern Illinois,47,-3.5,2.5,-5
+10,Michigan,29,Indiana,7,-21,-20,-22
+10,Louisville,24,Clemson,30,3.5,5,6
+10,Akron,25,Ball State,31,20,19.5,6
+10,Notre Dame,34,Navy,6,-21,-25,-28
+10,South Florida,42,Houston,54,13,15.5,12
+10,Washington,16,Oregon,26,7,16.5,10
+10,Boston College,17,Virginia Tech,3,2.5,-1.5,-14
+10,Wyoming,31,Colorado State,17,3.5,6,-14
+10,Kansas,10,Kansas State,28,24,19.5,18
+10,Stanford,7,Utah,52,10,10,45
+10,Ohio,35,Miami (OH),33,7,7.5,-2
+10,Air Force,14,Army,21,-2.5,-4,7
+10,Ole Miss,27,Liberty,14,-9,-1,-13
+10,Texas A&M,20,Auburn,3,-4.5,3,-17
+10,Arizona State,31,USC,16,-10,-9,-15
+10,Northwestern,12,Iowa,17,12,13,5
+10,Maryland,14,Penn State,31,10,14,17
+10,Cincinnati,28,Tulsa,20,-22.5,-24,-8
+10,Toledo,49,Eastern Michigan,52,-9,-8,3
+10,Minnesota,6,Illinois,14,-15,-15,8
+10,UCF,14,Tulane,10,-12,-14,-4
+10,Memphis,28,SMU,25,3.5,7,-3
+10,UAB,52,Louisiana Tech,38,-13.5,-14,-14
+10,North Carolina,58,Wake Forest,55,-2.5,6,-3
+10,Miami,33,Georgia Tech,30,-10,-8,-3
+10,TCU,30,Baylor,28,7,10,-2
+10,Purdue,40,Michigan State,29,3,8,-11
+10,Florida State,14,NC State,28,3,5,14
+10,Arkansas State,14,Appalachian State,48,21.5,20.5,34
+10,New Mexico State,13,Utah State,35,18.5,20,22
+10,Arkansas,31,Mississippi State,28,-4,-7,-3
+10,Southern Mississippi,14,North Texas,38,5,4,24
+10,East Carolina,45,Temple,3,-15.5,-14,-42
+10,Georgia Southern,8,Coastal Carolina,28,16,24,20
+10,Georgia,43,Missouri,6,-40,-40,-37
+10,Texas State,27,Louisiana Monroe,19,-3.5,3,-8
+10,Arizona,10,California,3,8.5,14,-7
+10,Charlotte,31,Rice,24,-6.5,-7,-7
+10,Kentucky,42,Tennessee,45,1,3.5,3
+10,South Carolina,40,Florida,17,21,18.5,-23
+10,Rutgers,3,Wisconsin,52,13.5,-13,49
+10,Duke,29,Pittsburgh,54,21.5,23.5,25
+10,Nebraska,17,Ohio State,26,14.5,14,9
+10,Western Kentucky,48,Middle Tennessee,21,-18,-16,-27
+10,Florida Atlantic,13,Marshall,28,1.5,3,15
+10,New Mexico,17,UNLV,31,-1.5,-3,14
+10,Alabama,20,LSU,14,-29,-31,-6
+10,Florida International,24,Old Dominion,47,3,3.5,23
+10,Fresno State,14,Boise State,40,-5,-6,26
+10,UTEP,23,UT San Antonio,44,11.5,14,21
+10,Nevada,27,San José State,24,-11,-11,-3
+10,Hawai'i,10,San Diego State,17,7,8.5,7
+10,Iowa State,30,Texas,7,-6.5,-7,-23
+11,Northern Illinois,30,Ball State,29,3,-3,-1
+11,Central Michigan,54,Kent State,30,-2.5,-4,-24
+11,Florida State,31,Miami,28,3,4.5,-3
+11,Texas Tech,41,Iowa State,38,10.5,13.5,-3
+11,Missouri,31,South Carolina,28,1.5,1.5,-3
+11,North Texas,20,UTEP,17,1,5,-3
+11,Tulane,13,Tulsa,20,3,4.5,7
+11,Tennessee,17,Georgia,41,20,22.5,24
+11,Louisiana Monroe,24,Arkansas State,27,-3,-3.5,3
+11,Fresno State,34,New Mexico,7,-24.5,-28,-27
+11,Vanderbilt,17,Kentucky,34,21.5,23.5,17
+11,Colorado State,21,Air Force,35,2.5,6.5,14
+11,Washington,30,Arizona State,35,6,7,5
+11,Ole Miss,29,Texas A&M,19,2.5,-4.5,-10
+11,Louisville,41,Syracuse,3,-3.5,3,-38
+11,Kansas State,34,West Virginia,17,-6,-5.5,-17
+11,Memphis,29,East Carolina,30,-4,1.5,1
+11,Temple,8,Houston,37,26,28,29
+11,Indiana,3,Rutgers,38,-6,1.5,35
+11,Clemson,44,Connecticut,7,-40,-39.5,-37
+11,Penn State,17,Michigan,21,2.5,3.5,4
+11,Coastal Carolina,40,Georgia State,42,-13,-17,2
+11,Georgia Tech,30,Boston College,41,-1,5,11
+11,Virginia Tech,48,Duke,17,-11,-13,-31
+11,LSU,13,Arkansas,16,3,8,3
+11,Texas,56,Kansas,57,-31,-28.5,1
+11,UCLA,44,Colorado,20,-18,-18.5,-24
+11,San Diego State,23,Nevada,21,-3,3.5,-2
+11,Oregon,38,Washington State,24,-13,-13.5,-14
+11,San José State,17,Utah State,48,-4.5,5.5,31
+11,Pittsburgh,30,North Carolina,23,-6.5,-7,-7
+11,Wisconsin,35,Northwestern,7,-26,-28,-28
+11,Alabama,59,New Mexico State,3,-50,-49.5,-56
+11,SMU,55,UCF,28,-7,-8.5,-27
+11,Auburn,34,Mississippi State,43,-6,-7,9
+11,Rice,21,Western Kentucky,42,19,20,21
+11,Arizona,29,Utah,38,24.5,28,9
+11,Appalachian State,31,South Alabama,7,-21.5,-22,-24
+11,Middle Tennessee,50,Florida International,10,-10,-12,-40
+11,UT San Antonio,27,Southern Mississippi,17,-33,-34.5,-10
+11,Marshall,14,UAB,21,-4.5,-6,7
+11,Oregon State,35,Stanford,14,-13,-14,-21
+11,Texas State,30,Georgia Southern,38,-2,-3.5,8
+11,Troy,21,Louisiana,35,6.5,10,14
+11,Old Dominion,30,Florida Atlantic,16,6.5,9.5,-14
+11,Ohio State,59,Purdue,31,-19.5,-19,-28
+11,Louisiana Tech,42,Charlotte,32,-7,-6,-10
+11,UNLV,27,Hawai'i,13,3.5,4.5,-14
+11,Iowa,27,Minnesota,22,-4,-6,-5
+11,Michigan State,40,Maryland,21,-12,-14,-19
+11,Baylor,27,Oklahoma,14,3.5,-3.5,-13
+11,Virginia,3,Notre Dame,28,7.5,7.5,25
+11,Oklahoma State,63,TCU,17,-12,-12,-46
+11,Wake Forest,45,NC State,42,-1.5,3,-3
+11,South Florida,28,Cincinnati,45,24,23,17
+11,Boise State,23,Wyoming,13,-14,-15,-10
+11,Miami (OH),45,Buffalo,18,-7,6.5,-27
+11,Western Michigan,45,Akron,40,-24,-22.5,-5
+11,Eastern Michigan,26,Ohio,34,-6.5,-9.5,8
+11,Bowling Green,17,Toledo,49,10.5,10,32
+12,Ohio State,56,Michigan State,7,-19,-17.5,-49
+12,Wisconsin,35,Nebraska,28,-9.5,-10.5,-7
+12,Louisiana Tech,19,Southern Mississippi,35,-15,-14.5,16
+12,Clemson,48,Wake Forest,27,-3.5,2.5,-21
+12,Boston College,23,Florida State,26,-3,-3.5,3
+12,Maryland,18,Michigan,59,16,14,41
+12,UNLV,20,San Diego State,28,11,13.5,8
+12,Oregon State,24,Arizona State,10,3,6.5,-14
+12,UCF,49,Connecticut,17,-30.5,-35,-32
+12,Cincinnati,48,SMU,14,-10,-10,-34
+12,Georgia State,28,Arkansas State,20,-16,-13.5,-8
+12,West Virginia,31,Texas,23,-2,3,-8
+12,Western Kentucky,52,Florida Atlantic,17,-11,-11.5,-35
+12,Boise State,37,New Mexico,0,-27,-29.5,-37
+12,Buffalo,27,Northern Illinois,33,2,3,6
+12,Indiana,14,Minnesota,35,7.5,9.5,21
+12,Notre Dame,55,Georgia Tech,0,-18,-16,-55
+12,Navy,35,East Carolina,38,3.5,7,3
+12,Akron,0,Kent State,38,14,12,38
+12,NC State,41,Syracuse,17,-11.5,-13.5,-24
+12,Army,33,UMass,17,-37,-39.5,-16
+12,Nevada,39,Air Force,41,2,2.5,2
+12,Alabama,42,Arkansas,35,-21,-20.5,-7
+12,Miami (OH),34,Bowling Green,7,-17,-15.5,-27
+12,Duke,22,Louisville,62,20.5,22.5,40
+12,Liberty,14,Louisiana,42,-4.5,-3,28
+12,Penn State,28,Rutgers,0,-14,-16,-28
+12,Iowa,33,Illinois,23,-11.5,-13.5,-10
+12,Colorado,20,Washington,17,6.5,8,-3
+12,Northwestern,14,Purdue,32,11,15,18
+12,Miami,38,Virginia Tech,26,-7,-6,-12
+12,Tulane,45,South Florida,14,-6,-6,-31
+12,Charlotte,28,Marshall,49,14.5,17,21
+12,Ohio,23,Toledo,35,7.5,7,12
+12,Eastern Michigan,22,Western Michigan,21,6,-3,-1
+12,Tennessee,60,South Alabama,14,-28,-31.5,-46
+12,Stanford,11,California,41,2.5,4.5,30
+12,Ball State,17,Central Michigan,37,2.5,3.5,20
+12,USC,33,UCLA,62,3.5,6,29
+12,Troy,7,Appalachian State,45,10,15,38
+12,Houston,31,Memphis,13,-9.5,-10.5,-18
+12,Missouri,24,Florida,23,9,12,-1
+12,Washington State,44,Arizona,18,-15,-18,-26
+12,Texas A&M,52,Prairie View,3,-41.5,-44.5,-49
+12,Georgia,56,Charleston Southern,7,-53,-55,-49
+12,Mississippi State,55,Tennessee State,10,-44,-45.5,-45
+12,Kentucky,56,New Mexico State,16,-36,-42,-40
+12,Coastal Carolina,35,Texas State,21,-24.5,-28,-14
+12,Middle Tennessee,17,Old Dominion,24,-3,-5,7
+12,UT San Antonio,33,UAB,31,-4,-5.5,-2
+12,Georgia Southern,17,BYU,34,20,24,17
+12,Pittsburgh,48,Virginia,38,-15.5,-14,-10
+12,Tulsa,44,Temple,10,-22,-20,-34
+12,TCU,31,Kansas,28,-21,-20,-3
+12,UTEP,38,Rice,28,-9,-10.5,-10
+12,Kansas State,10,Baylor,20,-2.5,7,10
+12,South Carolina,21,Auburn,17,7.5,10,-4
+12,Florida International,7,North Texas,49,10.5,15,42
+12,Utah,38,Oregon,7,-3,3,-31
+12,Ole Miss,31,Vanderbilt,17,-36,-45,-14
+12,Utah State,17,Wyoming,44,-6,-7,27
+12,Texas Tech,0,Oklahoma State,23,10,12.5,23
+12,LSU,27,Louisiana Monroe,14,-29,-33.5,-13
+12,Hawai'i,50,Colorado State,45,3,4.5,-5
+12,North Carolina,34,Wofford,14,-37,-45,-20
+13,Liberty,16,Army,31,-3,-3,15
+13,UAB,42,UTEP,25,-13.5,-16.5,-17
+13,North Texas,45,UT San Antonio,23,8.5,8.5,-22
+13,Purdue,44,Indiana,7,-15,-16,-37
+13,South Carolina,0,Clemson,30,11,13,30
+13,Air Force,41,UNLV,7,-18,-20.5,-34
+13,South Alabama,21,Coastal Carolina,27,15,18.5,6
+13,Memphis,33,Tulane,28,-6,-8,-5
+13,Louisiana,21,Louisiana Monroe,16,-21.5,-24,-5
+13,Virginia,24,Virginia Tech,29,-7,-9.5,5
+13,Marshall,21,Western Kentucky,53,-1.5,-1,32
+13,Georgia Tech,0,Georgia,45,36,39.5,45
+13,Arkansas,34,Missouri,17,-14.5,-17,-17
+13,Temple,14,Navy,38,13.5,14,24
+13,Louisville,21,Kentucky,52,-3,3.5,31
+13,Utah,28,Colorado,13,-24,-28,-15
+13,East Carolina,13,Cincinnati,35,14,16.5,22
+13,Arkansas State,22,Texas State,24,-2,-3.5,2
+13,Texas,22,Kansas State,17,-3,3,-5
+13,Bowling Green,21,Ohio,10,6.5,-2,-11
+13,Ball State,20,Buffalo,3,-6,7,-17
+13,Northern Illinois,21,Western Michigan,42,7,5,21
+13,Stanford,14,Notre Dame,45,20,23.5,31
+13,Appalachian State,27,Georgia Southern,3,-24.5,-26,-24
+13,Minnesota,23,Wisconsin,13,7,9.5,-10
+13,Kent State,48,Miami (OH),47,1,7,-1
+13,Boston College,10,Wake Forest,41,6.5,8.5,31
+13,SMU,31,Tulsa,34,-6.5,-10.5,3
+13,Oklahoma State,37,Oklahoma,33,-4.5,-4,-4
+13,Old Dominion,56,Charlotte,34,-9.5,-8,-22
+13,Rutgers,16,Maryland,40,-2,-3.5,24
+13,San Diego State,27,Boise State,16,3.5,7,-11
+13,NC State,34,North Carolina,30,-6.5,-10.5,-4
+13,Auburn,22,Alabama,24,20.5,16.5,2
+13,Baylor,27,Texas Tech,24,-14,-19.5,-3
+13,Southern Mississippi,37,Florida International,17,-14,-13,-20
+13,Colorado State,10,Nevada,52,3,7,42
+13,Connecticut,17,Houston,45,32.5,36.5,28
+13,UCLA,42,California,14,-6.5,-8,-28
+13,Washington,13,Washington State,40,1,1.5,27
+13,Wyoming,14,Hawai'i,38,-11.5,-12,24
+13,USC,31,BYU,35,7,10.5,4
+13,Michigan,42,Ohio State,27,7,7.5,-15
+13,Duke,10,Miami,47,21,24,37
+13,New Mexico State,44,UMass,27,-7,-6,-17
+13,Illinois,47,Northwestern,14,-6.5,-8.5,-33
+13,Central Michigan,31,Eastern Michigan,10,-8.5,-6.5,-21
+13,Florida Atlantic,17,Middle Tennessee,27,-3.5,4.5,10
+13,LSU,27,Texas A&M,24,6.5,8.5,-3
+13,Toledo,49,Akron,14,-29,-26.5,-35
+13,UCF,17,South Florida,13,-17.5,-21.5,-4
+13,Iowa State,48,TCU,14,-15,-14,-34
+13,New Mexico,10,Utah State,35,17,20,25
+13,Michigan State,30,Penn State,27,5.5,-4,-3
+13,San José State,9,Fresno State,40,7,14,31
+13,Tennessee,45,Vanderbilt,21,-31.5,-29.5,-24
+13,Nebraska,21,Iowa,28,-1,7,7
+13,Oregon,38,Oregon State,29,-7,-10,-9
+13,Syracuse,14,Pittsburgh,31,12.5,16,17
+13,Florida,24,Florida State,21,-4,-5,-3
+13,Kansas,28,West Virginia,34,15.5,16.5,6
+13,Rice,35,Louisiana Tech,31,4,7,-4
+13,Mississippi State,21,Ole Miss,31,-2,7,10
+13,Georgia State,37,Troy,10,-6.5,4,-27
+13,Arizona State,38,Arizona,15,-20,-23.5,-23
+14,Cincinnati,35,Houston,20,-10.5,-8.5,-15
+14,Wake Forest,21,Pittsburgh,45,3.5,5,24
+14,Alabama,41,Georgia,24,6.5,10,-17
+14,San Diego State,13,Utah State,46,-6,-10,33
+14,Utah,38,Oregon,10,-3,-7,-28
+14,Michigan,42,Iowa,3,-12,-14,-39
+14,UT San Antonio,49,Western Kentucky,41,3.5,-3,-8
+14,Northern Illinois,41,Kent State,23,4,7,-18
+14,Louisiana,24,Appalachian State,16,2.5,5.5,-8
+14,Oklahoma State,16,Baylor,21,-7,6,5
+14,California,24,USC,14,-4.5,-6.5,-10
+14,Army,13,Navy,17,-7,-10,4
+15,Rutgers,10,Wake Forest,38,17,17,28
+15,Alabama,27,Cincinnati,6,-13,-11.5,-21
+15,Michigan,11,Georgia,34,7.5,7,23
+15,Arkansas,24,Penn State,10,-3.5,-5.5,-14
+15,Kentucky,20,Iowa,17,-3,-8.5,-3
+15,Notre Dame,35,Oklahoma State,37,1.5,-6,2
+15,Ohio State,48,Utah,45,-4.5,-4,-3
+15,Ole Miss,7,Baylor,21,-1,3,14
+15,Florida,17,UCF,29,-7,-7.5,12
+15,Tulsa,30,Old Dominion,17,-7.5,-7.5,-13
+15,Coastal Carolina,47,Northern Illinois,41,-11,-15,-6
+15,Appalachian State,38,Western Kentucky,59,-3,-7,21
+15,Fresno State,31,UTEP,24,-11.5,-14,-7
+15,BYU,28,UAB,31,-7,-8.5,3
+15,Liberty,56,Eastern Michigan,20,-9.5,-10.5,-36
+15,Oregon State,13,Utah State,24,-7,-9.5,11
+15,Alabama,18,Georgia,33,3,5,15
+15,Marshall,21,Louisiana,36,4,6.5,15
+15,Miami (OH),27,North Texas,14,-2,-7,-13
+15,South Carolina,38,North Carolina,21,12.5,15,-17
+15,Purdue,48,Tennessee,45,8,6,-3
+15,Michigan State,31,Pittsburgh,21,-3.5,5,-10
+15,Louisville,28,Air Force,31,1,4.5,3
+15,Texas Tech,34,Mississippi State,7,10,14,-27
+15,Arizona State,13,Wisconsin,20,8.5,6,7
+15,Minnesota,18,West Virginia,6,-5,-7,-12
+15,Wyoming,52,Kent State,38,-3,-2.5,-14
+15,San Diego State,38,UT San Antonio,24,-3,8,-14
+15,Virginia Tech,10,Maryland,54,4,-5,44
+15,Iowa State,13,Clemson,20,1.5,-1,7
+15,Army,24,Missouri,22,-7,-10,-2
+15,Oklahoma,47,Oregon,32,-7,-9,-15
+15,Auburn,13,Houston,17,-2,6,4
+15,Nevada,24,Western Michigan,52,7,-7,28
+15,Toledo,24,Middle Tennessee,31,-10,-8.5,7
+15,Ball State,20,Georgia State,51,6,6,31
+15,Kansas State,42,LSU,20,-9.5,-4,-22
