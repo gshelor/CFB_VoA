@@ -173,19 +173,24 @@ fcs_margin_projection <- function(away, home, neutral) {
 ### coefficients for calculating win probability aren't just random long decimal numbers, I fit a model using lm() to Bill Connelly's projected win probs and just took them out and wrote them into this script instead of just fitting that model over and over every week
 ### it's a lazy way of "calculating" win prob but it works well enough for my purposes
 ### I wanted to fit a stan model but that didn't work so I'm trying a beta regression model with betareg to do something different, see how it goes
-SP_WPdata <- read_csv(here("Data", "SP_Projections", "All_SP.csv")) |>
-  separate(col = "Game", into = c("away_team", "home_team"), sep = " at ") |>
-  drop_na(away_team, home_team) |>
-  filter(home_team == Proj_winner | away_team == Proj_winner) |>
-  mutate(away_WP_pct = case_when(Proj_winner == away_team ~ WP_pct,
-                                 TRUE ~ 1 - WP_pct),
-         Proj_Margin = case_when(Proj_winner == away_team ~ Proj_margin,
-                                 TRUE ~ -1 * Proj_margin))
+# SP_WPdata <- read_csv(here("Data", "SP_Projections", "All_SP.csv")) |>
+#   separate(col = "Game", into = c("away_team", "home_team"), sep = " at ") |>
+#   drop_na(away_team, home_team) |>
+#   filter(home_team == Proj_winner | away_team == Proj_winner) |>
+#   mutate(away_WP_pct = case_when(Proj_winner == away_team ~ WP_pct,
+#                                  TRUE ~ 1 - WP_pct),
+#          Proj_Margin = case_when(Proj_winner == away_team ~ Proj_margin,
+#                                  TRUE ~ -1 * Proj_margin))
+# 
+# ### fitting betareg model
+# set.seed(802)
+# WP_betareg <- betareg(away_WP_pct ~ Proj_Margin, data = SP_WPdata)
 
-### fitting betareg model
-WP_betareg <- betareg(away_WP_pct ~ Proj_Margin, data = SP_WPdata)
-
+### since the model's already fit, I'm just saving it as an RDS file so I don't have to fit it each and every week
+# saveRDS(WP_betareg, here("Data", "SP_Projections", "WP_betareg.rds"))
+WP_betareg <- read_rds(here("Data", "SP_Projections", "WP_betareg.rds"))
 summary(WP_betareg)
+
 
 if (as.numeric(upcoming) == 1){
   ### adding projected winner, projected win margin, and win probability

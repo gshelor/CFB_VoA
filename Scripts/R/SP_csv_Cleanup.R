@@ -1,4 +1,4 @@
-## This script is designed to read in Bill Connelly's SP+ csvs, select the game, winner, 
+### This script is designed to read in Bill Connelly's SP+ csvs, select the game, winner, 
 # margin and win probability columns, string together each week's csv into 1 data frame,
 # export data frame as csv, and read in that csv in the VoP script to derive a
 # VoA-based Win Probability metric based on Vortex of Projection's projected margin for
@@ -42,11 +42,43 @@ week12_sp <- read_csv(here("Data", "SP_Projections", "2022SPWeek12FBS.csv")) |>
   select(Game, Proj_winner, Proj_margin, Win_prob)
 week13_sp <- read_csv(here("Data", "SP_Projections", "2022SPWeek13FBS.csv")) |>
   select(Game, Proj_winner, Proj_margin, Win_prob)
-# week14_sp <- read_csv(here("Data", "SP_Projections", "2022SPWeek14FBS.csv")) |>select(Game, Proj_winner, Proj_margin, Win_prob)
 week15_sp <- read_csv(here("Data", "SP_Projections", "2022SPWeek15FBS.csv")) |>
   select(Game, Proj_winner, Proj_margin, Win_prob)
-# week16_sp <- read_csv(here("Data", "SP_Projections", "2022SPWeek16FBS.csv")) |>select(Game, Proj_winner, Proj_margin, Win_prob)
 week12023_sp <- read_csv(here("Data", "SP_Projections", "2023SPWeek1FBS.csv")) |>
+  select(Game, Proj_winner, Proj_margin, Win_prob)
+week02024_sp <- read_csv(here("Data", "SP_Projections", "2024SPWeek0FBS.csv")) |>
+  select(Game, Proj_winner, Proj_margin, Win_prob)
+week12024_sp <- read_csv(here("Data", "SP_Projections", "2024SPWeek1FBS.csv")) |>
+  select(Game, Proj_winner, Proj_margin, Win_prob)
+week22024_sp <- read_csv(here("Data", "SP_Projections", "2024SPWeek2FBS.csv")) |>
+  select(Game, Proj_winner, Proj_margin, Win_prob)
+week32024_sp <- read_csv(here("Data", "SP_Projections", "2024SPWeek3FBS.csv")) |>
+  select(Game, Proj_winner, Proj_margin, Win_prob)
+week42024_sp <- read_csv(here("Data", "SP_Projections", "2024SPWeek4FBS.csv")) |>
+  select(Game, Proj_winner, Proj_margin, Win_prob)
+week52024_sp <- read_csv(here("Data", "SP_Projections", "2024SPWeek5FBS.csv")) |>
+  select(Game, Proj_winner, Proj_margin, Win_prob)
+week62024_sp <- read_csv(here("Data", "SP_Projections", "2024SPWeek6FBS.csv")) |>
+  select(Game, Proj_winner, Proj_margin, Win_prob)
+week72024_sp <- read_csv(here("Data", "SP_Projections", "2024SPWeek7FBS.csv")) |>
+  select(Game, Proj_winner, Proj_margin, Win_prob)
+week82024_sp <- read_csv(here("Data", "SP_Projections", "2024SPWeek8FBS.csv")) |>
+  select(Game, Proj_winner, Proj_margin, Win_prob)
+week92024_sp <- read_csv(here("Data", "SP_Projections", "2024SPWeek9FBS.csv")) |>
+  select(Game, Proj_winner, Proj_margin, Win_prob)
+week102024_sp <- read_csv(here("Data", "SP_Projections", "2024SPWeek10FBS.csv")) |>
+  select(Game, Proj_winner, Proj_margin, Win_prob)
+week112024_sp <- read_csv(here("Data", "SP_Projections", "2024SPWeek11FBS.csv")) |>
+  select(Game, Proj_winner, Proj_margin, Win_prob)
+week122024_sp <- read_csv(here("Data", "SP_Projections", "2024SPWeek12FBS.csv")) |>
+  select(Game, Proj_winner, Proj_margin, Win_prob)
+week132024_sp <- read_csv(here("Data", "SP_Projections", "2024SPWeek13FBS.csv")) |>
+  select(Game, Proj_winner, Proj_margin, Win_prob)
+week142024_sp <- read_csv(here("Data", "SP_Projections", "2024SPWeek14FBS.csv")) |>
+  select(Game, Proj_winner, Proj_margin, Win_prob)
+week152024_sp <- read_csv(here("Data", "SP_Projections", "2024SPWeek15FBS.csv")) |>
+  select(Game, Proj_winner, Proj_margin, Win_prob)
+Bowls2024_sp <- read_csv(here("Data", "SP_Projections", "2024SPBowlPicksFBS.csv")) |>
   select(Game, Proj_winner, Proj_margin, Win_prob)
 
 ## combining weekly SP+ data frames to get one df of games and SP+ proj margins and win probabilities
@@ -62,10 +94,25 @@ all_sp <- rbind(all_sp, week10_sp)
 all_sp <- rbind(all_sp, week11_sp)
 all_sp <- rbind(all_sp, week12_sp)
 all_sp <- rbind(all_sp, week13_sp)
-# all_sp <- rbind(all_sp, week14_sp)
 all_sp <- rbind(all_sp, week15_sp)
-# all_sp <- rbind(all_sp, week16_sp)
 all_sp <- rbind(all_sp, week12023_sp)
+all_sp <- rbind(all_sp, week02024_sp)
+all_sp <- rbind(all_sp, week12024_sp)
+all_sp <- rbind(all_sp, week22024_sp)
+all_sp <- rbind(all_sp, week32024_sp)
+all_sp <- rbind(all_sp, week42024_sp)
+all_sp <- rbind(all_sp, week52024_sp)
+all_sp <- rbind(all_sp, week62024_sp)
+all_sp <- rbind(all_sp, week72024_sp)
+all_sp <- rbind(all_sp, week82024_sp)
+all_sp <- rbind(all_sp, week92024_sp)
+all_sp <- rbind(all_sp, week102024_sp)
+all_sp <- rbind(all_sp, week112024_sp)
+all_sp <- rbind(all_sp, week122024_sp)
+all_sp <- rbind(all_sp, week132024_sp)
+all_sp <- rbind(all_sp, week142024_sp)
+all_sp <- rbind(all_sp, week152024_sp)
+all_sp <- rbind(all_sp, Bowls2024_sp)
 
 ## removing nas
 all_sp <- all_sp |>
@@ -78,59 +125,5 @@ all_sp$Win_prob <- as.numeric(all_sp$Win_prob)
 all_sp <- all_sp |>
   mutate(WP_pct = Win_prob / 100)
 
-
-## win probability plot
-WP_plot <- ggplot(all_sp, aes(x = Proj_margin, y = Win_prob)) +
-  geom_point(size = 2) +
-  geom_smooth() +
-  stat_regline_equation(label.y = 90, aes(label = ..eq.label..)) +
-  stat_regline_equation(label.y = 80, aes(label = ..rr.label..))
-WP_plot
-
-## trying to match Bill Connelly's WP numbers
-## win probability linear model
-WP_model <- lm(Win_prob ~ Proj_margin, data = all_sp)
-# summary(WP_model)
-## adding WP predictions to all_sp
-all_sp <- all_sp |> mutate(WP_predict = predict(WP_model))
-
-## quadratic WP model
-## adding square of Bill Connelly's projected margin to all_sp
-all_sp <- all_sp |> mutate(Proj_margin_sqr = Proj_margin^2, .before = 4)
-
-WP_model_squares <- lm(Win_prob ~ Proj_margin + Proj_margin_sqr, data = all_sp)
-## adding WP predictions to all_sp
-all_sp <- all_sp |> mutate(WP_predict_sqrs = predict(WP_model_squares))
-
-## win probability plot
-WP_plot_sqrs <- ggplot(all_sp, aes(x = Proj_margin_sqr, y = Win_prob)) +
-  geom_point(size = 2) +
-  geom_smooth() +
-  stat_regline_equation(label.x = 2500, label.y = 70, aes(label = ..eq.label..)) +
-  stat_regline_equation(label.x = 2500, label.y = 60, aes(label = ..rr.label..))
-WP_plot_sqrs
-
-## creating error metrics
-errors <- c(mae(all_sp$Win_prob, all_sp$WP_predict), mae(all_sp$Win_prob, all_sp$WP_predict_sqrs),
-            rmse(all_sp$Win_prob, all_sp$WP_predict), rmse(all_sp$Win_prob, all_sp$WP_predict_sqrs))
-errors
-
-## adding individual error column to all_sp
-all_sp <- all_sp |> mutate(WP_predict_ae = ae(Win_prob, WP_predict),
-                           WP_predict_se = se(Win_prob, WP_predict),
-                           WP_predict_sqrs_ae = ae(Win_prob, WP_predict_sqrs),
-                           WP_predict_sqrs_se = se(Win_prob, WP_predict_sqrs))
-
-## plotting WP_predict_sqrs against Bill Connelly's Win_prob
-WP_comparison <- ggplot(all_sp, aes(x = WP_predict_sqrs, y = Win_prob)) +
-  geom_point(size = 2) +
-  geom_smooth() +
-  stat_regline_equation(label.y = 90, aes(label = ..eq.label..)) +
-  stat_regline_equation(label.y = 80, aes(label = ..rr.label..))
-WP_comparison
-
 ## exporting all_sp as csv
 write_csv(all_sp, here("Data", "SP_Projections", "All_SP.csv"))
-
-## storing coefficients in data frame so they can be referenced in VoP script
-coefficients <- data.frame(WP_model_squares$coefficients)
