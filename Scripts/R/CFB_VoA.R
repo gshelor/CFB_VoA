@@ -7173,3 +7173,28 @@ ggsave(Output_Rating_Plot_filename, path = output_dir, width = 50, height = 40, 
 end_time <- Sys.time()
 end_time - start_time
 
+Poopypants <- read_csv(here("Data", "VoA2024", "2024Week16_VoA.csv"))
+covars <- Poopypants |>
+  filter(Rank_Def_Open_Field_Yds <= quantile(Rank_Def_Open_Field_Yds, 0.7)) |>
+  select(off_success_rate, adj_off_ppa, adj_off_explosiveness, adj_off_ypp, third_conv_rate, off_plays_pg)
+covars_y <- Poopypants |>
+  filter(Rank_Def_Open_Field_Yds <= quantile(Rank_Def_Open_Field_Yds, 0.7)) |>
+  select(adj_off_ppg)
+test <- Poopypants |>
+  filter(Rank_Def_Open_Field_Yds > quantile(Rank_Def_Open_Field_Yds, 0.7)) |>
+  select(off_success_rate, adj_off_ppa, adj_off_explosiveness, adj_off_ypp, third_conv_rate, off_plays_pg, adj_off_ppg)
+
+library(randomForest)
+library(treeshap)
+
+RF <- randomForest(x = covars, y = covars_y$adj_off_ppg, mtry = 2, ntree = 500)
+
+UnifiedRF <- unify(RF, data = covars)
+
+set.seed(802)
+starttime <- Sys.time()
+Treeshap_test1 <- treeshap(UnifiedRF, x = test)
+endtime <- Sys.time()
+endtime - starttime
+
+test1_shaps <- Treeshap_test1$shaps
