@@ -248,7 +248,8 @@ Adv_Stats_PY3 <- Adv_Stats_PY3 |> mutate_if(is.integer,as.numeric)
 ### computing means of each column and assigning them to FCS teams
 ### I, uh, don't know how to add a row and set all the variable values as the means of the rest of the column
 FCS_Adv_Stats_PY3 <- Adv_Stats_PY3 |>
-  filter(team %in% sample_team_names[1:length(PY3Teams)]) |>
+  head(length(PY3Teams)) |>
+  # filter(team %in% sample_team_names[1:length(PY3Teams)]) #|>
   arrange(team) |>
   # mutate(team_keep = case_when(team == 'Akron' ~ 'Sam Houston State',
   #                              team == 'Ball State' ~ 'Delaware',
@@ -256,7 +257,7 @@ FCS_Adv_Stats_PY3 <- Adv_Stats_PY3 |>
   #                              team == 'Toledo' ~ 'Kennesaw State',
   #                              team == 'Wyoming' ~ 'Missouri State',
   #                              TRUE ~ team), .before = 1) |>
-  select(team_keep, off_ppa, off_success_rate, off_explosiveness, off_power_success,
+  select(team, off_ppa, off_success_rate, off_explosiveness, off_power_success,
          off_stuff_rate, off_line_yds, off_second_lvl_yds, off_open_field_yds,
          off_pts_per_opp, off_field_pos_avg_predicted_points, off_havoc_total, 
          off_havoc_front_seven, off_havoc_db, off_standard_downs_ppa,
@@ -294,15 +295,39 @@ FCS_recruit_PY3 <- cfbd_recruiting_team(year = 2022) |>
   select(team, points) |>
   filter(team %in% PY3Teams)
 
+### if some teams aren't in the recruiting info, this is hopefully a fix for that
+if (nrow(FCS_recruit_PY3) != length(PY3Teams)){
+  Recruiting_PY3 <- cfbd_recruiting_team(year = (old_season - 2)) |>
+    select(team, points) #|>
+    # filter(team %in% PrevYear3VoA$team)
+  MissingTeams <- Recruiting_PY3 |>
+    head(length(PY3Teams) - nrow(FCS_recruit_PY3))
+  MissingTeams$team <- PY3Teams[which(PY3Teams %nin% FCS_recruit_PY3$team)]
+  MissingTeams$points <- quantile(Recruiting_PY3$points, probs = 0.01)
+  FCS_recruit_PY3 <- rbind(FCS_recruit_PY3, MissingTeams)
+}
+
 FCS_recruit_PY3[,2] <- FCS_recruit_PY3[,2] |> mutate_if(is.character, as.numeric)
 colnames(FCS_recruit_PY3) <- c("team", "recruit_pts_PY3")
 
 ## pulling in talent rankings
 FCS_talent_df_PY3 <- cfbd_team_talent(year = 2022) |>
-  filter(school %in% PY3Teams | school == "Jacksonville") |>
-  mutate(team = case_when(school == 'Jacksonville' ~ 'Jacksonville State',
-                          TRUE ~ school)) |>
+  filter(team %in% PY3Teams) |> # | team == "Jacksonville") |>
+  # mutate(team = case_when(team == 'Jacksonville' ~ 'Jacksonville State',
+  #                         TRUE ~ team)) |>
   select(team, talent)
+
+### if some teams aren't in the talent info, this is hopefully a somewhat reasonable fix for that
+if (nrow(FCS_talent_df_PY3) != length(PY3Teams)){
+  Talent_PY3 <- cfbd_team_talent(year = (old_season - 2)) |>
+    select(team, talent) #|>
+  # filter(team %in% PrevYear3VoA$team)
+  MissingTeams <- Talent_PY3 |>
+    head(length(PY3Teams) - nrow(FCS_talent_df_PY3))
+  MissingTeams$team <- PY3Teams[which(PY3Teams %nin% FCS_talent_df_PY3$team)]
+  MissingTeams$talent <- quantile(Talent_PY3$talent, probs = 0.1)
+  FCS_talent_df_PY3 <- rbind(FCS_talent_df_PY3, MissingTeams)
+}
 colnames(FCS_talent_df_PY3) <- c("team", "talent_PY3")
 
 ##### PY3 PBP stuff #####
@@ -427,7 +452,7 @@ ThirdDownDef_PY3 <- read_csv(here("Data", "FCSPrevYears", "FCSThirdDownDef2022.c
                           Team == 'Delaware (CAA)' ~ 'Delaware',
                           Team == 'Missouri St. (MVFC)' ~ 'Missouri State',
                           TRUE ~ Team), .before = 2) |>
-  filter(team == "Sam Houston State" | team == "Delaware" | team == "Jacksonville State" | team == "Kennesaw State")
+  filter(team %in% PY3Teams)
 ThirdDownDef_PY3_colnames <- c("del", "team", "team_del", "gms", "wl", "third_atts", "third_convs", "def_third_conv_rate_PY3")
 # ThirdDownDef_PY3[,3:ncol(ThirdDownDef_PY3)] <- ThirdDownDef_PY3[,3:ncol(ThirdDownDef_PY3)] |> mutate_if(is.character, as.numeric)
 colnames(ThirdDownDef_PY3) <- ThirdDownDef_PY3_colnames
@@ -677,7 +702,8 @@ Adv_Stats_PY2 <- Adv_Stats_PY2 |> mutate_if(is.integer,as.numeric)
 
 
 FCS_Adv_Stats_PY2 <- Adv_Stats_PY2 |>
-  filter(team %in% sample_team_names[1:length(PY2Teams)]) |>
+  head(length(PY2Teams)) |>
+  # filter(team %in% sample_team_names[1:length(PY2Teams)]) |>
   # mutate(team_keep = case_when(team == 'Akron' ~ 'Missouri State',
   #                              team == 'Rice' ~ 'Delaware',
   #                              team == 'Toledo' ~ 'Kennesaw State',
@@ -723,16 +749,41 @@ colnames(FCS_Adv_Stats_PY2) <- c("team", "off_ppa_PY2", "off_success_rate_PY2", 
 FCS_recruit_PY2 <- cfbd_recruiting_team(year = 2023) |>
   select(team, points) |>
   filter(team %in% PY2Teams)
+
+### if some teams aren't in the recruiting info, this is hopefully a fix for that
+if (nrow(FCS_recruit_PY2) != length(PY2Teams)){
+  Recruiting_PY2 <- cfbd_recruiting_team(year = (old_season - 1)) |>
+    select(team, points) #|>
+  # filter(team %in% PrevYear3VoA$team)
+  MissingTeams <- Recruiting_PY2 |>
+    head(length(PY2Teams) - nrow(FCS_recruit_PY2))
+  MissingTeams$team <- PY2Teams[which(PY2Teams %nin% FCS_recruit_PY2$team)]
+  MissingTeams$points <- quantile(Recruiting_PY2$points, probs = 0.01)
+  FCS_recruit_PY2 <- rbind(FCS_recruit_PY2, MissingTeams)
+}
 ## making recruiting points value numeric
 FCS_recruit_PY2[,2] <- FCS_recruit_PY2[,2] |> mutate_if(is.character, as.numeric)
 colnames(FCS_recruit_PY2) <- c("team", "recruit_pts_PY2")
 
 ### pulling in talent rankings
 FCS_talent_df_PY2 <- cfbd_team_talent(year = 2023) |>
-  filter(school %in% PY2Teams) |>
-  mutate(team = case_when(school == 'Jacksonville' ~ 'Jacksonville State',
-                          TRUE ~ school)) |>
+  filter(team %in% PY2Teams) |>
+  mutate(team = case_when(team == 'Jacksonville' ~ 'Jacksonville State',
+                          TRUE ~ team)) |>
   select(team, talent)
+
+### if some teams aren't in the talent info, this is hopefully a somewhat reasonable fix for that
+if (nrow(FCS_talent_df_PY2) != length(PY2Teams)){
+  Talent_PY2 <- cfbd_team_talent(year = (old_season - 1)) |>
+    select(team, talent) #|>
+  # filter(team %in% PrevYear3VoA$team)
+  MissingTeams <- Talent_PY2 |>
+    head(length(PY2Teams) - nrow(FCS_talent_df_PY2))
+  MissingTeams$team <- PY2Teams[which(PY2Teams %nin% FCS_talent_df_PY2$team)]
+  MissingTeams$talent <- quantile(Talent_PY2$talent, probs = 0.1)
+  FCS_talent_df_PY2 <- rbind(FCS_talent_df_PY2, MissingTeams)
+}
+
 colnames(FCS_talent_df_PY2) <- c("team", "talent_PY2")
 
 ##### PY2 PBP stuff #####
@@ -1053,7 +1104,7 @@ Turnovers_df_PY1 <- Turnovers_df_PY1 |>
 
 ## bringing in advanced stats for G5 and non-Notre Dame Indy teams
 Adv_Stats_PY1 <- cfbd_stats_season_advanced(2024, excl_garbage_time = FALSE, start_week = 1, end_week = 15) |>
-  filter(team %in% PrevYearVoA) |>
+  filter(team %in% PrevYearVoA$team) |>
   # filter(team != "Notre Dame") |>
   # filter(team != "Kennesaw State") |>
   select(-one_of("season", "conference")) |>
@@ -1083,7 +1134,8 @@ Adv_Stats_PY1 <- Adv_Stats_PY1 |> mutate_if(is.integer,as.numeric)
 ## computing means of each column and assigning them to the FCS teams
 ## I, uh, don't know how to add a row and set all the variable values as the means of the rest of the column
 FCS_Adv_Stats_PY1 <- Adv_Stats_PY1 |>
-  filter(team %in% sample_team_names[1:length(PY1Teams)]) |>
+  head(length(PY1Teams)) |>
+  # filter(team %in% sample_team_names[1:length(PY1Teams)]) |>
   # mutate(team_keep = case_when(team == 'Toledo' ~ 'Kennesaw State',
   #                              TRUE ~ team), .before = 1) |>
   select(team, off_ppa, off_success_rate, off_explosiveness, off_power_success,
@@ -1123,6 +1175,19 @@ colnames(FCS_Adv_Stats_PY1) <- c("team", "off_ppa_PY1", "off_success_rate_PY1", 
 FCS_recruit_PY1 <- cfbd_recruiting_team(year = 2024) |>
   select(team, points) |>
   filter(team %in% PY1Teams)
+
+### if some teams aren't in the recruiting info, this is hopefully a fix for that
+if (nrow(FCS_recruit_PY1) != length(PY1Teams)){
+  Recruiting_PY1 <- cfbd_recruiting_team(year = old_season) |>
+    select(team, points) #|>
+  # filter(team %in% PrevYear3VoA$team)
+  MissingTeams <- Recruiting_PY1 |>
+    head(length(PY1Teams) - nrow(FCS_recruit_PY1))
+  MissingTeams$team <- PY1Teams[which(PY1Teams %nin% FCS_recruit_PY1$team)]
+  MissingTeams$points <- quantile(Recruiting_PY1$points, probs = 0.01)
+  FCS_recruit_PY1 <- rbind(FCS_recruit_PY1, MissingTeams)
+}
+
 ## making recruiting points value numeric
 FCS_recruit_PY1[,2] <- FCS_recruit_PY1[,2] |> mutate_if(is.character, as.numeric)
 ## changing column names
@@ -1130,8 +1195,20 @@ colnames(FCS_recruit_PY1) <- c("team", "recruit_pts_PY1")
 
 ## pulling in talent rankings
 FCS_talent_df_PY1 <- cfbd_team_talent(year = 2024) |>
-  filter(school %in% PY1Teams) |>
-  select(school, talent)
+  filter(team %in% PY1Teams) |>
+  select(team, talent)
+
+### if some teams aren't in the talent info, this is hopefully a somewhat reasonable fix for that
+if (nrow(FCS_talent_df_PY1) != length(PY1Teams)){
+  Talent_PY1 <- cfbd_team_talent(year = (old_season - 2)) |>
+    select(team, talent) #|>
+  # filter(team %in% PrevYear3VoA$team)
+  MissingTeams <- Talent_PY1 |>
+    head(length(PY1Teams) - nrow(FCS_talent_df_PY1))
+  MissingTeams$team <- PY1Teams[which(PY1Teams %nin% FCS_talent_df_PY1$team)]
+  MissingTeams$talent <- quantile(Talent_PY1$talent, probs = 0.1)
+  FCS_talent_df_PY1 <- rbind(FCS_talent_df_PY1, MissingTeams)
+}
 colnames(FCS_talent_df_PY1) <- c("team", "talent_PY1")
 
 ##### PY1 PBP stuff #####
@@ -1307,8 +1384,8 @@ FCS_PY1[is.na(FCS_PY1)] = 0
 
 ##### Writing FCS csvs #####
 ### creating directory
-if (dir.exists(here("Data", paste0("VoA", old_season + 1), "FCSPrevYears")) == FALSE){
-  dir.create(here("Data", paste0("VoA", old_season + 1), "FCSPrevYears"))
+if (dir.exists(here("Data", paste0("VoA", old_season + 1),"FCSPrevYears")) == FALSE){
+  dir.create(here("Data", paste0("VoA", old_season + 1), "FCSPrevYears"), recursive = TRUE)
 }
 write_csv(FCS_PY3, here("Data", paste0("VoA", old_season + 1), "FCSPrevYears", "FCS_PY3.csv"))
 write_csv(FCS_PY2, here("Data", paste0("VoA", old_season + 1), "FCSPrevYears", "FCS_PY2.csv"))
