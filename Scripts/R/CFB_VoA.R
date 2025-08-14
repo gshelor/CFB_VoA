@@ -1,4 +1,4 @@
-##### The Vortex of Accuracy, Version 5.0.1 #####
+##### The Vortex of Accuracy, Version 5.1.0 #####
 ### Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy
 ### Created by Griffin Shelor
 ### installing packages
@@ -18,6 +18,10 @@ week <- readline(prompt = "What week just occurred? ")
 `%nin%` = Negate(`%in%`)
 output_dir <- here("Outputs", "RVoA", paste0("VoA", year))
 data_dir <- here("Data", paste0("VoA", year))
+tracking_chart_dir <- here("Data", paste0("VoA", year), "TrackingChartCSVs")
+accuracy_data_dir <- here("Data", paste0("VoA", year), "AccuracyMetrics")
+PY_data_dir <- here("Data", paste0("VoA", year), "PYData")
+Projection_data_dir <- here("Data", paste0("VoA", year), "Projections")
 preseason_text <- "Preseason"
 resume_text <- "Resume"
 VoAString <- "VoA.csv"
@@ -84,7 +88,7 @@ Output_Rating_Plot_filename <- paste(year, week_text, week, "_", Output_Rating_P
 ### creating string for csv spreadsheet pathway
 file_pathway <- paste0(data_dir, "/", year, week_text, week,"_", VoAString)
 ### creating directories that don't exist
-for (i in c(data_dir, output_dir, here("Data", paste0("VoA", year), "TrackingChartCSVs"))){
+for (i in c(data_dir, output_dir, tracking_chart_dir, Projection_data_dir, PY_data_dir, accuracy_data_dir)){
   if (dir.exists(i) == FALSE){
     dir.create(i, recursive = TRUE)
   }
@@ -107,21 +111,21 @@ if (as.numeric(week) == 0) {
   FCS_PY1 <- read_csv(here("Data", paste0("VoA", year), "FCSPrevYears", "FCS_PY1.csv"))
   
   ### pulling in completed games as part of opponent-adjustment of stats later
-  CompletedFBSGames_PY3 <- cfbd_game_info(as.numeric(year) - 3) #|>
+  CompletedFBSGames_PY3 <- cfbd_game_info(as.numeric(year) - 3) |>
     filter(completed == TRUE) |>
-    filter(home_division == "fbs" & away_division == "fbs" | home_team %in% PY3Teams | away_team %in% PY3Teams)
+    filter(home_classification == "fbs" & away_classification == "fbs" | home_team %in% PY3Teams | away_team %in% PY3Teams)
   CompletedNeutralGames_PY3 <- CompletedFBSGames_PY3 |>
     filter(neutral_site == TRUE)
   ### PY2 completed games
   CompletedFBSGames_PY2 <- cfbd_game_info(as.numeric(year) - 2) |>
     filter(completed == TRUE) |>
-    filter(home_division == "fbs" & away_division == "fbs" | home_team %in% PY2Teams | away_team %in% PY2Teams)
+    filter(home_classification == "fbs" & away_classification == "fbs" | home_team %in% PY2Teams | away_team %in% PY2Teams)
   CompletedNeutralGames_PY2 <- CompletedFBSGames_PY2 |>
     filter(neutral_site == TRUE)
   ### PY1 completed games
   CompletedFBSGames_PY1 <- cfbd_game_info(as.numeric(year) - 1) |>
     filter(completed == TRUE) |>
-    filter(home_division == "fbs" & away_division == "fbs" | home_team %in% PY1Teams | away_team %in% PY1Teams)
+    filter(home_classification == "fbs" & away_classification == "fbs" | home_team %in% PY1Teams | away_team %in% PY1Teams)
   CompletedNeutralGames_PY1 <- CompletedFBSGames_PY1 |>
     filter(neutral_site == TRUE)
   
@@ -223,10 +227,10 @@ if (as.numeric(week) == 0) {
                                      TRUE ~ def_pos_team),
            real_def_pos_team = case_when(play_type %in% c("Field Goal Good", "Field Goal Missed", "Kickoff Return Touchdown", "Kickoff Return (Offense)", "Kickoff") | pos_score_pts == 7 ~ def_pos_team,
                                          TRUE ~ pos_team),
-           home_neutral = case_when(game_id %in% CompletedNeutralGames$game_id ~ "Neutral",
+           home_neutral = case_when(game_id %in% CompletedNeutralGames_PY3$game_id ~ "Neutral",
                                     TRUE ~ "Home"))
   
-  PBP_STPPA_Adjustment_PY3 <- PBP_PY3_STPlays |>
+  PBP_STPPA_Adjustment_PY3 <- PBP_STPlays_PY3 |>
     select(game_id, home, real_pos_team, real_def_pos_team, ppa, home_neutral) |>
     mutate(hfa = as.factor(case_when(home_neutral == "Neutral" ~ 0,
                                      ### home team on offense
@@ -327,10 +331,10 @@ if (as.numeric(week) == 0) {
                                      TRUE ~ def_pos_team),
            real_def_pos_team = case_when(play_type %in% c("Field Goal Good", "Field Goal Missed", "Kickoff Return Touchdown", "Kickoff Return (Offense)", "Kickoff") | pos_score_pts == 7 ~ def_pos_team,
                                          TRUE ~ pos_team),
-           home_neutral = case_when(game_id %in% CompletedNeutralGames$game_id ~ "Neutral",
+           home_neutral = case_when(game_id %in% CompletedNeutralGames_PY2$game_id ~ "Neutral",
                                     TRUE ~ "Home"))
   
-  PBP_STPPA_Adjustment_PY2 <- PBP_PY2_STPlays |>
+  PBP_STPPA_Adjustment_PY2 <- PBP_STPlays_PY2 |>
     select(game_id, home, real_pos_team, real_def_pos_team, ppa, home_neutral) |>
     mutate(hfa = as.factor(case_when(home_neutral == "Neutral" ~ 0,
                                      ### home team on offense
@@ -431,10 +435,10 @@ if (as.numeric(week) == 0) {
                                      TRUE ~ def_pos_team),
            real_def_pos_team = case_when(play_type %in% c("Field Goal Good", "Field Goal Missed", "Kickoff Return Touchdown", "Kickoff Return (Offense)", "Kickoff") | pos_score_pts == 7 ~ def_pos_team,
                                          TRUE ~ pos_team),
-           home_neutral = case_when(game_id %in% CompletedNeutralGames$game_id ~ "Neutral",
+           home_neutral = case_when(game_id %in% CompletedNeutralGames_PY1$game_id ~ "Neutral",
                                     TRUE ~ "Home"))
   
-  PBP_STPPA_Adjustment_PY1 <- PBP_PY1_STPlays |>
+  PBP_STPPA_Adjustment_PY1 <- PBP_STPlays_PY1 |>
     select(game_id, home, real_pos_team, real_def_pos_team, ppa, home_neutral) |>
     mutate(hfa = as.factor(case_when(home_neutral == "Neutral" ~ 0,
                                      ### home team on offense
@@ -732,7 +736,7 @@ if (as.numeric(week) == 0) {
   ### pulling in completed games as part of opponent-adjustment of stats later
   CompletedFBSGames <- cfbd_game_info(as.numeric(year)) |>
     filter(completed == TRUE) |>
-    filter(home_division == "fbs" & away_division == "fbs")
+    filter(home_classification == "fbs" & away_classification == "fbs")
   CompletedNeutralGames <- CompletedFBSGames |>
     filter(neutral_site == TRUE)
   
@@ -935,7 +939,7 @@ if (as.numeric(week) == 0) {
   ### pulling in completed games as part of opponent-adjustment of stats later
   CompletedFBSGames <- cfbd_game_info(as.numeric(year)) |>
     filter(completed == TRUE) |>
-    filter(home_division == "fbs" & away_division == "fbs")
+    filter(home_classification == "fbs" & away_classification == "fbs")
   CompletedNeutralGames <- CompletedFBSGames |>
     filter(neutral_site == TRUE)
   
@@ -1134,7 +1138,7 @@ if (as.numeric(week) == 0) {
   ### pulling in completed games as part of opponent-adjustment of stats later
   CompletedFBSGames <- cfbd_game_info(as.numeric(year)) |>
     filter(completed == TRUE) |>
-    filter(home_division == "fbs" & away_division == "fbs")
+    filter(home_classification == "fbs" & away_classification == "fbs")
   CompletedNeutralGames <- CompletedFBSGames |>
     filter(neutral_site == TRUE)
   
@@ -1330,7 +1334,7 @@ if (as.numeric(week) == 0) {
   ### pulling in completed games as part of opponent-adjustment of stats later
   CompletedFBSGames <- cfbd_game_info(as.numeric(year)) |>
     filter(completed == TRUE) |>
-    filter(home_division == "fbs" & away_division == "fbs")
+    filter(home_classification == "fbs" & away_classification == "fbs")
   CompletedNeutralGames <- CompletedFBSGames |>
     filter(neutral_site == TRUE)
   ### Current season Play by play data
@@ -3935,7 +3939,7 @@ if (as.numeric(week) == 0) {
     rename(adj_st_ppa_allowed = ppa) |>
     mutate(net_adj_st_ppa = adj_st_ppa - adj_st_ppa_allowed)
 } else {
-  ##### Week 10-End of Season CURRENT SEASON ONLY DF Merge #####
+  ##### Week 9-End of Season CURRENT SEASON ONLY DF Merge #####
   ## Current Years data frames
   stats_adv_stats_list <- list(Stats, Adv_Stats)
   stats_adv_stats_merge <- stats_adv_stats_list |>
@@ -7053,13 +7057,13 @@ if (as.numeric(week) <= 8) {
   ##### Week 0-8 Stan Models #####
   ### VoA Offensive Rating Model
   ### making list of data to declare what goes into stan model
-  Off_VoA_datalist <- list(N = nrow(VoA_Variables), off_ppg = VoA_Variables$adj_off_ppg, off_ppa = VoA_Variables$weighted_off_ppa, off_ypp = VoA_Variables$weighted_off_ypp, off_success_rate = VoA_Variables$weighted_off_success_rate, off_explosiveness = VoA_Variables$weighted_off_explosiveness, third_conv_rate = VoA_Variables$weighted_third_conv_rate, off_pts_per_opp = VoA_Variables$weighted_off_pts_per_opp, off_plays_pg = VoA_Variables$weighted_off_plays_pg, off_error = VoA_Variables$off_error, VoA_Output = 1/VoA_Variables$VoA_Output, Conference_Strength = 1/VoA_Variables$Conference_Strength)
+  Off_VoA_datalist <- list(N = nrow(VoA_Variables), off_ppg = VoA_Variables$adj_off_ppg, off_ppa = VoA_Variables$weighted_off_ppa, off_ypp = VoA_Variables$weighted_off_ypp, off_success_rate = VoA_Variables$weighted_off_success_rate, off_explosiveness = VoA_Variables$weighted_off_explosiveness, third_conv_rate = VoA_Variables$weighted_third_conv_rate, off_pts_per_opp = VoA_Variables$weighted_off_pts_per_opp, off_plays_pg = VoA_Variables$weighted_off_plays_pg, VoA_Output = 1/VoA_Variables$VoA_Output, Conference_Strength = 1/VoA_Variables$Conference_Strength)
   
   ### compile the stan model
-  Off_VoA_model <- cmdstan_model(stan_file = here("Scripts","Stan", "Off_VoA.stan"))
+  Off_VoA_model <- cmdstan_model(stan_file = here("Scripts", "Stan", "Off_VoA.stan"))
   ### fitting stan model
   set.seed(802)
-  Off_VoA_fit <- Off_VoA_model$sample(data = Off_VoA_datalist, chains = 3, iter_sampling = 10000, iter_warmup = 3000, seed = 802)
+  Off_VoA_fit <- Off_VoA_model$sample(data = Off_VoA_datalist, chains = 3, iter_sampling = 10000, iter_warmup = 5000, seed = 802)
   Off_VoA_fit
   
   ### Print the diagnostics
@@ -7067,7 +7071,7 @@ if (as.numeric(week) <= 8) {
   
   
   ### Extracting Parameters
-  Off_VoA_pars <- Off_VoA_fit$draws(variables = c("b0", "beta_off_ppa", "beta_off_ypp", "beta_off_success_rate", "beta_off_explosiveness", "beta_third_conv_rate", "beta_off_pts_per_opp", "beta_off_plays_pg", "beta_VoA_Output", "beta_Conference_Strength", "sigma"), format = "list")
+  Off_VoA_pars <- Off_VoA_fit$draws(variables = c("b0", "beta_off_ppa", "beta_off_ypp", "beta_off_success_rate", "beta_off_explosiveness", "beta_third_conv_rate", "beta_off_pts_per_opp", "beta_off_plays_pg", "beta_VoA_Output", "beta_Conference_Strength", "sigma"), format = "draws_df")
   
   ### creating matrix to hold ratings
   Off_VoA_Ratings <- matrix(NA, length(Off_VoA_pars$b0), nrow(VoA_Variables))
@@ -7076,7 +7080,7 @@ if (as.numeric(week) <= 8) {
   set.seed(802)
   for (p in 1:length(Off_VoA_pars$b0)){
     for(t in 1:nrow(VoA_Variables)){
-      Off_VoA_Rating <- rnorm(1, mean = Off_VoA_pars$b0[p] + Off_VoA_pars$beta_off_ppa[p] * VoA_Variables$weighted_off_ppa[t] + Off_VoA_pars$beta_off_ypp[p] * VoA_Variables$weighted_off_ypp[t] + Off_VoA_pars$beta_off_success_rate[p] * VoA_Variables$weighted_off_success_rate[t] + Off_VoA_pars$beta_off_explosiveness[p] * VoA_Variables$weighted_off_explosiveness[t] + Off_VoA_pars$beta_third_conv_rate[p] * VoA_Variables$weighted_third_conv_rate[t] + Off_VoA_pars$beta_off_pts_per_opp[p] * VoA_Variables$weighted_off_pts_per_opp[t] + Off_VoA_pars$beta_off_plays_pg[p] * VoA_Variables$weighted_off_plays_pg[t] + Off_VoA_pars$beta_off_error[p] * VoA_Variables$off_error[t] + Off_VoA_pars$beta_VoA_Output[p] * (1/VoA_Variables$VoA_Output[t]) + Off_VoA_pars$beta_Conference_Strength[p] * (1/VoA_Variables$Conference_Strength[t]), sd = Off_VoA_pars$sigma[p])
+      Off_VoA_Rating <- rnorm(1, mean = Off_VoA_pars$b0[p] + Off_VoA_pars$beta_off_ppa[p] * VoA_Variables$weighted_off_ppa[t] + Off_VoA_pars$beta_off_ypp[p] * VoA_Variables$weighted_off_ypp[t] + Off_VoA_pars$beta_off_success_rate[p] * VoA_Variables$weighted_off_success_rate[t] + Off_VoA_pars$beta_off_explosiveness[p] * VoA_Variables$weighted_off_explosiveness[t] + Off_VoA_pars$beta_third_conv_rate[p] * VoA_Variables$weighted_third_conv_rate[t] + Off_VoA_pars$beta_off_pts_per_opp[p] * VoA_Variables$weighted_off_pts_per_opp[t] + Off_VoA_pars$beta_off_plays_pg[p] * VoA_Variables$weighted_off_plays_pg[t] + Off_VoA_pars$beta_VoA_Output[p] * (1/VoA_Variables$VoA_Output[t]) + Off_VoA_pars$beta_Conference_Strength[p] * (1/VoA_Variables$Conference_Strength[t]), sd = Off_VoA_pars$sigma[p])
       Off_VoA_Ratings[p,t] <- Off_VoA_Rating
     }
   }
@@ -7096,13 +7100,13 @@ if (as.numeric(week) <= 8) {
   
   ### VoA Defensive Rating Model
   ### making list of data to declare what goes into stan model
-  Def_VoA_datalist <- list(N = nrow(VoA_Variables), def_ppg = VoA_Variables$adj_def_ppg, def_ppa = VoA_Variables$weighted_def_ppa, def_ypp = VoA_Variables$weighted_def_ypp, def_success_rate = VoA_Variables$weighted_def_success_rate, def_explosiveness = VoA_Variables$weighted_def_explosiveness, def_third_conv_rate = VoA_Variables$weighted_def_third_conv_rate, def_pts_per_opp = VoA_Variables$weighted_def_pts_per_opp, def_havoc_total = VoA_Variables$weighted_def_havoc_total, def_plays_pg = VoA_Variables$weighted_def_plays_pg, def_error = VoA_Variables$def_error, VoA_Output = VoA_Variables$VoA_Output, Conference_Strength = VoA_Variables$Conference_Strength)
+  Def_VoA_datalist <- list(N = nrow(VoA_Variables), def_ppg = VoA_Variables$adj_def_ppg, def_ppa = VoA_Variables$weighted_def_ppa, def_ypp = VoA_Variables$weighted_def_ypp, def_success_rate = VoA_Variables$weighted_def_success_rate, def_explosiveness = VoA_Variables$weighted_def_explosiveness, def_third_conv_rate = VoA_Variables$weighted_def_third_conv_rate, def_pts_per_opp = VoA_Variables$weighted_def_pts_per_opp, def_havoc_total = VoA_Variables$weighted_def_havoc_total, def_plays_pg = VoA_Variables$weighted_def_plays_pg, VoA_Output = VoA_Variables$VoA_Output, Conference_Strength = VoA_Variables$Conference_Strength)
   
   ### compile the stan model
   Def_VoA_model <- cmdstan_model(stan_file = here("Scripts","Stan", "Def_VoA.stan"))
   ### fitting stan model
   set.seed(802)
-  Def_VoA_fit <- Def_VoA_model$sample(data = Def_VoA_datalist, chains = 3, iter_sampling = 10000, iter_warmup = 3000, seed = 802)
+  Def_VoA_fit <- Def_VoA_model$sample(data = Def_VoA_datalist, chains = 3, iter_sampling = 10000, iter_warmup = 5000, seed = 802)
   Def_VoA_fit
   
   ### Print the diagnostics
@@ -7110,7 +7114,7 @@ if (as.numeric(week) <= 8) {
   
   
   ### Extracting Parameters
-  Def_VoA_pars <- Def_VoA_fit$draws(variables = c("b0", "beta_def_ppa", "beta_def_ypp", "beta_def_success_rate", "beta_def_explosiveness", "beta_def_third_conv_rate", "beta_def_pts_per_opp", "beta_def_havoc_total", "beta_def_plays_pg", "beta_def_error", "beta_VoA_Output", "beta_Conference_Strength", "sigma"), format = "list")
+  Def_VoA_pars <- Def_VoA_fit$draws(variables = c("b0", "beta_def_ppa", "beta_def_ypp", "beta_def_success_rate", "beta_def_explosiveness", "beta_def_third_conv_rate", "beta_def_pts_per_opp", "beta_def_havoc_total", "beta_def_plays_pg", "beta_VoA_Output", "beta_Conference_Strength", "sigma"), format = "draws_df")
   
   ### creating matrix to hold ratings
   Def_VoA_Ratings <- matrix(NA, length(Def_VoA_pars$b0), nrow(VoA_Variables))
@@ -7119,7 +7123,7 @@ if (as.numeric(week) <= 8) {
   set.seed(802)
   for (p in 1:length(Def_VoA_pars$b0)){
     for(t in 1:nrow(VoA_Variables)){
-      Def_VoA_Rating <- rnorm(1, mean = Def_VoA_pars$b0[p] + Def_VoA_pars$beta_def_ppa[p] * VoA_Variables$weighted_def_ppa[t] + Def_VoA_pars$beta_def_ypp[p] * VoA_Variables$weighted_def_ypp[t] + Def_VoA_pars$beta_def_success_rate[p] * VoA_Variables$weighted_def_success_rate[t] + Def_VoA_pars$beta_def_explosiveness[p] * VoA_Variables$weighted_def_explosiveness[t] + Def_VoA_pars$beta_def_third_conv_rate[p] * VoA_Variables$weighted_def_third_conv_rate[t] + Def_VoA_pars$beta_def_pts_per_opp[p] * VoA_Variables$weighted_def_pts_per_opp[t] + Def_VoA_pars$beta_def_havoc_total[p] * VoA_Variables$weighted_def_havoc_total[t] + Def_VoA_pars$beta_def_plays_pg[p] * VoA_Variables$weighted_def_plays_pg[t] + Def_VoA_pars$beta_def_error[p] * VoA_Variables + Def_VoA_pars$beta_VoA_Output[p] * VoA_Variables$VoA_Output[t] + Def_VoA_pars$beta_Conference_Strength[p] * VoA_Variables$Conference_Strength[t], sd = Def_VoA_pars$sigma[p])
+      Def_VoA_Rating <- rnorm(1, mean = Def_VoA_pars$b0[p] + Def_VoA_pars$beta_def_ppa[p] * VoA_Variables$weighted_def_ppa[t] + Def_VoA_pars$beta_def_ypp[p] * VoA_Variables$weighted_def_ypp[t] + Def_VoA_pars$beta_def_success_rate[p] * VoA_Variables$weighted_def_success_rate[t] + Def_VoA_pars$beta_def_explosiveness[p] * VoA_Variables$weighted_def_explosiveness[t] + Def_VoA_pars$beta_def_third_conv_rate[p] * VoA_Variables$weighted_def_third_conv_rate[t] + Def_VoA_pars$beta_def_pts_per_opp[p] * VoA_Variables$weighted_def_pts_per_opp[t] + Def_VoA_pars$beta_def_havoc_total[p] * VoA_Variables$weighted_def_havoc_total[t] + Def_VoA_pars$beta_def_plays_pg[p] * VoA_Variables$weighted_def_plays_pg[t] + Def_VoA_pars$beta_VoA_Output[p] * VoA_Variables$VoA_Output[t] + Def_VoA_pars$beta_Conference_Strength[p] * VoA_Variables$Conference_Strength[t], sd = Def_VoA_pars$sigma[p])
       Def_VoA_Ratings[p,t] <- Def_VoA_Rating
     }
   }
@@ -7142,10 +7146,10 @@ if (as.numeric(week) <= 8) {
   ST_VoA_datalist <- list(N = nrow(VoA_Variables), net_st_ppg = VoA_Variables$weighted_net_st_ppg_mean, net_kick_return_avg = VoA_Variables$weighted_net_kick_return_avg, net_punt_return_avg = VoA_Variables$weighted_net_punt_return_avg, net_fg_rate = VoA_Variables$weighted_net_fg_rate, net_st_ppa = VoA_Variables$weighted_net_adj_st_ppa)
   
   ### compile the stan model
-  ST_VoA_model <- cmdstan_model(stan_file = here("Scripts","Stan", "ST_VoA.stan"))
+  ST_VoA_model <- cmdstan_model(stan_file = here("Scripts", "Stan", "ST_VoA.stan"))
   ### fitting special teams stan model
   set.seed(802)
-  ST_VoA_fit <- ST_VoA_model$sample(data = ST_VoA_datalist, chains = 3, iter_sampling = 5000, iter_warmup = 2000, seed = 802)
+  ST_VoA_fit <- ST_VoA_model$sample(data = ST_VoA_datalist, chains = 3, iter_sampling = 5000, iter_warmup = 2500, seed = 802)
   ST_VoA_fit
   
   ### Print the diagnostics
@@ -7180,13 +7184,13 @@ if (as.numeric(week) <= 8) {
   ##### Weeks 9-End of Season Stan Models, current season data only #####
   ### VoA Offensive Rating Model
   ### making list of data to declare what goes into stan model
-  Off_VoA_datalist <- list(N = nrow(VoA_Variables), off_ppg = VoA_Variables$adj_off_ppg, off_ppa = VoA_Variables$adj_off_ppa, off_ypp = VoA_Variables$adj_off_ypp, off_success_rate = VoA_Variables$off_success_rate, off_explosiveness = VoA_Variables$adj_off_explosiveness, third_conv_rate = VoA_Variables$third_conv_rate, off_pts_per_opp = VoA_Variables$off_pts_per_opp, off_plays_pg = VoA_Variables$off_plays_pg, off_error = VoA_Variables$off_error, VoA_Output = 1/VoA_Variables$VoA_Output, Conference_Strength = 1/VoA_Variables$Conference_Strength)
+  Off_VoA_datalist <- list(N = nrow(VoA_Variables), off_ppg = VoA_Variables$adj_off_ppg, off_ppa = VoA_Variables$adj_off_ppa, off_ypp = VoA_Variables$adj_off_ypp, off_success_rate = VoA_Variables$off_success_rate, off_explosiveness = VoA_Variables$adj_off_explosiveness, third_conv_rate = VoA_Variables$third_conv_rate, off_pts_per_opp = VoA_Variables$off_pts_per_opp, off_plays_pg = VoA_Variables$off_plays_pg, VoA_Output = 1/VoA_Variables$VoA_Output, Conference_Strength = 1/VoA_Variables$Conference_Strength)
   
   ### compile the stan model
   Off_VoA_model <- cmdstan_model(stan_file = here("Scripts","Stan", "Off_VoA.stan"))
   ### fitting stan model
   set.seed(802)
-  Off_VoA_fit <- Off_VoA_model$sample(data = Off_VoA_datalist, chains = 3, iter_sampling = 10000, iter_warmup = 3000, seed = 802)
+  Off_VoA_fit <- Off_VoA_model$sample(data = Off_VoA_datalist, chains = 3, iter_sampling = 10000, iter_warmup = 2500, seed = 802)
   Off_VoA_fit
   
   ### Print the diagnostics
@@ -7194,7 +7198,7 @@ if (as.numeric(week) <= 8) {
   
   
   ### Extracting Parameters
-  Off_VoA_pars <- Off_VoA_fit$draws(variables = c("b0", "beta_off_ppa", "beta_off_ypp", "beta_off_success_rate", "beta_off_explosiveness", "beta_third_conv_rate", "beta_off_pts_per_opp", "beta_off_plays_pg", "beta_off_error", "beta_VoA_Output", "beta_Conference_Strength", "sigma"), format = "list")
+  Off_VoA_pars <- Off_VoA_fit$draws(variables = c("b0", "beta_off_ppa", "beta_off_ypp", "beta_off_success_rate", "beta_off_explosiveness", "beta_third_conv_rate", "beta_off_pts_per_opp", "beta_off_plays_pg", "beta_VoA_Output", "beta_Conference_Strength", "sigma"), format = "draws_df")
   
   ### creating matrix to hold ratings
   Off_VoA_Ratings <- matrix(NA, length(Off_VoA_pars$b0), nrow(VoA_Variables))
@@ -7203,7 +7207,7 @@ if (as.numeric(week) <= 8) {
   set.seed(802)
   for (p in 1:length(Off_VoA_pars$b0)){
     for(t in 1:nrow(VoA_Variables)){
-      Off_VoA_Rating <- rnorm(1, mean = Off_VoA_pars$b0[p] + Off_VoA_pars$beta_off_ppa[p] * VoA_Variables$adj_off_ppa[t] + Off_VoA_pars$beta_off_ypp[p] * VoA_Variables$adj_off_ypp[t] + Off_VoA_pars$beta_off_success_rate[p] * VoA_Variables$off_success_rate[t] + Off_VoA_pars$beta_off_explosiveness[p] * VoA_Variables$adj_off_explosiveness[t] + Off_VoA_pars$beta_third_conv_rate[p] * VoA_Variables$third_conv_rate[t] + Off_VoA_pars$beta_off_pts_per_opp[p] * VoA_Variables$off_pts_per_opp[t] + Off_VoA_pars$beta_off_plays_pg[p] * VoA_Variables$off_plays_pg[t] + Off_VoA_pars$beta_off_error[p] * VoA_Variables$off_error[t] + Off_VoA_pars$beta_VoA_Output[p] * (1/VoA_Variables$VoA_Output[t]) + Off_VoA_pars$beta_Conference_Strength[p] * (1/VoA_Variables$Conference_Strength[t]) , sd = Off_VoA_pars$sigma[p])
+      Off_VoA_Rating <- rnorm(1, mean = Off_VoA_pars$b0[p] + Off_VoA_pars$beta_off_ppa[p] * VoA_Variables$adj_off_ppa[t] + Off_VoA_pars$beta_off_ypp[p] * VoA_Variables$adj_off_ypp[t] + Off_VoA_pars$beta_off_success_rate[p] * VoA_Variables$off_success_rate[t] + Off_VoA_pars$beta_off_explosiveness[p] * VoA_Variables$adj_off_explosiveness[t] + Off_VoA_pars$beta_third_conv_rate[p] * VoA_Variables$third_conv_rate[t] + Off_VoA_pars$beta_off_pts_per_opp[p] * VoA_Variables$off_pts_per_opp[t] + Off_VoA_pars$beta_off_plays_pg[p] * VoA_Variables$off_plays_pg[t] + Off_VoA_pars$beta_VoA_Output[p] * (1/VoA_Variables$VoA_Output[t]) + Off_VoA_pars$beta_Conference_Strength[p] * (1/VoA_Variables$Conference_Strength[t]) , sd = Off_VoA_pars$sigma[p])
       Off_VoA_Ratings[p,t] <- Off_VoA_Rating
     }
   }
@@ -7222,20 +7226,20 @@ if (as.numeric(week) <= 8) {
   
   ### VoA Defensive Rating Model
   ### making list of data to declare what goes into stan model
-  Def_VoA_datalist <- list(N = nrow(VoA_Variables), def_ppg = VoA_Variables$adj_def_ppg, def_ppa = VoA_Variables$adj_def_ppa, def_ypp = VoA_Variables$adj_def_ypp, def_success_rate = VoA_Variables$def_success_rate, def_explosiveness = VoA_Variables$adj_def_explosiveness, def_third_conv_rate = VoA_Variables$def_third_conv_rate, def_pts_per_opp = VoA_Variables$def_pts_per_opp, def_havoc_total = VoA_Variables$def_havoc_total, def_plays_pg = VoA_Variables$def_plays_pg, def_error = VoA_Variables$def_error, VoA_Output = VoA_Variables$VoA_Output, Conference_Strength = VoA_Variables$Conference_Strength)
+  Def_VoA_datalist <- list(N = nrow(VoA_Variables), def_ppg = VoA_Variables$adj_def_ppg, def_ppa = VoA_Variables$adj_def_ppa, def_ypp = VoA_Variables$adj_def_ypp, def_success_rate = VoA_Variables$def_success_rate, def_explosiveness = VoA_Variables$adj_def_explosiveness, def_third_conv_rate = VoA_Variables$def_third_conv_rate, def_pts_per_opp = VoA_Variables$def_pts_per_opp, def_havoc_total = VoA_Variables$def_havoc_total, def_plays_pg = VoA_Variables$def_plays_pg, VoA_Output = VoA_Variables$VoA_Output, Conference_Strength = VoA_Variables$Conference_Strength)
   
   ### compile the stan model
   Def_VoA_model <- cmdstan_model(stan_file = here("Scripts","Stan", "Def_VoA.stan"))
   ### fitting stan model
   set.seed(802)
-  Def_VoA_fit <- Def_VoA_model$sample(data = Def_VoA_datalist, chains = 3, iter_sampling = 10000, iter_warmup = 3000, seed = 802)
+  Def_VoA_fit <- Def_VoA_model$sample(data = Def_VoA_datalist, chains = 3, iter_sampling = 10000, iter_warmup = 2500, seed = 802)
   # Def_VoA_fit
   
   ### Print the diagnostics
   print(Def_VoA_fit$cmdstan_diagnose())
   
   ### Extracting Parameters
-  Def_VoA_pars <- Def_VoA_fit$draws(variables = c("b0", "beta_def_ppa", "beta_def_ypp", "beta_def_success_rate", "beta_def_explosiveness", "beta_def_third_conv_rate", "beta_def_pts_per_opp", "beta_def_havoc_total", "beta_def_plays_pg", "beta_def_error", "beta_VoA_Output", "beta_Conference_Strength", "sigma"), format = "list")
+  Def_VoA_pars <- Def_VoA_fit$draws(variables = c("b0", "beta_def_ppa", "beta_def_ypp", "beta_def_success_rate", "beta_def_explosiveness", "beta_def_third_conv_rate", "beta_def_pts_per_opp", "beta_def_havoc_total", "beta_def_plays_pg", "beta_VoA_Output", "beta_Conference_Strength", "sigma"), format = "list")
   
   ### creating matrix to hold ratings
   ### adding in process uncertainty
@@ -7245,7 +7249,7 @@ if (as.numeric(week) <= 8) {
   set.seed(802)
   for (p in 1:length(Def_VoA_pars$b0)){
     for(t in 1:nrow(VoA_Variables)){
-      Def_VoA_Rating <- rnorm(1, mean = Def_VoA_pars$b0[p] + Def_VoA_pars$beta_def_ppa[p] * VoA_Variables$adj_def_ppa[t] + Def_VoA_pars$beta_def_ypp[p] * VoA_Variables$adj_def_ypp[t] + Def_VoA_pars$beta_def_success_rate[p] * VoA_Variables$def_success_rate[t] + Def_VoA_pars$beta_def_explosiveness[p] * VoA_Variables$adj_def_explosiveness[t] + Def_VoA_pars$beta_def_third_conv_rate[p] * VoA_Variables$def_third_conv_rate[t] + Def_VoA_pars$beta_def_pts_per_opp[p] * VoA_Variables$def_pts_per_opp[t] + Def_VoA_pars$beta_def_havoc_total[p] * VoA_Variables$def_havoc_total[t]  + Def_VoA_pars$beta_def_plays_pg[p] * VoA_Variables$def_plays_pg[t] + Def_VoA_pars$beta_def_error[p] * VoA_Variables$def_error[t] + Def_VoA_pars$beta_VoA_Output[p] * VoA_Variables$VoA_Output[t] + Def_VoA_pars$beta_Conference_Strength[p] * VoA_Variables$Conference_Strength[t], sd = Def_VoA_pars$sigma[p])
+      Def_VoA_Rating <- rnorm(1, mean = Def_VoA_pars$b0[p] + Def_VoA_pars$beta_def_ppa[p] * VoA_Variables$adj_def_ppa[t] + Def_VoA_pars$beta_def_ypp[p] * VoA_Variables$adj_def_ypp[t] + Def_VoA_pars$beta_def_success_rate[p] * VoA_Variables$def_success_rate[t] + Def_VoA_pars$beta_def_explosiveness[p] * VoA_Variables$adj_def_explosiveness[t] + Def_VoA_pars$beta_def_third_conv_rate[p] * VoA_Variables$def_third_conv_rate[t] + Def_VoA_pars$beta_def_pts_per_opp[p] * VoA_Variables$def_pts_per_opp[t] + Def_VoA_pars$beta_def_havoc_total[p] * VoA_Variables$def_havoc_total[t]  + Def_VoA_pars$beta_def_plays_pg[p] * VoA_Variables$def_plays_pg[t] + Def_VoA_pars$beta_VoA_Output[p] * VoA_Variables$VoA_Output[t] + Def_VoA_pars$beta_Conference_Strength[p] * VoA_Variables$Conference_Strength[t], sd = Def_VoA_pars$sigma[p])
       Def_VoA_Ratings[p,t] <- Def_VoA_Rating
     }
   }
@@ -7270,7 +7274,7 @@ if (as.numeric(week) <= 8) {
   ST_VoA_model <- cmdstan_model(stan_file = here("Scripts", "Stan", "ST_VoA.stan"))
   ### fitting special teams stan model
   set.seed(802)
-  ST_VoA_fit <- ST_VoA_model$sample(data = ST_VoA_datalist, chains = 3, iter_sampling = 5000, iter_warmup = 2000, seed = 802)
+  ST_VoA_fit <- ST_VoA_model$sample(data = ST_VoA_datalist, chains = 3, iter_sampling = 5000, iter_warmup = 2500, seed = 802)
   # ST_VoA_fit
   
   ### Print the diagnostics
@@ -7292,8 +7296,8 @@ if (as.numeric(week) <= 8) {
   }
   
   ### generating median and mean and quantile ratings
-  MeanPred <- apply(ST_VoA_Ratings,2,mean)
-  MedianPred <- apply(ST_VoA_Ratings,2,median)
+  MeanPred <- apply(ST_VoA_Ratings, 2, mean)
+  MedianPred <- apply(ST_VoA_Ratings, 2, median)
   Upper <- apply(ST_VoA_Ratings, 2, quantile, prob=.95)
   Lower <- apply(ST_VoA_Ratings, 2, quantile, prob=.05)
   
