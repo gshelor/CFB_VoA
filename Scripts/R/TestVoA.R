@@ -12790,7 +12790,7 @@ VoA_Variables_Test <- full_join(VoA_Variables_Test, ResumeVoA, by = "team")
 ########### BREAK HERE EVERYTHING BELOW IS NOT PART OF CURRENT TESTING ######
 break
 
-############### DEBUGGING WEIRD AND STUPID NA ERRORS #####
+##### DEBUGGING WEIRD AND STUPID NA ERRORS #####
 ## Making values numeric
 # VoA_Variables[,6:ncol(VoA_Variables)] <- VoA_Variables[,6:ncol(VoA_Variables)] |> mutate_if(is.character,as.numeric)
 # 
@@ -12800,7 +12800,7 @@ colnames(nas_why) <- c("containsNAs")
 nas_why <- nas_why |>
   filter(containsNAs == TRUE)
 recruit_nas_why <- VoA_Variables |>
-  filter(is.na(fg_rate_allowed))
+  filter(is.na(recruit_pts))
 recruit_nas_teams <- anti_join(VoA_Variables, recruit, by = "team")
 
 colnames(VoA_Variables)[apply(VoA_Variables, 2, anyNA)]

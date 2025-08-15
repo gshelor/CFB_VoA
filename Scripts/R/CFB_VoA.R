@@ -101,7 +101,7 @@ options(mc.cores = parallel::detectCores() / 2)
 if (as.numeric(week) == 0) {
   ##### WEEK 0 Data Pull #####
   ### storing names of FCS teams for when they need to be filtered out in PY stats grabs
-  PY3Teams <- c("Delaware", "Missouri State", "Kennesaw State", "Sam Houston State", "Jacksonville State")
+  PY3Teams <- c("Delaware", "Missouri State", "Kennesaw State", "Sam Houston State", "Jacksonville State", "Sam Houston")
   PY2Teams <- c("Delaware", "Missouri State", "Kennesaw State")
   PY1Teams <- c("Delaware", "Missouri State")
   ### reading in data for 3 previous years
@@ -448,7 +448,7 @@ if (as.numeric(week) == 0) {
     drop_na()
   
   ### reading in regular stats
-  Stats_PY1 <- cfbd_stats_season_team(year = as.integer(year) - 1, season_type = "both") |>
+  Stats_PY1 <- cfbd_stats_season_team(year = as.integer(year) - 1, season_type = "both", start_week = 1, end_week = 15) |>
     filter(team %nin% PY1Teams) |>
     mutate(total_yds_pg = total_yds/games,
            pass_yds_pg = net_pass_yds / games,
@@ -492,7 +492,7 @@ if (as.numeric(week) == 0) {
   ## removing NAs
   Stats_PY1[is.na(Stats_PY1)] = 0
   ## PY2 stats
-  Stats_PY2 <- cfbd_stats_season_team(year = as.integer(year) - 2, season_type = "both") |>
+  Stats_PY2 <- cfbd_stats_season_team(year = as.integer(year) - 2, season_type = "both", start_week = 1, end_week = 15) |>
     filter(team %nin% PY2Teams) |>
     mutate(total_yds_pg = total_yds/games,
            pass_yds_pg = net_pass_yds/games,
@@ -536,7 +536,7 @@ if (as.numeric(week) == 0) {
   ## removing NAs
   Stats_PY2[is.na(Stats_PY2)] = 0
   ## PY3 stats
-  Stats_PY3 <- cfbd_stats_season_team(year = as.integer(year) - 3, season_type = "both") |>
+  Stats_PY3 <- cfbd_stats_season_team(year = as.integer(year) - 3, season_type = "both", start_week = 1, end_week = 15) |>
     filter(team %nin% PY3Teams) |>
     mutate(total_yds_pg = total_yds/games,
            pass_yds_pg = net_pass_yds/games,
@@ -665,8 +665,8 @@ if (as.numeric(week) == 0) {
   ### pulling in talent rankings
   talent_df_PY1 <- cfbd_team_talent(year = as.numeric(year) - 1) |>
     # filter(school != "Kennesaw State") |>
-    filter(school %in% Stats_PY1$team) |>
-    select(school, talent)
+    filter(team %in% Stats_PY1$team) |>
+    select(team, talent)
   colnames(talent_df_PY1) <- c("team", "talent_PY1")
   
   ### pulling in recruiting rankings
@@ -681,8 +681,8 @@ if (as.numeric(week) == 0) {
   ## pulling in talent rankings
   talent_df_PY2 <- cfbd_team_talent(year = as.numeric(year) - 2) |>
     # filter(school != "Kennesaw State" & school != "Sam Houston State" & school != "Jacksonville State") |>
-    filter(school %in% Stats_PY2$team) |>
-    select(school, talent)
+    filter(team %in% Stats_PY2$team) |>
+    select(team, talent)
   colnames(talent_df_PY2) <- c("team", "talent_PY2")
   
   ### pulling in recruiting rankings
@@ -697,14 +697,13 @@ if (as.numeric(week) == 0) {
   ## pulling in talent rankings
   talent_df_PY3 <- cfbd_team_talent(year = as.numeric(year) - 3) |>
     # filter(school != "James Madison" & school != "Sam Houston State" & school != "Jacksonville State" & school != "Kennesaw State") |>
-    filter(school %in% Stats_PY3$team) |>
-    select(school, talent)
+    filter(team %in% Stats_PY3$team) |>
+    select(team, talent)
   colnames(talent_df_PY3) <- c("team", "talent_PY3")
   
   ## incoming recruiting class rankings
   recruit <- cfbd_recruiting_team(year = as.numeric(year)) |>
-    select(team, points)
-  recruit <- recruit |>
+    select(team, points) |>
     mutate(school = case_when(team == "Florida Intl" ~ "Florida International",
                               TRUE ~ team)) |>
     filter(school %in% Stats_PY1$team) |>
@@ -712,7 +711,7 @@ if (as.numeric(week) == 0) {
   recruit[,2] <- recruit[,2] |> mutate_if(is.character, as.numeric)
   colnames(recruit) <- c("team", "recruit_pts")
 } else if (as.numeric(week) == 1) {
-  ##### WEEK 1 DATA PULL #####
+  ##### WEEK 1 Data Pull #####
   ### reading in data for 3 previous years
   ### no need to remove season and conference columns from PY3_df because they are removed before I write the csv in week 0
   PY3_df <- read_csv(here("Data", paste0("VoA", year), "PYData", "PY3.csv"))
@@ -1911,10 +1910,10 @@ if (as.numeric(week) == 0) {
   PPAOppAdjDummyCols <- dummy_cols(PBP_PPA_Adjustment_PY3[,c("pos_team", "def_pos_team", "hfa")], remove_selected_columns = TRUE)
   
   ### using cross-validation to identify best lambda for ridge regression
-  PPA_cvglmnet <- cv.glmnet(x = as.matrix(PPAOppAdjDummyCols), y = PBP_PPA_Adjustment$ppa, alpha = 0)
+  PPA_cvglmnet <- cv.glmnet(x = as.matrix(PPAOppAdjDummyCols), y = PBP_PPA_Adjustment_PY3$ppa, alpha = 0)
   best_lambda <- PPA_cvglmnet$lambda.min
   ### running ridge regression model
-  PPA_glmnet <- glmnet(x = as.matrix(PPAOppAdjDummyCols), y = PBP_PPA_Adjustment$ppa, alpha = 0, lambda = best_lambda)
+  PPA_glmnet <- glmnet(x = as.matrix(PPAOppAdjDummyCols), y = PBP_PPA_Adjustment_PY3$ppa, alpha = 0, lambda = best_lambda)
   
   ### extracting coefficients for each team, storing in dataframe
   PPA_glmnetcoef <- coef(PPA_glmnet)
@@ -1965,9 +1964,9 @@ if (as.numeric(week) == 0) {
   ExpAdj_dummycols <- dummy_cols(PBP_ExpAdjustment_PY3[,c("pos_team", "def_pos_team", "hfa")], remove_selected_columns = TRUE)
   
   ### Identifying best lambda with cross-validation
-  ExpAdj_cvglmnet <- cv.glmnet(x = as.matrix(ExpAdj_dummycols), y = PBP_ExpAdjustment$ppa, alpha = 0)
+  ExpAdj_cvglmnet <- cv.glmnet(x = as.matrix(ExpAdj_dummycols), y = PBP_ExpAdjustment_PY3$ppa, alpha = 0)
   best_lambda <- ExpAdj_cvglmnet$lambda.min
-  ExpAdj_glmnet <- glmnet(x = as.matrix(ExpAdj_dummycols), y = PBP_ExpAdjustment$ppa, alpha = 0, lambda = best_lambda)
+  ExpAdj_glmnet <- glmnet(x = as.matrix(ExpAdj_dummycols), y = PBP_ExpAdjustment_PY3$ppa, alpha = 0, lambda = best_lambda)
   
   ### extracting coefficients from ridge regression model
   ExpAdj_glmnetcoef <- coef(ExpAdj_glmnet)
@@ -2017,10 +2016,10 @@ if (as.numeric(week) == 0) {
   YPPAdj_dummycols <- dummy_cols(PBP_YPP_Adjustment_PY3[,c("pos_team", "def_pos_team", "hfa")], remove_selected_columns = TRUE)
   
   ### Using cross-validation to identify best lambda for ridge regression
-  YPPAdj_cvglmnet <- cv.glmnet(x = as.matrix(YPPAdj_dummycols), y = PBP_YPP_Adjustment$yards_gained, alpha = 0)
+  YPPAdj_cvglmnet <- cv.glmnet(x = as.matrix(YPPAdj_dummycols), y = PBP_YPP_Adjustment_PY3$yards_gained, alpha = 0)
   best_lambda <- YPPAdj_cvglmnet$lambda.min
   ### performing ridge regression
-  YPPAdj_glmnet <- glmnet(x = as.matrix(YPPAdj_dummycols), y = PBP_YPP_Adjustment$yards_gained, alpha = 0, lambda = best_lambda)
+  YPPAdj_glmnet <- glmnet(x = as.matrix(YPPAdj_dummycols), y = PBP_YPP_Adjustment_PY3$yards_gained, alpha = 0, lambda = best_lambda)
   
   ### extracting coefficients to finalize adjusted YPP metric
   YPPAdj_glmnetcoef <- coef(YPPAdj_glmnet)
@@ -2066,10 +2065,10 @@ if (as.numeric(week) == 0) {
   PPGAdj_dummycols <- dummy_cols(PBP_PPG_Adjustment_PY3[,c("pos_team", "def_pos_team", "hfa")], remove_selected_columns = TRUE)
   
   ### using cross validation to identify best lambda
-  PPGAdj_cvglmnet <- cv.glmnet(x = as.matrix(PPGAdj_dummycols), y = PBP_PPG_Adjustment$play_pts_scored, alpha = 0)
+  PPGAdj_cvglmnet <- cv.glmnet(x = as.matrix(PPGAdj_dummycols), y = PBP_PPG_Adjustment_PY3$play_pts_scored, alpha = 0)
   best_lambda <- PPGAdj_cvglmnet$lambda.min
   ### performing ridge regression
-  PPGAdj_glmnet <- glmnet(x = as.matrix(PPGAdj_dummycols), y = PBP_PPG_Adjustment$play_pts_scored, alpha = 0, lambda = best_lambda)
+  PPGAdj_glmnet <- glmnet(x = as.matrix(PPGAdj_dummycols), y = PBP_PPG_Adjustment_PY3$play_pts_scored, alpha = 0, lambda = best_lambda)
   
   ### extracting coefficients
   PPGAdj_glmnetcoef <- coef(PPGAdj_glmnet)
@@ -2119,10 +2118,10 @@ if (as.numeric(week) == 0) {
   STPPAOppAdjDummyCols <- dummy_cols(PBP_STPPA_Adjustment_PY3[,c("real_pos_team", "real_def_pos_team", "hfa")], remove_selected_columns = TRUE)
   
   ### using cross-validation to identify best lambda for ridge regression
-  STPPA_cvglmnet <- cv.glmnet(x = as.matrix(STPPAOppAdjDummyCols), y = PBP_STPPA_Adjustment$ppa, alpha = 0)
+  STPPA_cvglmnet <- cv.glmnet(x = as.matrix(STPPAOppAdjDummyCols), y = PBP_STPPA_Adjustment_PY3$ppa, alpha = 0)
   best_lambda <- STPPA_cvglmnet$lambda.min
   ### running ridge regression model
-  STPPA_glmnet <- glmnet(x = as.matrix(STPPAOppAdjDummyCols), y = PBP_STPPA_Adjustment$ppa, alpha = 0, lambda = best_lambda)
+  STPPA_glmnet <- glmnet(x = as.matrix(STPPAOppAdjDummyCols), y = PBP_STPPA_Adjustment_PY3$ppa, alpha = 0, lambda = best_lambda)
   
   ### extracting coefficients for each team, storing in dataframe
   STPPA_glmnetcoef <- coef(STPPA_glmnet)
@@ -2172,10 +2171,10 @@ if (as.numeric(week) == 0) {
   PPAOppAdjDummyCols <- dummy_cols(PBP_PPA_Adjustment_PY2[,c("pos_team", "def_pos_team", "hfa")], remove_selected_columns = TRUE)
   
   ### using cross-validation to identify best lambda for ridge regression
-  PPA_cvglmnet <- cv.glmnet(x = as.matrix(PPAOppAdjDummyCols), y = PBP_PPA_Adjustment$ppa, alpha = 0)
+  PPA_cvglmnet <- cv.glmnet(x = as.matrix(PPAOppAdjDummyCols), y = PBP_PPA_Adjustment_PY2$ppa, alpha = 0)
   best_lambda <- PPA_cvglmnet$lambda.min
   ### running ridge regression model
-  PPA_glmnet <- glmnet(x = as.matrix(PPAOppAdjDummyCols), y = PBP_PPA_Adjustment$ppa, alpha = 0, lambda = best_lambda)
+  PPA_glmnet <- glmnet(x = as.matrix(PPAOppAdjDummyCols), y = PBP_PPA_Adjustment_PY2$ppa, alpha = 0, lambda = best_lambda)
   
   ### extracting coefficients for each team, storing in dataframe
   PPA_glmnetcoef <- coef(PPA_glmnet)
@@ -2226,9 +2225,9 @@ if (as.numeric(week) == 0) {
   ExpAdj_dummycols <- dummy_cols(PBP_ExpAdjustment_PY2[,c("pos_team", "def_pos_team", "hfa")], remove_selected_columns = TRUE)
   
   ### Identifying best lambda with cross-validation
-  ExpAdj_cvglmnet <- cv.glmnet(x = as.matrix(ExpAdj_dummycols), y = PBP_ExpAdjustment$ppa, alpha = 0)
+  ExpAdj_cvglmnet <- cv.glmnet(x = as.matrix(ExpAdj_dummycols), y = PBP_ExpAdjustment_PY2$ppa, alpha = 0)
   best_lambda <- ExpAdj_cvglmnet$lambda.min
-  ExpAdj_glmnet <- glmnet(x = as.matrix(ExpAdj_dummycols), y = PBP_ExpAdjustment$ppa, alpha = 0, lambda = best_lambda)
+  ExpAdj_glmnet <- glmnet(x = as.matrix(ExpAdj_dummycols), y = PBP_ExpAdjustment_PY2$ppa, alpha = 0, lambda = best_lambda)
   
   ### extracting coefficients from ridge regression model
   ExpAdj_glmnetcoef <- coef(ExpAdj_glmnet)
@@ -2278,10 +2277,10 @@ if (as.numeric(week) == 0) {
   YPPAdj_dummycols <- dummy_cols(PBP_YPP_Adjustment_PY2[,c("pos_team", "def_pos_team", "hfa")], remove_selected_columns = TRUE)
   
   ### Using cross-validation to identify best lambda for ridge regression
-  YPPAdj_cvglmnet <- cv.glmnet(x = as.matrix(YPPAdj_dummycols), y = PBP_YPP_Adjustment$yards_gained, alpha = 0)
+  YPPAdj_cvglmnet <- cv.glmnet(x = as.matrix(YPPAdj_dummycols), y = PBP_YPP_Adjustment_PY2$yards_gained, alpha = 0)
   best_lambda <- YPPAdj_cvglmnet$lambda.min
   ### performing ridge regression
-  YPPAdj_glmnet <- glmnet(x = as.matrix(YPPAdj_dummycols), y = PBP_YPP_Adjustment$yards_gained, alpha = 0, lambda = best_lambda)
+  YPPAdj_glmnet <- glmnet(x = as.matrix(YPPAdj_dummycols), y = PBP_YPP_Adjustment_PY2$yards_gained, alpha = 0, lambda = best_lambda)
   
   ### extracting coefficients to finalize adjusted YPP metric
   YPPAdj_glmnetcoef <- coef(YPPAdj_glmnet)
@@ -2327,10 +2326,10 @@ if (as.numeric(week) == 0) {
   PPGAdj_dummycols <- dummy_cols(PBP_PPG_Adjustment_PY2[,c("pos_team", "def_pos_team", "hfa")], remove_selected_columns = TRUE)
   
   ### using cross validation to identify best lambda
-  PPGAdj_cvglmnet <- cv.glmnet(x = as.matrix(PPGAdj_dummycols), y = PBP_PPG_Adjustment$play_pts_scored, alpha = 0)
+  PPGAdj_cvglmnet <- cv.glmnet(x = as.matrix(PPGAdj_dummycols), y = PBP_PPG_Adjustment_PY2$play_pts_scored, alpha = 0)
   best_lambda <- PPGAdj_cvglmnet$lambda.min
   ### performing ridge regression
-  PPGAdj_glmnet <- glmnet(x = as.matrix(PPGAdj_dummycols), y = PBP_PPG_Adjustment$play_pts_scored, alpha = 0, lambda = best_lambda)
+  PPGAdj_glmnet <- glmnet(x = as.matrix(PPGAdj_dummycols), y = PBP_PPG_Adjustment_PY2$play_pts_scored, alpha = 0, lambda = best_lambda)
   
   ### extracting coefficients
   PPGAdj_glmnetcoef <- coef(PPGAdj_glmnet)
@@ -2380,10 +2379,10 @@ if (as.numeric(week) == 0) {
   STPPAOppAdjDummyCols <- dummy_cols(PBP_STPPA_Adjustment_PY2[,c("real_pos_team", "real_def_pos_team", "hfa")], remove_selected_columns = TRUE)
   
   ### using cross-validation to identify best lambda for ridge regression
-  STPPA_cvglmnet <- cv.glmnet(x = as.matrix(STPPAOppAdjDummyCols), y = PBP_STPPA_Adjustment$ppa, alpha = 0)
+  STPPA_cvglmnet <- cv.glmnet(x = as.matrix(STPPAOppAdjDummyCols), y = PBP_STPPA_Adjustment_PY2$ppa, alpha = 0)
   best_lambda <- STPPA_cvglmnet$lambda.min
   ### running ridge regression model
-  STPPA_glmnet <- glmnet(x = as.matrix(STPPAOppAdjDummyCols), y = PBP_STPPA_Adjustment$ppa, alpha = 0, lambda = best_lambda)
+  STPPA_glmnet <- glmnet(x = as.matrix(STPPAOppAdjDummyCols), y = PBP_STPPA_Adjustment_PY2$ppa, alpha = 0, lambda = best_lambda)
   
   ### extracting coefficients for each team, storing in dataframe
   STPPA_glmnetcoef <- coef(STPPA_glmnet)
@@ -2433,10 +2432,10 @@ if (as.numeric(week) == 0) {
   PPAOppAdjDummyCols <- dummy_cols(PBP_PPA_Adjustment_PY1[,c("pos_team", "def_pos_team", "hfa")], remove_selected_columns = TRUE)
   
   ### using cross-validation to identify best lambda for ridge regression
-  PPA_cvglmnet <- cv.glmnet(x = as.matrix(PPAOppAdjDummyCols), y = PBP_PPA_Adjustment$ppa, alpha = 0)
+  PPA_cvglmnet <- cv.glmnet(x = as.matrix(PPAOppAdjDummyCols), y = PBP_PPA_Adjustment_PY1$ppa, alpha = 0)
   best_lambda <- PPA_cvglmnet$lambda.min
   ### running ridge regression model
-  PPA_glmnet <- glmnet(x = as.matrix(PPAOppAdjDummyCols), y = PBP_PPA_Adjustment$ppa, alpha = 0, lambda = best_lambda)
+  PPA_glmnet <- glmnet(x = as.matrix(PPAOppAdjDummyCols), y = PBP_PPA_Adjustment_PY1$ppa, alpha = 0, lambda = best_lambda)
   
   ### extracting coefficients for each team, storing in dataframe
   PPA_glmnetcoef <- coef(PPA_glmnet)
@@ -2487,9 +2486,9 @@ if (as.numeric(week) == 0) {
   ExpAdj_dummycols <- dummy_cols(PBP_ExpAdjustment_PY1[,c("pos_team", "def_pos_team", "hfa")], remove_selected_columns = TRUE)
   
   ### Identifying best lambda with cross-validation
-  ExpAdj_cvglmnet <- cv.glmnet(x = as.matrix(ExpAdj_dummycols), y = PBP_ExpAdjustment$ppa, alpha = 0)
+  ExpAdj_cvglmnet <- cv.glmnet(x = as.matrix(ExpAdj_dummycols), y = PBP_ExpAdjustment_PY1$ppa, alpha = 0)
   best_lambda <- ExpAdj_cvglmnet$lambda.min
-  ExpAdj_glmnet <- glmnet(x = as.matrix(ExpAdj_dummycols), y = PBP_ExpAdjustment$ppa, alpha = 0, lambda = best_lambda)
+  ExpAdj_glmnet <- glmnet(x = as.matrix(ExpAdj_dummycols), y = PBP_ExpAdjustment_PY1$ppa, alpha = 0, lambda = best_lambda)
   
   ### extracting coefficients from ridge regression model
   ExpAdj_glmnetcoef <- coef(ExpAdj_glmnet)
@@ -2539,10 +2538,10 @@ if (as.numeric(week) == 0) {
   YPPAdj_dummycols <- dummy_cols(PBP_YPP_Adjustment_PY1[,c("pos_team", "def_pos_team", "hfa")], remove_selected_columns = TRUE)
   
   ### Using cross-validation to identify best lambda for ridge regression
-  YPPAdj_cvglmnet <- cv.glmnet(x = as.matrix(YPPAdj_dummycols), y = PBP_YPP_Adjustment$yards_gained, alpha = 0)
+  YPPAdj_cvglmnet <- cv.glmnet(x = as.matrix(YPPAdj_dummycols), y = PBP_YPP_Adjustment_PY1$yards_gained, alpha = 0)
   best_lambda <- YPPAdj_cvglmnet$lambda.min
   ### performing ridge regression
-  YPPAdj_glmnet <- glmnet(x = as.matrix(YPPAdj_dummycols), y = PBP_YPP_Adjustment$yards_gained, alpha = 0, lambda = best_lambda)
+  YPPAdj_glmnet <- glmnet(x = as.matrix(YPPAdj_dummycols), y = PBP_YPP_Adjustment_PY1$yards_gained, alpha = 0, lambda = best_lambda)
   
   ### extracting coefficients to finalize adjusted YPP metric
   YPPAdj_glmnetcoef <- coef(YPPAdj_glmnet)
@@ -2588,10 +2587,10 @@ if (as.numeric(week) == 0) {
   PPGAdj_dummycols <- dummy_cols(PBP_PPG_Adjustment_PY1[,c("pos_team", "def_pos_team", "hfa")], remove_selected_columns = TRUE)
   
   ### using cross validation to identify best lambda
-  PPGAdj_cvglmnet <- cv.glmnet(x = as.matrix(PPGAdj_dummycols), y = PBP_PPG_Adjustment$play_pts_scored, alpha = 0)
+  PPGAdj_cvglmnet <- cv.glmnet(x = as.matrix(PPGAdj_dummycols), y = PBP_PPG_Adjustment_PY1$play_pts_scored, alpha = 0)
   best_lambda <- PPGAdj_cvglmnet$lambda.min
   ### performing ridge regression
-  PPGAdj_glmnet <- glmnet(x = as.matrix(PPGAdj_dummycols), y = PBP_PPG_Adjustment$play_pts_scored, alpha = 0, lambda = best_lambda)
+  PPGAdj_glmnet <- glmnet(x = as.matrix(PPGAdj_dummycols), y = PBP_PPG_Adjustment_PY1$play_pts_scored, alpha = 0, lambda = best_lambda)
   
   ### extracting coefficients
   PPGAdj_glmnetcoef <- coef(PPGAdj_glmnet)
@@ -2641,10 +2640,10 @@ if (as.numeric(week) == 0) {
   STPPAOppAdjDummyCols <- dummy_cols(PBP_STPPA_Adjustment_PY1[,c("real_pos_team", "real_def_pos_team", "hfa")], remove_selected_columns = TRUE)
   
   ### using cross-validation to identify best lambda for ridge regression
-  STPPA_cvglmnet <- cv.glmnet(x = as.matrix(STPPAOppAdjDummyCols), y = PBP_STPPA_Adjustment$ppa, alpha = 0)
+  STPPA_cvglmnet <- cv.glmnet(x = as.matrix(STPPAOppAdjDummyCols), y = PBP_STPPA_Adjustment_PY1$ppa, alpha = 0)
   best_lambda <- STPPA_cvglmnet$lambda.min
   ### running ridge regression model
-  STPPA_glmnet <- glmnet(x = as.matrix(STPPAOppAdjDummyCols), y = PBP_STPPA_Adjustment$ppa, alpha = 0, lambda = best_lambda)
+  STPPA_glmnet <- glmnet(x = as.matrix(STPPAOppAdjDummyCols), y = PBP_STPPA_Adjustment_PY1$ppa, alpha = 0, lambda = best_lambda)
   
   ### extracting coefficients for each team, storing in dataframe
   STPPA_glmnetcoef <- coef(STPPA_glmnet)
@@ -4687,9 +4686,11 @@ if (as.numeric(week) == 0){
 ### leaving this outside an if statement because this could be an issue regardless of season or CFB_Week
 ### currently commented out because I added this fix to each individual stat pull in function
 ### uncommented it because I must once again ask that Florida International University go fuck itself
-# VoA_Variables$recruit_pts[is.na(VoA_Variables$recruit_pts)] = 0
-# VoA_Variables$recruit_pts_PY2[is.na(VoA_Variables$recruit_pts_PY2)] = 0
-### above code useful for Week 0, not necessary now that current season data is available
+if (as.numeric(week) %in% c(0, 9:16)){
+  VoA_Variables$recruit_pts[is.na(VoA_Variables$recruit_pts)] = 0
+  VoA_Variables$recruit_pts_PY3[is.na(VoA_Variables$recruit_pts_PY3)] = 0
+}
+
 ### Fixing conference errors for Week 0 (Preseason)
 if (as.numeric(week) == 0) {
   VoA_Variables <- VoA_Variables |>
@@ -7057,7 +7058,7 @@ if (as.numeric(week) <= 8) {
   ##### Week 0-8 Stan Models #####
   ### VoA Offensive Rating Model
   ### making list of data to declare what goes into stan model
-  Off_VoA_datalist <- list(N = nrow(VoA_Variables), off_ppg = VoA_Variables$adj_off_ppg, off_ppa = VoA_Variables$weighted_off_ppa, off_ypp = VoA_Variables$weighted_off_ypp, off_success_rate = VoA_Variables$weighted_off_success_rate, off_explosiveness = VoA_Variables$weighted_off_explosiveness, third_conv_rate = VoA_Variables$weighted_third_conv_rate, off_pts_per_opp = VoA_Variables$weighted_off_pts_per_opp, off_plays_pg = VoA_Variables$weighted_off_plays_pg, VoA_Output = 1/VoA_Variables$VoA_Output, Conference_Strength = 1/VoA_Variables$Conference_Strength)
+  Off_VoA_datalist <- list(N = nrow(VoA_Variables), off_ppg = VoA_Variables$weighted_off_ppg_mean, off_ppa = VoA_Variables$weighted_off_ppa, off_ypp = VoA_Variables$weighted_off_ypp, off_success_rate = VoA_Variables$weighted_off_success_rate, off_explosiveness = VoA_Variables$weighted_off_explosiveness, third_conv_rate = VoA_Variables$weighted_third_conv_rate, off_pts_per_opp = VoA_Variables$weighted_off_pts_per_opp, off_plays_pg = VoA_Variables$weighted_off_plays_pg, VoA_Output = 1/VoA_Variables$VoA_Output, Conference_Strength = 1/VoA_Variables$Conference_Strength)
   
   ### compile the stan model
   Off_VoA_model <- cmdstan_model(stan_file = here("Scripts", "Stan", "Off_VoA.stan"))
@@ -7100,7 +7101,7 @@ if (as.numeric(week) <= 8) {
   
   ### VoA Defensive Rating Model
   ### making list of data to declare what goes into stan model
-  Def_VoA_datalist <- list(N = nrow(VoA_Variables), def_ppg = VoA_Variables$adj_def_ppg, def_ppa = VoA_Variables$weighted_def_ppa, def_ypp = VoA_Variables$weighted_def_ypp, def_success_rate = VoA_Variables$weighted_def_success_rate, def_explosiveness = VoA_Variables$weighted_def_explosiveness, def_third_conv_rate = VoA_Variables$weighted_def_third_conv_rate, def_pts_per_opp = VoA_Variables$weighted_def_pts_per_opp, def_havoc_total = VoA_Variables$weighted_def_havoc_total, def_plays_pg = VoA_Variables$weighted_def_plays_pg, VoA_Output = VoA_Variables$VoA_Output, Conference_Strength = VoA_Variables$Conference_Strength)
+  Def_VoA_datalist <- list(N = nrow(VoA_Variables), def_ppg = VoA_Variables$weighted_def_ppg_mean, def_ppa = VoA_Variables$weighted_def_ppa, def_ypp = VoA_Variables$weighted_def_ypp, def_success_rate = VoA_Variables$weighted_def_success_rate, def_explosiveness = VoA_Variables$weighted_def_explosiveness, def_third_conv_rate = VoA_Variables$weighted_def_third_conv_rate, def_pts_per_opp = VoA_Variables$weighted_def_pts_per_opp, def_havoc_total = VoA_Variables$weighted_def_havoc_total, def_plays_pg = VoA_Variables$weighted_def_plays_pg, VoA_Output = VoA_Variables$VoA_Output, Conference_Strength = VoA_Variables$Conference_Strength)
   
   ### compile the stan model
   Def_VoA_model <- cmdstan_model(stan_file = here("Scripts","Stan", "Def_VoA.stan"))
@@ -7156,7 +7157,7 @@ if (as.numeric(week) <= 8) {
   print(ST_VoA_fit$cmdstan_diagnose())
   
   ### extracting parameters
-  ST_VoA_pars <- ST_VoA_fit$draws(variables = c("b0", "beta_net_kick_return_avg", "beta_net_punt_return_avg", "beta_net_fg_rate", "beta_net_st_ppa", "sigma"), format = "list")
+  ST_VoA_pars <- ST_VoA_fit$draws(variables = c("b0", "beta_net_kick_return_avg", "beta_net_punt_return_avg", "beta_net_fg_rate", "beta_net_st_ppa", "sigma"), format = "draws_df")
   
   ### creating matrix to store special teams VoA_Ratings
   ST_VoA_Ratings <- matrix(NA, nrow = length(ST_VoA_pars$b0), ncol = nrow(VoA_Variables))

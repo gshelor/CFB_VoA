@@ -18,6 +18,8 @@ gameprojections_filename <- paste(year, week_text, upcoming, gameprojections_png
 if (as.numeric(upcoming) == 1){
   FBS_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.character(as.numeric(upcoming) - 1), "_VoA.csv"))) |>
     select(team, conference, VoA_Rating_Ovr)
+  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.character(as.numeric(upcoming) - 1), "_VoA.csv"))) |>
+    select(team, VoA_Rating_Ovr)
 } else if (as.numeric(upcoming) == 16){
   week16_run <- readline(prompt = "Is this the first week 16 run of week 16 projections? (y/n) ")
   if (week16_run == "y"){
@@ -31,6 +33,8 @@ if (as.numeric(upcoming) == 1){
     break
   }
 } else{
+  FBS_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.character(as.numeric(upcoming) - 1), "_VoA.csv"))) |>
+    select(team, conference, VoA_Rating_Ovr)
   PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.character(as.numeric(upcoming) - 1), "_VoA.csv"))) |>
     select(team, VoA_Rating_Ovr)
 }
@@ -185,8 +189,8 @@ fcs_margin_projection <- function(away, home, neutral) {
 # ### fitting betareg model
 # set.seed(802)
 # WP_betareg <- betareg(away_WP_pct ~ Proj_Margin, data = SP_WPdata)
-
-### since the model's already fit, I'm just saving it as an RDS file so I don't have to fit it each and every week
+# 
+# ### since the model's already fit, I'm just saving it as an RDS file so I don't have to fit it each and every week
 # saveRDS(WP_betareg, here("Data", "SP_Projections", "WP_betareg.rds"))
 WP_betareg <- read_rds(here("Data", "SP_Projections", "WP_betareg.rds"))
 summary(WP_betareg)
@@ -208,7 +212,8 @@ if (as.numeric(upcoming) == 1){
     select(game_id, season, week, neutral_site, home_team, home_VoA_Rating, away_team, away_VoA_Rating, Proj_Winner, Proj_Margin, win_prob) ## |>
   # arrange(desc(Proj_Margin))
   upcoming_games_df <- FullSeason_Games |>
-    filter(week == as.numeric(upcoming))
+    filter(week == as.numeric(upcoming)) |>
+    filter(home_team %in% FBS_VoA$team | away_team %in% FBS_VoA$team)
 } else{
   ### making gt table of upcoming games df to display games with close spreads
   upcoming_games_df <- upcoming_games_df |>
@@ -222,8 +227,9 @@ if (as.numeric(upcoming) == 1){
   ### calculating win probability based on model built with betareg
   upcoming_games_df <- upcoming_games_df |>
     mutate(win_prob = predict(WP_betareg, newdata = upcoming_games_df)) |>
-    select(game_id, season, week, neutral_site, home_team, home_VoA_Rating, away_team, away_VoA_Rating, Proj_Winner, Proj_Margin, win_prob) #|>
-  ## arrange(desc(Proj_Margin))
+    select(game_id, season, week, neutral_site, home_team, home_VoA_Rating, away_team, away_VoA_Rating, Proj_Winner, Proj_Margin, win_prob) |>
+    filter(home_team %in% FBS_VoA$team | away_team %in% FBS_VoA$team)
+  # arrange(desc(Proj_Margin))
 }
 
 
@@ -241,7 +247,7 @@ if (as.numeric(upcoming) == 1){
       filter(Proj_Winner == FBS_VoA$team[school])
     temp_losses_df <- temp_games_df |>
       filter(Proj_Winner != FBS_VoA$team[school])
-    temp_proj_wins <- (sum(temp_wins_df$win_prob) / 100) + (nrow(temp_losses_df) - (sum(temp_losses_df$win_prob) / 100))
+    temp_proj_wins <- (sum(temp_wins_df$win_prob)) + (nrow(temp_losses_df) - (sum(temp_losses_df$win_prob)))
     FBS_VoA$proj_wins[school] = temp_proj_wins
   }
   
@@ -803,12 +809,13 @@ if (as.numeric(upcoming) == 16) {
     VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API"
     )
   
-  upcoming_games_df <- upcoming_games_df |>
+  ### sorting df by projected win margin for ESPN prediction game
+  upcoming_games_df_sorted <- upcoming_games_df |>
     arrange(Proj_Margin)
   
   ### Creating gt table
   ## adding title and subtitle
-  upcoming_games_gt_sorted <- upcoming_games_df |>
+  upcoming_games_gt_sorted <- upcoming_games_df_sorted |>
     gt() |> # use 'gt' to make an awesome table...
     gt_theme_espn() |>
     tab_header(
@@ -910,6 +917,64 @@ if (as.numeric(upcoming) == 16) {
       footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
     VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API"
     )
+  
+  
+  ### sorting df by projected win margin for ESPN prediction game
+  upcoming_games_df_sorted <- upcoming_games_df |>
+    arrange(Proj_Margin)
+  
+  ### Creating gt table
+  ## adding title and subtitle
+  upcoming_games_gt_sorted <- upcoming_games_df_sorted |>
+    gt() |> # use 'gt' to make an awesome table...
+    gt_theme_espn() |>
+    tab_header(
+      title =  paste(year, week_text, upcoming, "Vortex of Projection Game Projections, sorted"), # ...with this title
+      subtitle = "The Unquestionably Puzzling Yet Impeccibly Perceptive Vortex of Projection")  |>  # and this subtitle
+    fmt_number( # A column (numeric data)
+      columns = c(Proj_Margin),
+      decimals = 3 # With 3 decimal places
+    ) |> 
+    fmt_number( # Another column (also numeric data)
+      columns = c(home_VoA_Rating), # What column variable? FinalVoATop25$VoA_Ranking
+      decimals = 3 # I want this column to have 3 decimal places
+    ) |>
+    fmt_number( # Another numeric column
+      columns = c(away_VoA_Rating),
+      decimals = 3
+    ) |>
+    fmt_number( # Another numeric column
+      columns = c(away_VoA_Rating),
+      decimals = 3
+    ) |>  
+    fmt_number( # Another numeric column
+      columns = c(win_prob),
+      decimals = 3
+    ) |> 
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(Proj_Margin), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(11, "RdBu"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    data_color( # Update cell colors, testing different color palettes
+      columns = c(win_prob), # ...for dose column
+      fn = scales::col_numeric( # <- bc it's numeric
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    cols_label(home_team = "Home", away_team = "Away", home_VoA_Rating = "Home VoA Rating", away_VoA_Rating = "Away VoA Rating", Proj_Winner = "Projected Winner", Proj_Margin = "Projected Margin", win_prob = "Win Probability") |> # Update labels
+    cols_move_to_end(columns = "win_prob") |>
+    cols_hide(c(game_id, season, week, neutral_site)) |>
+    tab_footnote(
+      footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
+    VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API"
+    )
+  upcoming_games_gt_sorted
 }
 upcoming_games_gt
 upcoming_games_gt |>
