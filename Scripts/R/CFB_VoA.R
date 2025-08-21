@@ -4597,19 +4597,24 @@ if (as.numeric(week) == 0){
 
 ##### Calculating Mean Error of Offensive and Defensive Ratings in Completed FBS games based on previous week's VoA #####
 if (as.numeric(week) == 0){
-  print("no error adjustment yet!")
+  print("no error adjustment this week!")
 } else if (as.numeric(week) <= 5){
   ##### Week 1 - 5 Off & Def Error Calculations #####
+  ### adding dummy off and def error columns, to be filled with real values later
   VoA_Variables <- VoA_Variables |>
     mutate(off_error = -999,
            def_error = -999)
   
+  ### reading in previous week's VoA for error calculation
   PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, week, "_", VoAString)))
+  ### adding dummy home and away off and def VoA rating columns with values to be filled below
   CompletedFBSGames <- CompletedFBSGames |>
     mutate(home_off_VoA_rating = -999,
            home_def_VoA_rating = -999,
            away_off_VoA_rating = -999,
            away_def_VoA_rating = -999)
+  
+  ### filling in VoA ratings with previous week's VoA ratings
   for (i in 1:nrow(CompletedFBSGames)){
     CompletedFBSGames$home_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
     CompletedFBSGames$home_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
@@ -4617,6 +4622,7 @@ if (as.numeric(week) == 0){
     CompletedFBSGames$away_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
   }
   
+  ### calculating error based on differences between off and def ratings and actual point totals
   for (i in 1:nrow(VoA_Variables)){
     temp_games <- CompletedFBSGames |>
       filter(home_team == VoA_Variables$team[i] | away_team == VoA_Variables$team[i]) |>
@@ -4641,16 +4647,21 @@ if (as.numeric(week) == 0){
   
 } else{
   ##### Week 6 - End of Season Error Calculations #####
+  ### creating dummy columns for offensive and defensive error, to be filled with real values at the end
   VoA_Variables <- VoA_Variables |>
     mutate(off_error = -999,
            def_error = -999)
   
+  ### reading in previous week's VoA ratings for error calculations
   PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, week, "_", VoAString)))
+  
+  ### adding dummy rating columns to completed games df, adding in ratings in for loop
   CompletedFBSGames <- CompletedFBSGames |>
     mutate(home_off_VoA_rating = -999,
            home_def_VoA_rating = -999,
            away_off_VoA_rating = -999,
            away_def_VoA_rating = -999)
+  ### adding in actual ratings by game
   for (i in 1:nrow(CompletedFBSGames)){
     CompletedFBSGames$home_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
     CompletedFBSGames$home_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
@@ -4658,6 +4669,7 @@ if (as.numeric(week) == 0){
     CompletedFBSGames$away_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
   }
   
+  ### calculating deviation of offensive and defensive pts for each game from most recent iteration of VoA ratings
   for (i in 1:nrow(VoA_Variables)){
     temp_games <- CompletedFBSGames |>
       filter(home_team == VoA_Variables$team[i] | away_team == VoA_Variables$team[i]) |>
@@ -4671,6 +4683,7 @@ if (as.numeric(week) == 0){
     VoA_Variables$def_error[i] = mean(temp_games$def_error)
   }
   
+  ### adding the average offensive and defensive errors to each teams, filling in the dummy columns created at the start of this section
   for (i in 1:nrow(VoA_Variables)){
     set.seed(802)
     temp_off_ppg <- VoA_Variables$adj_off_ppg[i]
@@ -7394,7 +7407,7 @@ if (as.numeric(week) == 0) {
     # cols_move_to_end(columns = "VoA_Rating") |>
     cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
     tab_footnote(
-      footnote = "Table by @gshelor, Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org"
+      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
     )
   
   ## Full 134 teams table
@@ -7463,7 +7476,7 @@ if (as.numeric(week) == 0) {
     # cols_move_to_end(columns = "VoA_Rating_Ovr") |>
     cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
     tab_footnote(
-      footnote = "Table by @gshelor, Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org"
+      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
     )
 } else if (as.numeric(week) > 15) {
   ## Top 25 Table
@@ -7532,7 +7545,7 @@ if (as.numeric(week) == 0) {
     # cols_move_to_end(columns = "VoA_Rating") |>
     cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
     tab_footnote(
-      footnote = "Table by @gshelor, Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org"
+      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
     )
   
   ## Full 134 teams table
@@ -7601,7 +7614,7 @@ if (as.numeric(week) == 0) {
     # cols_move_to_end(columns = "VoA_Rating_Ovr") |>
     cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
     tab_footnote(
-      footnote = "Table by @gshelor, Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org"
+      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
     )
 } else {
   ## Top 25 Table
@@ -7670,7 +7683,7 @@ if (as.numeric(week) == 0) {
     # cols_move_to_end(columns = "VoA_Rating") |>
     cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
     tab_footnote(
-      footnote = "Table by @gshelor, Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org"
+      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
     )
   
   ## Full 134 teams table
@@ -7739,7 +7752,7 @@ if (as.numeric(week) == 0) {
     # cols_move_to_end(columns = "VoA_Rating") |>
     cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
     tab_footnote(
-      footnote = "Table by @gshelor, Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org"
+      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
     )
 }
 
@@ -7867,7 +7880,7 @@ if (as.numeric(week) > 9) {
     cols_move_to_end(columns = "Resume_VoA") |>
     # cols_hide(c(conference, CFB_Week, VoA_Output)) |>
     tab_footnote(
-      footnote = "Table by @gshelor, Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org"
+      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
     )
   
   ### Full 134 teams table
@@ -7900,7 +7913,7 @@ if (as.numeric(week) > 9) {
     cols_move_to_end(columns = "Resume_VoA") |>
     # cols_hide(c(conference, CFB_Week, VoA_Output)) |>
     tab_footnote(
-      footnote = "Table by @gshelor, Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org"
+      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
     )
 } else if (as.numeric(week) > 15) {
   ## Top 25 Table
@@ -7933,7 +7946,7 @@ if (as.numeric(week) > 9) {
     cols_move_to_end(columns = "Resume_VoA") |>
     # cols_hide(c(conference, CFB_Week, VoA_Output)) |>
     tab_footnote(
-      footnote = "Table by @gshelor, Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org"
+      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
     )
   
   ### Full 134 teams table
@@ -7966,7 +7979,7 @@ if (as.numeric(week) > 9) {
     cols_move_to_end(columns = "Resume_VoA") |>
     # cols_hide(c(conference, CFB_Week, VoA_Output)) |>
     tab_footnote(
-      footnote = "Table by @gshelor, Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org"
+      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
     )
 } else {
   print("No Resume VoA until Week 10!")
