@@ -4598,8 +4598,8 @@ if (as.numeric(week) == 0){
 ##### Calculating Mean Error of Offensive and Defensive Ratings in Completed FBS games based on previous week's VoA #####
 if (as.numeric(week) == 0){
   print("no error adjustment this week!")
-} else if (as.numeric(week) <= 5){
-  ##### Week 1 - 5 Off & Def Error Calculations #####
+} else if (as.numeric(week) <= 2){
+  ##### Week 1 - 2 Off & Def Error Calculations #####
   ### adding dummy off and def error columns, to be filled with real values later
   VoA_Variables <- VoA_Variables |>
     mutate(off_error = -999,
@@ -4640,11 +4640,103 @@ if (as.numeric(week) == 0){
   for (i in 1:nrow(VoA_Variables)){
     set.seed(802)
     temp_off_ppg <- VoA_Variables$adj_off_ppg[i]
-    VoA_Variables$adj_off_ppg[i] = temp_off_ppg + rnorm(1, mean = VoA_Variables$off_error[i], sd = sd(VoA_Variables$off_error) * 1.15)
+    VoA_Variables$adj_off_ppg[i] = temp_off_ppg + rnorm(1, mean = VoA_Variables$off_error[i] / 5, sd = sd(VoA_Variables$off_error) * 1.15)
     temp_def_ppg <- VoA_Variables$adj_def_ppg[i]
-    VoA_Variables$adj_def_ppg[i] = temp_def_ppg + rnorm(1, mean = VoA_Variables$def_error[i], sd = sd(VoA_Variables$def_error) * 1.15)
+    VoA_Variables$adj_def_ppg[i] = temp_def_ppg + rnorm(1, mean = VoA_Variables$def_error[i] / 5, sd = sd(VoA_Variables$def_error) * 1.15)
   }
   
+} else if (as.numeric(week) <= 4){
+  ##### Week 3 - 4 Off & Def Error Calculations #####
+  ### adding dummy off and def error columns, to be filled with real values later
+  VoA_Variables <- VoA_Variables |>
+    mutate(off_error = -999,
+           def_error = -999)
+  
+  ### reading in previous week's VoA for error calculation
+  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, week, "_", VoAString)))
+  ### adding dummy home and away off and def VoA rating columns with values to be filled below
+  CompletedFBSGames <- CompletedFBSGames |>
+    mutate(home_off_VoA_rating = -999,
+           home_def_VoA_rating = -999,
+           away_off_VoA_rating = -999,
+           away_def_VoA_rating = -999)
+  
+  ### filling in VoA ratings with previous week's VoA ratings
+  for (i in 1:nrow(CompletedFBSGames)){
+    CompletedFBSGames$home_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
+    CompletedFBSGames$home_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
+    CompletedFBSGames$away_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
+    CompletedFBSGames$away_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
+  }
+  
+  ### calculating error based on differences between off and def ratings and actual point totals
+  for (i in 1:nrow(VoA_Variables)){
+    temp_games <- CompletedFBSGames |>
+      filter(home_team == VoA_Variables$team[i] | away_team == VoA_Variables$team[i]) |>
+      mutate(team = VoA_Variables$team[i],
+             off_error = case_when(home_team == team ~ home_points - home_off_VoA_rating,
+                                   TRUE ~ away_points - away_off_VoA_rating),
+             def_error = case_when(home_team == team ~ away_points - home_def_VoA_rating,
+                                   TRUE ~ home_points - away_def_VoA_rating))
+    
+    VoA_Variables$off_error[i] = mean(temp_games$off_error)
+    VoA_Variables$def_error[i] = mean(temp_games$def_error)
+  }
+  
+  ### experimenting with making the standard deviation for the random-ish error adjustment bigger so a wider range of values could theoretically be added to the adj ppg vals
+  for (i in 1:nrow(VoA_Variables)){
+    set.seed(802)
+    temp_off_ppg <- VoA_Variables$adj_off_ppg[i]
+    VoA_Variables$adj_off_ppg[i] = temp_off_ppg + rnorm(1, mean = VoA_Variables$off_error[i] / 2, sd = sd(VoA_Variables$off_error) * 1.1)
+    temp_def_ppg <- VoA_Variables$adj_def_ppg[i]
+    VoA_Variables$adj_def_ppg[i] = temp_def_ppg + rnorm(1, mean = VoA_Variables$def_error[i] / 2, sd = sd(VoA_Variables$def_error) * 1.1)
+  }
+} else if (as.numeric(week) == 5){
+  ##### Week 5 Off & Def Error Calculations #####
+  ### adding dummy off and def error columns, to be filled with real values later
+  VoA_Variables <- VoA_Variables |>
+    mutate(off_error = -999,
+           def_error = -999)
+  
+  ### reading in previous week's VoA for error calculation
+  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, week, "_", VoAString)))
+  ### adding dummy home and away off and def VoA rating columns with values to be filled below
+  CompletedFBSGames <- CompletedFBSGames |>
+    mutate(home_off_VoA_rating = -999,
+           home_def_VoA_rating = -999,
+           away_off_VoA_rating = -999,
+           away_def_VoA_rating = -999)
+  
+  ### filling in VoA ratings with previous week's VoA ratings
+  for (i in 1:nrow(CompletedFBSGames)){
+    CompletedFBSGames$home_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
+    CompletedFBSGames$home_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
+    CompletedFBSGames$away_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
+    CompletedFBSGames$away_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
+  }
+  
+  ### calculating error based on differences between off and def ratings and actual point totals
+  for (i in 1:nrow(VoA_Variables)){
+    temp_games <- CompletedFBSGames |>
+      filter(home_team == VoA_Variables$team[i] | away_team == VoA_Variables$team[i]) |>
+      mutate(team = VoA_Variables$team[i],
+             off_error = case_when(home_team == team ~ home_points - home_off_VoA_rating,
+                                   TRUE ~ away_points - away_off_VoA_rating),
+             def_error = case_when(home_team == team ~ away_points - home_def_VoA_rating,
+                                   TRUE ~ home_points - away_def_VoA_rating))
+    
+    VoA_Variables$off_error[i] = mean(temp_games$off_error)
+    VoA_Variables$def_error[i] = mean(temp_games$def_error)
+  }
+  
+  ### experimenting with making the standard deviation for the random-ish error adjustment bigger so a wider range of values could theoretically be added to the adj ppg vals
+  for (i in 1:nrow(VoA_Variables)){
+    set.seed(802)
+    temp_off_ppg <- VoA_Variables$adj_off_ppg[i]
+    VoA_Variables$adj_off_ppg[i] = temp_off_ppg + rnorm(1, mean = VoA_Variables$off_error[i], sd = sd(VoA_Variables$off_error) * 1.05)
+    temp_def_ppg <- VoA_Variables$adj_def_ppg[i]
+    VoA_Variables$adj_def_ppg[i] = temp_def_ppg + rnorm(1, mean = VoA_Variables$def_error[i], sd = sd(VoA_Variables$def_error) * 1.05)
+  }
 } else{
   ##### Week 6 - End of Season Error Calculations #####
   ### creating dummy columns for offensive and defensive error, to be filled with real values at the end
