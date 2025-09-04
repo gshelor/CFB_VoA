@@ -735,7 +735,7 @@ if (as.numeric(week) == 0) {
   ### pulling in completed games as part of opponent-adjustment of stats later
   CompletedFBSGames <- cfbd_game_info(as.numeric(year)) |>
     filter(completed == TRUE) |>
-    filter(home_classification == "fbs" & away_classification == "fbs")
+    filter(home_classification == "fbs" | away_classification == "fbs")
   CompletedNeutralGames <- CompletedFBSGames |>
     filter(neutral_site == TRUE)
   
@@ -938,7 +938,7 @@ if (as.numeric(week) == 0) {
   ### pulling in completed games as part of opponent-adjustment of stats later
   CompletedFBSGames <- cfbd_game_info(as.numeric(year)) |>
     filter(completed == TRUE) |>
-    filter(home_classification == "fbs" & away_classification == "fbs")
+    filter(home_classification == "fbs" | away_classification == "fbs")
   CompletedNeutralGames <- CompletedFBSGames |>
     filter(neutral_site == TRUE)
   
@@ -1137,7 +1137,7 @@ if (as.numeric(week) == 0) {
   ### pulling in completed games as part of opponent-adjustment of stats later
   CompletedFBSGames <- cfbd_game_info(as.numeric(year)) |>
     filter(completed == TRUE) |>
-    filter(home_classification == "fbs" & away_classification == "fbs")
+    filter(home_classification == "fbs" | away_classification == "fbs")
   CompletedNeutralGames <- CompletedFBSGames |>
     filter(neutral_site == TRUE)
   
@@ -1333,7 +1333,7 @@ if (as.numeric(week) == 0) {
   ### pulling in completed games as part of opponent-adjustment of stats later
   CompletedFBSGames <- cfbd_game_info(as.numeric(year)) |>
     filter(completed == TRUE) |>
-    filter(home_classification == "fbs" & away_classification == "fbs")
+    filter(home_classification == "fbs" | away_classification == "fbs")
   CompletedNeutralGames <- CompletedFBSGames |>
     filter(neutral_site == TRUE)
   ### Current season Play by play data
@@ -2848,7 +2848,7 @@ if (as.numeric(week) == 0) {
   }
   ##### TEMP 2024 week 1 fix for data issues/teams with no games played #####
   # Current_df <- rbind(Current_df, BallStCMUULM)
-  ##### End of Temp Fix #####
+  ##### End of Temp Fix
   
   ### removing temp variables from the environment in the hope it will stop my R session from crashing
   rm(temp_PBP_yards, temp_PBP_Defyards, temp_PBP_3rd, temp_PBP_4th, temp_PBP_OffTDs, temp_PBP_DefTDs, temp_PBP_2Pts, temp_PBP_Def2Pts, temp_PBP_FGs, temp_PBP_GoodFGs, temp_PBP_DefFGs, temp_PBP_DefGoodFGs, temp_PBP_XPts, temp_PBP_DefXPts, temp_PBP_KickReturn, temp_PBP_PuntReturn, temp_PBP_ReturnTDs, temp_PBP_OffReturnTDs, temp_PBP_PuntTDs)
@@ -3138,6 +3138,15 @@ if (as.numeric(week) == 0) {
     left_join(dfAdjdef_STPPA |> rename(team = coef_name), by = "team") |>
     rename(adj_st_ppa_allowed = ppa) |>
     mutate(net_adj_st_ppa = adj_st_ppa - adj_st_ppa_allowed)
+  
+  ### NAs in the special teams columns after week 1, substituting 0s for simplicity
+  for (i in 1:nrow(VoA_Variables)){
+    if(is.na(VoA_Variables$adj_st_ppa[i]) | is.na(VoA_Variables$adj_st_ppa_allowed[i])){
+      VoA_Variables$adj_st_ppa[i] = 0
+      VoA_Variables$adj_st_ppa_allowed[i] = 0
+    }
+    VoA_Variables$net_adj_st_ppa[i] = VoA_Variables$adj_st_ppa[i] - VoA_Variables$adj_st_ppa_allowed[i] 
+  }
 } else if (as.numeric(week) <= 5) {
   ##### WEEKS 2-5 DF Merge #####
   ### merging data frames together, arranging columns
@@ -4397,7 +4406,7 @@ if (as.numeric(week) == 0){
            weighted_net_fg_rate = ((fg_rate_PY3 - fg_rate_allowed_PY3) * 0.05) + ((fg_rate_PY2 - fg_rate_allowed_PY2) * 0.15) + ((fg_rate_PY1 - fg_rate_allowed_PY1) * 0.7) + ((fg_rate - fg_rate_allowed) * 0.1),
            weighted_net_fg_made_pg = ((fg_made_pg_PY3 - fg_made_pg_allowed_PY3) * 0.05) + ((fg_made_pg_PY2 - fg_made_pg_allowed_PY2) * 0.15) + ((fg_made_pg_PY1 - fg_made_pg_allowed_PY1) * 0.7) + ((fg_made_pg - fg_made_pg_allowed) * 0.1),
            weighted_net_xpts_pg = ((xpts_pg_PY3 - xpts_allowed_pg_PY3) * 0.05) + ((xpts_pg_PY2 - xpts_allowed_pg_PY2) * 0.15) + ((xpts_pg_PY1 - xpts_allowed_pg_PY1) * 0.7) + ((xpts_pg - xpts_allowed_pg) * 0.1),
-           weighted_net_adj_st_ppa = (net_adj_st_ppa_PY3 * 0.05) (net_adj_st_ppa_PY2 * 0.15) (net_adj_st_ppa_PY1 * 0.7) + (net_adj_st_ppa * 0.1),
+           weighted_net_adj_st_ppa = (net_adj_st_ppa_PY3 * 0.05) + (net_adj_st_ppa_PY2 * 0.15) + (net_adj_st_ppa_PY1 * 0.7) + (net_adj_st_ppa * 0.1),
            weighted_mean_oppdef_ppa = (oppdef_ppa_PY3 * 0.05) + (oppdef_ppa_PY2 * 0.15) + (oppdef_ppa_PY1 * 0.7) + (oppdef_ppa * 0.1),
            weighted_mean_oppoff_ppa = (oppoff_ppa_PY3 * 0.05) + (oppoff_ppa_PY2 * 0.15) + (oppoff_ppa_PY1 * 0.7) + (oppoff_ppa * 0.1))
 } else if (as.numeric(week) <= 3){
@@ -4429,7 +4438,7 @@ if (as.numeric(week) == 0){
            weighted_net_fg_rate = ((fg_rate_PY2 - fg_rate_allowed_PY2) * 0.1) + ((fg_rate_PY1 - fg_rate_allowed_PY1) * 0.5) + ((fg_rate - fg_rate_allowed) * 0.4),
            weighted_net_fg_made_pg = ((fg_made_pg_PY2 - fg_made_pg_allowed_PY2) * 0.1) + ((fg_made_pg_PY1 - fg_made_pg_allowed_PY1) * 0.5) + ((fg_made_pg - fg_made_pg_allowed) * 0.4),
            weighted_net_xpts_pg = ((xpts_pg_PY2 - xpts_allowed_pg_PY2) * 0.1) + ((xpts_pg_PY1 - xpts_allowed_pg_PY1) * 0.5) + ((xpts_pg - xpts_allowed_pg) * 0.4),
-           weighted_net_adj_st_ppa = (net_adj_st_ppa_PY2 * 0.1) (net_adj_st_ppa_PY1 * 0.5) + (net_adj_st_ppa * 0.4),
+           weighted_net_adj_st_ppa = (net_adj_st_ppa_PY2 * 0.1) + (net_adj_st_ppa_PY1 * 0.5) + (net_adj_st_ppa * 0.4),
            weighted_mean_oppdef_ppa = (oppdef_ppa_PY2 * 0.1) + (oppdef_ppa_PY1 * 0.5) + (oppdef_ppa * 0.4),
            weighted_mean_oppoff_ppa = (oppoff_ppa_PY2 * 0.1) + (oppoff_ppa_PY1 * 0.5) + (oppoff_ppa * 0.4))
 } else if (as.numeric(week) == 4){
@@ -4460,7 +4469,7 @@ if (as.numeric(week) == 0){
            weighted_net_fg_rate = ((fg_rate_PY2 - fg_rate_allowed_PY2) * 0.1) + ((fg_rate_PY1 - fg_rate_allowed_PY1) * 0.4) + ((fg_rate - fg_rate_allowed) * 0.5),
            weighted_net_fg_made_pg = ((fg_made_pg_PY2 - fg_made_pg_allowed_PY2) * 0.1) + ((fg_made_pg_PY1 - fg_made_pg_allowed_PY1) * 0.4) + ((fg_made_pg - fg_made_pg_allowed) * 0.5),
            weighted_net_xpts_pg = ((xpts_pg_PY2 - xpts_allowed_pg_PY2) * 0.1) + ((xpts_pg_PY1 - xpts_allowed_pg_PY1) * 0.4) + ((xpts_pg - xpts_allowed_pg) * 0.5),
-           weighted_net_adj_st_ppa = (net_adj_st_ppa_PY2 * 0.1) (net_adj_st_ppa_PY1 * 0.4) + (net_adj_st_ppa * 0.5),
+           weighted_net_adj_st_ppa = (net_adj_st_ppa_PY2 * 0.1) + (net_adj_st_ppa_PY1 * 0.4) + (net_adj_st_ppa * 0.5),
            weighted_mean_oppdef_ppa = (oppdef_ppa_PY2 * 0.1) + (oppdef_ppa_PY1 * 0.4) + (oppdef_ppa * 0.5),
            weighted_mean_oppoff_ppa = (oppoff_ppa_PY2 * 0.1) + (oppoff_ppa_PY1 * 0.4) + (oppoff_ppa * 0.5))
 } else if (as.numeric(week) == 5){
@@ -4491,7 +4500,7 @@ if (as.numeric(week) == 0){
            weighted_net_fg_rate = ((fg_rate_PY2 - fg_rate_allowed_PY2) * 0.05) + ((fg_rate_PY1 - fg_rate_allowed_PY1) * 0.35) + ((fg_rate - fg_rate_allowed) * 0.6),
            weighted_net_fg_made_pg = ((fg_made_pg_PY2 - fg_made_pg_allowed_PY2) * 0.05) + ((fg_made_pg_PY1 - fg_made_pg_allowed_PY1) * 0.35) + ((fg_made_pg - fg_made_pg_allowed) * 0.6),
            weighted_net_xpts_pg = ((xpts_pg_PY2 - xpts_allowed_pg_PY2) * 0.05) + ((xpts_pg_PY1 - xpts_allowed_pg_PY1) * 0.35) + ((xpts_pg - xpts_allowed_pg) * 0.6),
-           weighted_net_adj_st_ppa = (net_adj_st_ppa_PY2 * 0.05) (net_adj_st_ppa_PY1 * 0.35) + (net_adj_st_ppa * 0.6),
+           weighted_net_adj_st_ppa = (net_adj_st_ppa_PY2 * 0.05) + (net_adj_st_ppa_PY1 * 0.35) + (net_adj_st_ppa * 0.6),
            weighted_mean_oppdef_ppa = (oppdef_ppa_PY2 * 0.05) + (oppdef_ppa_PY1 * 0.35) + (oppdef_ppa * 0.6),
            weighted_mean_oppoff_ppa = (oppoff_ppa_PY2 * 0.05) + (oppoff_ppa_PY1 * 0.35) + (oppoff_ppa * 0.6))
 } else if (as.numeric(week) == 6){
@@ -4606,7 +4615,7 @@ if (as.numeric(week) == 0){
            def_error = -999)
   
   ### reading in previous week's VoA for error calculation
-  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, week, "_", VoAString)))
+  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.numeric(week) - 1, "_", VoAString)))
   ### adding dummy home and away off and def VoA rating columns with values to be filled below
   CompletedFBSGames <- CompletedFBSGames |>
     mutate(home_off_VoA_rating = -999,
@@ -4616,10 +4625,22 @@ if (as.numeric(week) == 0){
   
   ### filling in VoA ratings with previous week's VoA ratings
   for (i in 1:nrow(CompletedFBSGames)){
-    CompletedFBSGames$home_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
-    CompletedFBSGames$home_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
-    CompletedFBSGames$away_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
-    CompletedFBSGames$away_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
+    ### making sure home team is in FBS/VoA before assigning specific VoA rating
+    if(CompletedFBSGames$home_team[i] %in% VoA_Variables$team){
+      CompletedFBSGames$home_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
+      CompletedFBSGames$home_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
+    } else{
+      CompletedFBSGames$home_off_VoA_rating[i] = -999
+      CompletedFBSGames$home_def_VoA_rating[i] = -999
+    }
+    ### making sure away team is in FBS/VoA before assigning specific VoA rating
+    if(CompletedFBSGames$away_team[i] %in% VoA_Variables$team){
+      CompletedFBSGames$away_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
+      CompletedFBSGames$away_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
+    } else{
+      CompletedFBSGames$away_off_VoA_rating[i] = -999
+      CompletedFBSGames$away_def_VoA_rating[i] = -999
+    }
   }
   
   ### calculating error based on differences between off and def ratings and actual point totals
@@ -4663,10 +4684,22 @@ if (as.numeric(week) == 0){
   
   ### filling in VoA ratings with previous week's VoA ratings
   for (i in 1:nrow(CompletedFBSGames)){
-    CompletedFBSGames$home_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
-    CompletedFBSGames$home_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
-    CompletedFBSGames$away_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
-    CompletedFBSGames$away_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
+    ### making sure home team is in FBS/VoA before assigning specific VoA rating
+    if(CompletedFBSGames$home_team[i] %in% VoA_Variables$team){
+      CompletedFBSGames$home_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
+      CompletedFBSGames$home_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
+    } else{
+      CompletedFBSGames$home_off_VoA_rating[i] = -999
+      CompletedFBSGames$home_def_VoA_rating[i] = -999
+    }
+    ### making sure away team is in FBS/VoA before assigning specific VoA rating
+    if(CompletedFBSGames$away_team[i] %in% VoA_Variables$team){
+      CompletedFBSGames$away_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
+      CompletedFBSGames$away_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
+    } else{
+      CompletedFBSGames$away_off_VoA_rating[i] = -999
+      CompletedFBSGames$away_def_VoA_rating[i] = -999
+    }
   }
   
   ### calculating error based on differences between off and def ratings and actual point totals
@@ -4709,10 +4742,22 @@ if (as.numeric(week) == 0){
   
   ### filling in VoA ratings with previous week's VoA ratings
   for (i in 1:nrow(CompletedFBSGames)){
-    CompletedFBSGames$home_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
-    CompletedFBSGames$home_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
-    CompletedFBSGames$away_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
-    CompletedFBSGames$away_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
+    ### making sure home team is in FBS/VoA before assigning specific VoA rating
+    if(CompletedFBSGames$home_team[i] %in% VoA_Variables$team){
+      CompletedFBSGames$home_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
+      CompletedFBSGames$home_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
+    } else{
+      CompletedFBSGames$home_off_VoA_rating[i] = -999
+      CompletedFBSGames$home_def_VoA_rating[i] = -999
+    }
+    ### making sure away team is in FBS/VoA before assigning specific VoA rating
+    if(CompletedFBSGames$away_team[i] %in% VoA_Variables$team){
+      CompletedFBSGames$away_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
+      CompletedFBSGames$away_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
+    } else{
+      CompletedFBSGames$away_off_VoA_rating[i] = -999
+      CompletedFBSGames$away_def_VoA_rating[i] = -999
+    }
   }
   
   ### calculating error based on differences between off and def ratings and actual point totals
@@ -4755,10 +4800,22 @@ if (as.numeric(week) == 0){
            away_def_VoA_rating = -999)
   ### adding in actual ratings by game
   for (i in 1:nrow(CompletedFBSGames)){
-    CompletedFBSGames$home_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
-    CompletedFBSGames$home_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
-    CompletedFBSGames$away_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
-    CompletedFBSGames$away_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
+    ### making sure home team is in FBS/VoA before assigning specific VoA rating
+    if(CompletedFBSGames$home_team[i] %in% VoA_Variables$team){
+      CompletedFBSGames$home_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
+      CompletedFBSGames$home_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$home_team[i]]
+    } else{
+      CompletedFBSGames$home_off_VoA_rating[i] = -999
+      CompletedFBSGames$home_def_VoA_rating[i] = -999
+    }
+    ### making sure away team is in FBS/VoA before assigning specific VoA rating
+    if(CompletedFBSGames$away_team[i] %in% VoA_Variables$team){
+      CompletedFBSGames$away_off_VoA_rating[i] = PrevWeek_VoA$OffVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
+      CompletedFBSGames$away_def_VoA_rating[i] = PrevWeek_VoA$DefVoA_MeanRating[PrevWeek_VoA$team == CompletedFBSGames$away_team[i]]
+    } else{
+      CompletedFBSGames$away_off_VoA_rating[i] = -999
+      CompletedFBSGames$away_def_VoA_rating[i] = -999
+    }
   }
   
   ### calculating deviation of offensive and defensive pts for each game from most recent iteration of VoA ratings
@@ -4791,7 +4848,7 @@ if (as.numeric(week) == 0){
 ### leaving this outside an if statement because this could be an issue regardless of season or CFB_Week
 ### currently commented out because I added this fix to each individual stat pull in function
 ### uncommented it because I must once again ask that Florida International University go fuck itself
-if (as.numeric(week) %in% c(0, 9:16)){
+if (as.numeric(week) %in% c(0, 1, 9:16)){
   VoA_Variables$recruit_pts[is.na(VoA_Variables$recruit_pts)] = 0
   VoA_Variables$recruit_pts_PY3[is.na(VoA_Variables$recruit_pts_PY3)] = 0
 }
