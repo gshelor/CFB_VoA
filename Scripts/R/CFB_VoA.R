@@ -3292,15 +3292,15 @@ if (as.numeric(week) == 0) {
            SuccessRt_diff_PY1 = off_success_rate_PY1 - def_success_rate_PY1,
            HavocRt_diff_PY2 = def_havoc_total_PY2 - off_havoc_total_PY2,
            HavocRt_diff_PY1 = def_havoc_total_PY1 - off_havoc_total_PY1,
-             Explosiveness_diff_PY2 = off_explosiveness_PY2 - def_explosiveness_PY2,
-             Explosiveness_diff_PY1 = off_explosiveness_PY1 - def_explosiveness_PY1,
-             PPA_diff = off_ppa - def_ppa,
-             SuccessRt_diff = off_success_rate - def_success_rate,
-             HavocRt_diff = def_havoc_total - off_havoc_total,
-             Explosiveness_diff = off_explosiveness - def_explosiveness,
-             net_st_ppg = st_ppg - st_ppg_allowed,
-             net_st_ppg_PY2 = st_ppg_PY2 - st_ppg_allowed_PY2,
-             net_st_ppg_PY1 = st_ppg_PY1 - st_ppg_allowed_PY1)
+           Explosiveness_diff_PY2 = off_explosiveness_PY2 - def_explosiveness_PY2,
+           Explosiveness_diff_PY1 = off_explosiveness_PY1 - def_explosiveness_PY1,
+           PPA_diff = off_ppa - def_ppa,
+           SuccessRt_diff = off_success_rate - def_success_rate,
+           HavocRt_diff = def_havoc_total - off_havoc_total,
+           Explosiveness_diff = off_explosiveness - def_explosiveness,
+           net_st_ppg = st_ppg - st_ppg_allowed,
+           net_st_ppg_PY2 = st_ppg_PY2 - st_ppg_allowed_PY2,
+           net_st_ppg_PY1 = st_ppg_PY1 - st_ppg_allowed_PY1)
   
   ### Creating Opponent-adjusted stats with ridge regression
   ### PPA first
@@ -3562,6 +3562,15 @@ if (as.numeric(week) == 0) {
     left_join(dfAdjdef_STPPA |> rename(team = coef_name), by = "team") |>
     rename(adj_st_ppa_allowed = ppa) |>
     mutate(net_adj_st_ppa = adj_st_ppa - adj_st_ppa_allowed)
+  
+  ### NAs in the special teams columns after week 1, substituting 0s for simplicity
+  for (i in 1:nrow(VoA_Variables)){
+    if(is.na(VoA_Variables$adj_st_ppa[i]) | is.na(VoA_Variables$adj_st_ppa_allowed[i])){
+      VoA_Variables$adj_st_ppa[i] = 0
+      VoA_Variables$adj_st_ppa_allowed[i] = 0
+    }
+    VoA_Variables$net_adj_st_ppa[i] = VoA_Variables$adj_st_ppa[i] - VoA_Variables$adj_st_ppa_allowed[i] 
+  }
 } else if (as.numeric(week) <= 8) {
   ##### WEEKS 6-8 DF Merge #####
   ## merging data frames together, arranging columns
@@ -4660,10 +4669,19 @@ if (as.numeric(week) == 0){
   ### experimenting with making the standard deviation for the random-ish error adjustment bigger so a wider range of values could theoretically be added to the adj ppg vals
   for (i in 1:nrow(VoA_Variables)){
     set.seed(802)
-    temp_off_ppg <- VoA_Variables$adj_off_ppg[i]
-    VoA_Variables$adj_off_ppg[i] = temp_off_ppg + rnorm(1, mean = VoA_Variables$off_error[i] / 5, sd = sd(VoA_Variables$off_error) * 1.15)
-    temp_def_ppg <- VoA_Variables$adj_def_ppg[i]
-    VoA_Variables$adj_def_ppg[i] = temp_def_ppg + rnorm(1, mean = VoA_Variables$def_error[i] / 5, sd = sd(VoA_Variables$def_error) * 1.15)
+    temp_off_ppg <- VoA_Variables$weighted_off_ppg_mean[i]
+    VoA_Variables$weighted_off_ppg_mean[i] = temp_off_ppg + rnorm(1, mean = VoA_Variables$off_error[i] / 3, sd = sd(VoA_Variables$off_error) * 1.15)
+    temp_def_ppg <- VoA_Variables$weighted_def_ppg_mean[i]
+    VoA_Variables$weighted_def_ppg_mean[i] = temp_def_ppg + rnorm(1, mean = VoA_Variables$def_error[i] / 3, sd = sd(VoA_Variables$def_error) * 1.15)
+    
+    ### making sure all values are > 0
+    set.seed(802)
+    if (VoA_Variables$weighted_off_ppg_mean[i] <= 0){
+      VoA_Variables$weighted_off_ppg_mean[i] = abs(VoA_Variables$weighted_off_ppg_mean[i]) + abs(rnorm(1, 5, 1))
+    }
+    if (VoA_Variables$weighted_def_ppg_mean[i] <= 0){
+      VoA_Variables$weighted_def_ppg_mean[i] = abs(VoA_Variables$weighted_def_ppg_mean[i]) + abs(rnorm(1, 5, 1))
+    }
   }
   
 } else if (as.numeric(week) <= 4){
@@ -4719,10 +4737,19 @@ if (as.numeric(week) == 0){
   ### experimenting with making the standard deviation for the random-ish error adjustment bigger so a wider range of values could theoretically be added to the adj ppg vals
   for (i in 1:nrow(VoA_Variables)){
     set.seed(802)
-    temp_off_ppg <- VoA_Variables$adj_off_ppg[i]
-    VoA_Variables$adj_off_ppg[i] = temp_off_ppg + rnorm(1, mean = VoA_Variables$off_error[i] / 2, sd = sd(VoA_Variables$off_error) * 1.1)
-    temp_def_ppg <- VoA_Variables$adj_def_ppg[i]
-    VoA_Variables$adj_def_ppg[i] = temp_def_ppg + rnorm(1, mean = VoA_Variables$def_error[i] / 2, sd = sd(VoA_Variables$def_error) * 1.1)
+    temp_off_ppg <- VoA_Variables$weighted_off_ppg_mean[i]
+    VoA_Variables$weighted_off_ppg_mean[i] = temp_off_ppg + rnorm(1, mean = VoA_Variables$off_error[i] / 2, sd = sd(VoA_Variables$off_error) * 1.1)
+    temp_def_ppg <- VoA_Variables$weighted_def_ppg_mean[i]
+    VoA_Variables$weighted_def_ppg_mean[i] = temp_def_ppg + rnorm(1, mean = VoA_Variables$def_error[i] / 2, sd = sd(VoA_Variables$def_error) * 1.1)
+    
+    ### making sure all values are > 0
+    set.seed(802)
+    if (VoA_Variables$weighted_off_ppg_mean[i] <= 0){
+      VoA_Variables$weighted_off_ppg_mean[i] = abs(VoA_Variables$weighted_off_ppg_mean[i]) + abs(rnorm(1, 5, 1))
+    }
+    if (VoA_Variables$weighted_def_ppg_mean[i] <= 0){
+      VoA_Variables$weighted_def_ppg_mean[i] = abs(VoA_Variables$weighted_def_ppg_mean[i]) + abs(rnorm(1, 5, 1))
+    }
   }
 } else if (as.numeric(week) == 5){
   ##### Week 5 Off & Def Error Calculations #####
@@ -4777,10 +4804,19 @@ if (as.numeric(week) == 0){
   ### experimenting with making the standard deviation for the random-ish error adjustment bigger so a wider range of values could theoretically be added to the adj ppg vals
   for (i in 1:nrow(VoA_Variables)){
     set.seed(802)
-    temp_off_ppg <- VoA_Variables$adj_off_ppg[i]
-    VoA_Variables$adj_off_ppg[i] = temp_off_ppg + rnorm(1, mean = VoA_Variables$off_error[i], sd = sd(VoA_Variables$off_error) * 1.05)
-    temp_def_ppg <- VoA_Variables$adj_def_ppg[i]
-    VoA_Variables$adj_def_ppg[i] = temp_def_ppg + rnorm(1, mean = VoA_Variables$def_error[i], sd = sd(VoA_Variables$def_error) * 1.05)
+    temp_off_ppg <- VoA_Variables$weighted_off_ppg_mean[i]
+    VoA_Variables$weighted_off_ppg_mean[i] = temp_off_ppg + rnorm(1, mean = VoA_Variables$off_error[i], sd = sd(VoA_Variables$off_error) * 1.05)
+    temp_def_ppg <- VoA_Variables$weighted_def_ppg_mean[i]
+    VoA_Variables$weighted_def_ppg_mean[i] = temp_def_ppg + rnorm(1, mean = VoA_Variables$def_error[i], sd = sd(VoA_Variables$def_error) * 1.05)
+    
+    ### making sure all values are > 0
+    set.seed(802)
+    if (VoA_Variables$weighted_off_ppg_mean[i] <= 0){
+      VoA_Variables$weighted_off_ppg_mean[i] = abs(VoA_Variables$weighted_off_ppg_mean[i]) + abs(rnorm(1, 5, 1))
+    }
+    if (VoA_Variables$weighted_def_ppg_mean[i] <= 0){
+      VoA_Variables$weighted_def_ppg_mean[i] = abs(VoA_Variables$weighted_def_ppg_mean[i]) + abs(rnorm(1, 5, 1))
+    }
   }
 } else{
   ##### Week 6 - End of Season Error Calculations #####
@@ -4790,7 +4826,7 @@ if (as.numeric(week) == 0){
            def_error = -999)
   
   ### reading in previous week's VoA ratings for error calculations
-  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, week, "_", VoAString)))
+  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.numeric(week) - 1, "_", VoAString)))
   
   ### adding dummy rating columns to completed games df, adding in ratings in for loop
   CompletedFBSGames <- CompletedFBSGames |>
@@ -4839,6 +4875,15 @@ if (as.numeric(week) == 0){
     VoA_Variables$adj_off_ppg[i] = temp_off_ppg + rnorm(1, mean = VoA_Variables$off_error[i], sd = sd(VoA_Variables$off_error))
     temp_def_ppg <- VoA_Variables$adj_def_ppg[i]
     VoA_Variables$adj_def_ppg[i] = temp_def_ppg + rnorm(1, mean = VoA_Variables$def_error[i], sd = sd(VoA_Variables$def_error))
+    
+    ### making sure all values are > 0
+    set.seed(802)
+    if (VoA_Variables$adj_off_ppg[i] <= 0){
+      VoA_Variables$adj_off_ppg[i] = abs(VoA_Variables$adj_off_ppg[i]) + abs(rnorm(1, 5, 1))
+    }
+    if (VoA_Variables$adj_def_ppg[i] <= 0){
+      VoA_Variables$adj_def_ppg[i] = abs(VoA_Variables$adj_def_ppg[i]) + abs(rnorm(1, 5, 1))
+    }
   }
 }
 
@@ -5057,78 +5102,8 @@ if (as.numeric(week) == 0) {
            Rank_HavocRt_diff_PY2 = dense_rank(desc(HavocRt_diff_PY2)),
            Rank_Explosiveness_diff_PY2 = dense_rank(desc(Explosiveness_diff_PY2)),
            ## PY2 weighted twice
-           Rank_Comp_Pct_PY2_col2 = dense_rank(desc(completion_pct_PY2)),
-           Rank_Pass_YPA_PY2_col2 = dense_rank(desc(pass_ypa_PY2)),
-           Rank_Pass_YPR_PY2_col2 = dense_rank(desc(pass_ypr_PY2)),
-           Rank_Int_Pct_PY2_col2 = dense_rank(int_pct_PY2),
-           Rank_Rush_YPC_PY2_col2 = dense_rank(desc(rush_ypc_PY2)),
-           Rank_Turnovers_pg_PY2_col2 = dense_rank(turnovers_pg_PY2),
-           Rank_Third_Conv_Rate_PY2_col2 = dense_rank(desc(third_conv_rate_PY2)),
-           Rank_Fourth_Conv_Rate_PY2_col2 = dense_rank(desc(fourth_conv_rate_PY2)),
-           Rank_Penalty_Yds_pg_PY2_col2 = dense_rank(penalty_yds_pg_PY2),
-           Rank_Yds_Per_Penalty_PY2_col2 = dense_rank(yards_per_penalty_PY2),
-           Rank_Total_Yds_pg_PY2_col2 = dense_rank(desc(total_yds_pg_PY2)),
-           Rank_Pass_Yds_pg_PY2_col2 = dense_rank(desc(pass_yds_pg_PY2)),
-           Rank_Rush_Yds_pg_PY2_col2 = dense_rank(desc(rush_yds_pg_PY2)),
-           Rank_First_Downs_pg_PY2_col2 = dense_rank(desc(first_downs_pg_PY2)),
-           Rank_Off_YPP_PY2_col2 = dense_rank(desc(off_ypp_PY2)),
-           Rank_Def_Ints_pg_PY2_col2 = dense_rank(desc(def_interceptions_pg_PY2)),
-           Rank_Off_PPA_PY2_col2 = dense_rank(desc(off_ppa_PY2)),
-           Rank_Off_Success_Rt_PY2_col2 = dense_rank(desc(off_success_rate_PY2)),
-           Rank_Off_Explosiveness_PY2_col2 = dense_rank(desc(off_explosiveness_PY2)),
-           Rank_Off_Pwr_Success_PY2_col2 = dense_rank(desc(off_power_success_PY2)),
-           Rank_Off_Stuff_Rt_PY2_col2 = dense_rank(off_stuff_rate_PY2),
-           Rank_Off_Line_Yds_PY2_col2 = dense_rank(desc(off_line_yds_PY2)),
-           Rank_Off_Second_Lvl_Yds_PY2_col2 = dense_rank(desc(off_second_lvl_yds_PY2)),
-           Rank_Off_Open_Field_Yds_PY2_col2 = dense_rank(desc(off_open_field_yds_PY2)),
-           Rank_Off_Pts_Per_Opp_PY2_col2 = dense_rank(desc(off_pts_per_opp_PY2)),
-           Rank_Off_Field_Pos_Avg_Predicted_Pts_PY2_col2 = dense_rank(desc(off_field_pos_avg_predicted_points_PY2)),
-           Rank_Off_Havoc_Total_PY2_col2 = dense_rank(off_havoc_total_PY2),
-           Rank_Off_Havoc_Front_PY2_col2 = dense_rank(off_havoc_front_seven_PY2),
-           Rank_Off_Havoc_DB_PY2_col2 = dense_rank(off_havoc_db_PY2),
-           Rank_Off_Standard_Down_PPA_PY2_col2 = dense_rank(desc(off_standard_downs_ppa_PY2)),
-           Rank_Off_Standard_Down_Success_Rt_PY2_col2 = dense_rank(desc(off_standard_downs_success_rate_PY2)),
-           Rank_Off_Standard_Down_Explosiveness_PY2_col2 = dense_rank(desc(off_standard_downs_explosiveness_PY2)),
-           Rank_Off_Pass_Down_PPA_PY2_col2 = dense_rank(desc(off_passing_downs_ppa_PY2)),
-           Rank_Off_Pass_Down_Success_Rt_PY2_col2 = dense_rank(desc(off_passing_downs_success_rate_PY2)),
-           Rank_Off_Pass_Down_Explosiveness_PY2_col2 = dense_rank(desc(off_passing_downs_explosiveness_PY2)),
-           Rank_Off_Rush_Play_PPA_PY2_col2 = dense_rank(desc(off_rushing_plays_ppa_PY2)),
-           Rank_Off_Rush_Play_Success_Rt_PY2_col2 = dense_rank(desc(off_rushing_plays_success_rate_PY2)),
-           Rank_Off_Rush_Play_Explosiveness_PY2_col2 = dense_rank(desc(off_rushing_plays_explosiveness_PY2)),
-           Rank_Off_Pass_Play_PPA_PY2_col2 = dense_rank(desc(off_passing_plays_ppa_PY2)),
-           Rank_Off_Pass_Play_Success_Rt_PY2_col2 = dense_rank(desc(off_passing_plays_success_rate_PY2)),
-           Rank_Off_Pass_Play_Explosiveness_PY2_col2 = dense_rank(desc(off_passing_plays_explosiveness_PY2)),
-           Rank_Def_PPA_PY2_col2 = dense_rank(def_ppa_PY2),
-           Rank_Def_Success_Rt_PY2_col2 = dense_rank(def_success_rate_PY2),
-           Rank_Def_Explosiveness_PY2_col2 = dense_rank(def_explosiveness_PY2),
-           Rank_Def_Pwr_Success_PY2_col2 = dense_rank(def_power_success_PY2),
-           Rank_Def_Stuff_Rt_PY2_col2 = dense_rank(desc(def_stuff_rate_PY2)),
-           Rank_Def_Line_Yds_PY2_col2 = dense_rank(def_line_yds_PY2),
-           Rank_Def_Second_Lvl_Yds_PY2_col2 = dense_rank(def_second_lvl_yds_PY2),
-           Rank_Def_Open_Field_Yds_PY2_col2 = dense_rank(def_open_field_yds_PY2),
-           Rank_Def_Pts_Per_Opp_PY2_col2 = dense_rank(def_pts_per_opp_PY2),
-           Rank_Def_Field_Pos_Avg_Predicted_Pts_PY2_col2 = dense_rank(def_field_pos_avg_predicted_points_PY2),
-           Rank_Def_Havoc_Total_PY2_col2 = dense_rank(desc(def_havoc_total_PY2)),
-           Rank_Def_Havoc_Front_Seven_PY2_col2 = dense_rank(desc(def_havoc_front_seven_PY2)),
-           Rank_Def_Havoc_DB_PY2_col2 = dense_rank(desc(def_havoc_db_PY2)),
-           Rank_Def_Standard_Down_PPA_PY2_col2 = dense_rank(def_standard_downs_ppa_PY2),
-           Rank_Def_Standard_Down_Success_Rt_PY2_col2 = dense_rank(def_standard_downs_success_rate_PY2),
-           Rank_Def_Standard_Down_Explosiveness_PY2_col2 = dense_rank(def_standard_downs_explosiveness_PY2),
-           Rank_Def_Pass_Down_PPA_PY2_col2 = dense_rank(def_passing_downs_ppa_PY2),
-           Rank_Def_Pass_Down_Success_Rt_PY2_col2 = dense_rank(def_passing_downs_success_rate_PY2),
-           Rank_Def_Pass_Down_Explosiveness_PY2_col2 = dense_rank(def_passing_downs_explosiveness_PY2),
-           Rank_Def_Rush_Play_PPA_PY2_col2 = dense_rank(def_rushing_plays_ppa_PY2),
-           Rank_Def_Rush_Play_Success_Rt_PY2_col2 = dense_rank(def_rushing_plays_success_rate_PY2),
-           Rank_Def_Rush_Play_Explosiveness_PY2_col2 = dense_rank(def_rushing_plays_explosiveness_PY2),
-           Rank_Def_Pass_Play_PPA_PY2_col2 = dense_rank(def_passing_plays_ppa_PY2),
-           Rank_Def_Pass_Play_Success_Rt_PY2_col2 = dense_rank(def_passing_plays_success_rate_PY2),
-           Rank_Def_Pass_Play_Explosiveness_PY2_col2 = dense_rank(def_passing_plays_explosiveness_PY2),
-           Rank_PPA_diff_PY2_col2 = dense_rank(desc(PPA_diff_PY2)),
-           Rank_SuccessRt_diff_PY2_col2 = dense_rank(desc(SuccessRt_diff_PY2)),
-           Rank_HavocRt_diff_PY2_col2 = dense_rank(desc(HavocRt_diff_PY2)),
-           Rank_Explosiveness_diff_PY2_col2 = dense_rank(desc(Explosiveness_diff_PY2)),
            Rank_Recruit_Pts_PY2_col2 = dense_rank(desc(recruit_pts_PY2)),
-           ### PY1 ranks
+           ## PY1 ranks
            Rank_Comp_Pct_PY1 = dense_rank(desc(completion_pct_PY1)),
            Rank_Pass_YPA_PY1 = dense_rank(desc(pass_ypa_PY1)),
            Rank_Pass_YPR_PY1 = dense_rank(desc(pass_ypr_PY1)),
@@ -5990,7 +5965,7 @@ if (as.numeric(week) == 0) {
            Rank_Recruit_Pts_PY2 = dense_rank(desc(recruit_pts_PY2)),
            Rank_Talent_PY2 = dense_rank(desc(talent_PY2)),
            ## PY1 ranks
-      Rank_Comp_Pct_PY1 = dense_rank(desc(completion_pct_PY1)),
+           Rank_Comp_Pct_PY1 = dense_rank(desc(completion_pct_PY1)),
       Rank_Pass_YPA_PY1 = dense_rank(desc(pass_ypa_PY1)),
       Rank_Pass_YPR_PY1 = dense_rank(desc(pass_ypr_PY1)),
       Rank_Int_Pct_PY1 = dense_rank(int_pct_PY1),
@@ -6203,48 +6178,6 @@ if (as.numeric(week) == 0) {
       Rank_HavocRt_diff_PY1_col3 = dense_rank(desc(HavocRt_diff_PY1)),
       Rank_Explosiveness_diff_PY1_col3 = dense_rank(desc(Explosiveness_diff_PY1)),
       Rank_Talent_PY1_col3 = dense_rank(desc(talent_PY1)),
-      ## Extra weighted variables, weighted 2x (3 more times)
-      Rank_Off_YPP_PY1_col4 = dense_rank(desc(off_ypp_PY1)),
-      Rank_Off_PPA_PY1_col4 = dense_rank(desc(off_ppa_PY1)),
-      Rank_Off_Success_Rt_PY1_col4 = dense_rank(desc(off_success_rate_PY1)),
-      Rank_Off_Explosiveness_PY1_col4 = dense_rank(desc(off_explosiveness_PY1)),
-      Rank_Off_Pwr_Success_PY1_col4 = dense_rank(desc(off_power_success_PY1)),
-      Rank_Off_Stuff_Rt_PY1_col4 = dense_rank(off_stuff_rate_PY1),
-      Rank_Off_Pts_Per_Opp_PY1_col4 = dense_rank(desc(off_pts_per_opp_PY1)),
-      Rank_Off_Havoc_Total_PY1_col4 = dense_rank(off_havoc_total_PY1),
-      Rank_Off_Havoc_Front_PY1_col4 = dense_rank(off_havoc_front_seven_PY1),
-      Rank_Off_Havoc_DB_PY1_col4 = dense_rank(off_havoc_db_PY1),
-      Rank_Off_Rush_Play_PPA_PY1_col4 = dense_rank(desc(off_rushing_plays_ppa_PY1)),
-      Rank_Off_Rush_Play_Success_Rt_PY1_col4 = dense_rank(desc(off_rushing_plays_success_rate_PY1)),
-      Rank_Off_Rush_Play_Explosiveness_PY1_col4 = dense_rank(desc(off_rushing_plays_explosiveness_PY1)),
-      Rank_Off_Pass_Play_PPA_PY1_col4 = dense_rank(desc(off_passing_plays_ppa_PY1)),
-      Rank_Off_Pass_Play_Success_Rt_PY1_col4 = dense_rank(desc(off_passing_plays_success_rate_PY1)),
-      Rank_Off_Pass_Play_Explosiveness_PY1_col4 = dense_rank(desc(off_passing_plays_explosiveness_PY1)),
-      Rank_Def_PPA_PY1_col4 = dense_rank(def_ppa_PY1),
-      Rank_Def_Success_Rt_PY1_col4 = dense_rank(def_success_rate_PY1),
-      Rank_Def_Explosiveness_PY1_col4 = dense_rank(def_explosiveness_PY1),
-      Rank_Def_Pwr_Success_PY1_col4 = dense_rank(def_power_success_PY1),
-      Rank_Def_Stuff_Rt_PY1_col4 = dense_rank(desc(def_stuff_rate_PY1)),
-      Rank_Def_Pts_Per_Opp_PY1_col4 = dense_rank(def_pts_per_opp_PY1),
-      Rank_Def_Havoc_Total_PY1_col4 = dense_rank(desc(def_havoc_total_PY1)),
-      Rank_Def_Havoc_Front_Seven_PY1_col4 = dense_rank(desc(def_havoc_front_seven_PY1)),
-      Rank_Def_Havoc_DB_PY1_col4 = dense_rank(desc(def_havoc_db_PY1)),
-      Rank_Def_Standard_Down_PPA_PY1_col4 = dense_rank(def_standard_downs_ppa_PY1),
-      Rank_Def_Standard_Down_Success_Rt_PY1_col4 = dense_rank(def_standard_downs_success_rate_PY1),
-      Rank_Def_Standard_Down_Explosiveness_PY1_col4 = dense_rank(def_standard_downs_explosiveness_PY1),
-      Rank_Def_Pass_Down_PPA_PY1_col4 = dense_rank(def_passing_downs_ppa_PY1),
-      Rank_Def_Pass_Down_Success_Rt_PY1_col4 = dense_rank(def_passing_downs_success_rate_PY1),
-      Rank_Def_Pass_Down_Explosiveness_PY1_col4 = dense_rank(def_passing_downs_explosiveness_PY1),
-      Rank_Def_Rush_Play_PPA_PY1_col4 = dense_rank(def_rushing_plays_ppa_PY1),
-      Rank_Def_Rush_Play_Success_Rt_PY1_col4 = dense_rank(def_rushing_plays_success_rate_PY1),
-      Rank_Def_Rush_Play_Explosiveness_PY1_col4 = dense_rank(def_rushing_plays_explosiveness_PY1),
-      Rank_Def_Pass_Play_PPA_PY1_col4 = dense_rank(def_passing_plays_ppa_PY1),
-      Rank_Def_Pass_Play_Success_Rt_PY1_col4 = dense_rank(def_passing_plays_success_rate_PY1),
-      Rank_Def_Pass_Play_Explosiveness_PY1_col4 = dense_rank(def_passing_plays_explosiveness_PY1),
-      Rank_PPA_diff_PY1_col4 = dense_rank(desc(PPA_diff_PY1)),
-      Rank_SuccessRt_diff_PY1_col4 = dense_rank(desc(SuccessRt_diff_PY1)),
-      Rank_HavocRt_diff_PY1_col4 = dense_rank(desc(HavocRt_diff_PY1)),
-      Rank_Explosiveness_diff_PY1_col4 = dense_rank(desc(Explosiveness_diff_PY1)),
       ## Ranking current stats
       Rank_Comp_Pct = dense_rank(desc(completion_pct)),
       Rank_Pass_YPA = dense_rank(desc(pass_ypa)),
@@ -6401,14 +6334,14 @@ if (as.numeric(week) == 0) {
            Rank_Off_Field_Pos_Avg_Predicted_Pts_PY2 = dense_rank(desc(off_field_pos_avg_predicted_points_PY2)),
            Rank_Off_Havoc_Total_PY2 = dense_rank(off_havoc_total_PY2),
            Rank_Off_Havoc_Front_PY2 = dense_rank(off_havoc_front_seven_PY2),
-      Rank_Off_Havoc_DB_PY2 = dense_rank(off_havoc_db_PY2),
-      Rank_Off_Standard_Down_PPA_PY2 = dense_rank(desc(off_standard_downs_ppa_PY2)),
-      Rank_Off_Standard_Down_Success_Rt_PY2 = dense_rank(desc(off_standard_downs_success_rate_PY2)),
-      Rank_Off_Standard_Down_Explosiveness_PY2 = dense_rank(desc(off_standard_downs_explosiveness_PY2)),
-      Rank_Off_Pass_Down_PPA_PY2 = dense_rank(desc(off_passing_downs_ppa_PY2)),
-      Rank_Off_Pass_Down_Success_Rt_PY2 = dense_rank(desc(off_passing_downs_success_rate_PY2)),
-      Rank_Off_Pass_Down_Explosiveness_PY2 = dense_rank(desc(off_passing_downs_explosiveness_PY2)),
-      Rank_Off_Rush_Play_PPA_PY2 = dense_rank(desc(off_rushing_plays_ppa_PY2)),
+           Rank_Off_Havoc_DB_PY2 = dense_rank(off_havoc_db_PY2),
+           Rank_Off_Standard_Down_PPA_PY2 = dense_rank(desc(off_standard_downs_ppa_PY2)),
+           Rank_Off_Standard_Down_Success_Rt_PY2 = dense_rank(desc(off_standard_downs_success_rate_PY2)),
+           Rank_Off_Standard_Down_Explosiveness_PY2 = dense_rank(desc(off_standard_downs_explosiveness_PY2)),
+           Rank_Off_Pass_Down_PPA_PY2 = dense_rank(desc(off_passing_downs_ppa_PY2)),
+           Rank_Off_Pass_Down_Success_Rt_PY2 = dense_rank(desc(off_passing_downs_success_rate_PY2)),
+           Rank_Off_Pass_Down_Explosiveness_PY2 = dense_rank(desc(off_passing_downs_explosiveness_PY2)),
+           Rank_Off_Rush_Play_PPA_PY2 = dense_rank(desc(off_rushing_plays_ppa_PY2)),
       Rank_Off_Rush_Play_Success_Rt_PY2 = dense_rank(desc(off_rushing_plays_success_rate_PY2)),
       Rank_Off_Rush_Play_Explosiveness_PY2 = dense_rank(desc(off_rushing_plays_explosiveness_PY2)),
       Rank_Off_Pass_Play_PPA_PY2 = dense_rank(desc(off_passing_plays_ppa_PY2)),
@@ -7468,6 +7401,17 @@ if (as.numeric(week) <= 8) {
   VoA_Variables$STVoA_MedRating <- MedianPred
   VoA_Variables$STVoA_95PctRating <- Upper
   VoA_Variables$STVoA_05PctRating <- Lower
+}
+
+### making sure all values are > 0
+for (i in 1:nrow(VoA_Variables)){
+  set.seed(802)
+  if (VoA_Variables$OffVoA_MedRating[i] <= 0){
+    VoA_Variables$OffVoA_MedRating[i] = abs(VoA_Variables$OffVoA_MedRating[i]) + abs(rnorm(1, 3, 1))
+  }
+  if (VoA_Variables$DefVoA_MedRating[i] <= 0){
+    VoA_Variables$DefVoA_MedRating[i] = abs(VoA_Variables$DefVoA_MedRating[i]) + abs(rnorm(1, 3, 1))
+  }
 }
 
 ##### Ranking VoA Rating columns #####

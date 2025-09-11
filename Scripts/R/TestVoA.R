@@ -12800,8 +12800,8 @@ colnames(nas_why) <- c("containsNAs")
 nas_why <- nas_why |>
   filter(containsNAs == TRUE)
 recruit_nas_why <- VoA_Variables |>
-  filter(is.na(adj_off_ppg))
-recruit_nas_teams <- anti_join(VoA_Variables, recruit, by = "team")
+  filter(is.na(adj_st_ppa))
+# recruit_nas_teams <- anti_join(VoA_Variables, recruit, by = "team")
 
 colnames(VoA_Variables)[apply(VoA_Variables, 2, anyNA)]
 
