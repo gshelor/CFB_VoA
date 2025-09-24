@@ -20,17 +20,17 @@ PY1Teams <- c("Delaware", "Missouri State")
 ### reading in previous season's VoA to establish which teams to take average of for advanced stats later
 old_season <- as.numeric(readline("Which season was last year? "))
 PrevYearVoA <- read_csv(here("Data", paste0("VoA", old_season), paste0(old_season, "Week16_VoA.csv"))) |>
-  filter(VoA_Rating_Ovr < quantile(VoA_Rating_Ovr, probs = 0.2) | VoA_Output > quantile(VoA_Output, probs = 0.9) | conference %in% c("Mid-American", "Conference USA", "Mountain West") | team %in% c("Massachusetts", "UConn")) |>
+  filter(VoA_Rating_Ovr < quantile(VoA_Rating_Ovr, probs = 0.1) | VoA_Output > quantile(VoA_Output, probs = 0.9) | conference %in% c("Mid-American", "Conference USA", "Mountain West") | team %in% c("Massachusetts", "UConn")) |>
   filter(team %nin% c("Boise State", "UNLV")) |>
   arrange(desc(VoA_Rating_Ovr))
 ### PY2 VoA
 PrevYear2VoA <- read_csv(here("Data", paste0("VoA", old_season - 1), paste0(old_season - 1, "Week16_VoA.csv"))) |>
-  filter(VoA_Rating < quantile(VoA_Rating, probs = 0.2) | VoA_Output > quantile(VoA_Output, probs = 0.9) | conference %in% c("Mid-American", "Conference USA", "Mountain West") | team %in% c("Massachusetts", "UConn")) |>
+  filter(VoA_Rating < quantile(VoA_Rating, probs = 0.1) | VoA_Output > quantile(VoA_Output, probs = 0.9) | conference %in% c("Mid-American", "Conference USA", "Mountain West") | team %in% c("Massachusetts", "UConn")) |>
   filter(team %nin% c("Boise State", "UNLV")) |>
   arrange(desc(VoA_Rating))
 ### PY3 VoA
 PrevYear3VoA <- read_csv(here("Data", paste0("VoA", old_season - 2), paste0(old_season - 2, "Week16_VoA.csv"))) |>
-  filter(VoA_Rating < quantile(VoA_Rating, probs = 0.2) | VoA_Output > quantile(VoA_Output, probs = 0.9) | conference %in% c("Mid-American", "Conference USA", "Mountain West") | team %in% c("Massachusetts", "UConn")) |>
+  filter(VoA_Rating < quantile(VoA_Rating, probs = 0.1) | VoA_Output > quantile(VoA_Output, probs = 0.9) | conference %in% c("Mid-American", "Conference USA", "Mountain West") | team %in% c("Massachusetts", "UConn")) |>
   filter(team %nin% c("Boise State", "UNLV")) |>
   arrange(desc(VoA_Rating))
 
@@ -217,10 +217,11 @@ Turnovers_df_PY3 <- Turnovers_df_PY3 |>
   select(team, turnovers_pg_PY3)
 
 ## bringing in advanced stats for G5 and non-Notre Dame Indy teams
-Adv_Stats_PY3 <- cfbd_stats_season_advanced(2022, excl_garbage_time = FALSE, start_week = 1, end_week = 15) |>
+FCS_Adv_Stats_PY3 <- cfbd_stats_season_advanced(2022, excl_garbage_time = FALSE, start_week = 1, end_week = 15) |>
+  filter(team %in% PY3Teams) |>
   # filter(conference == "Mountain West" | conference == "Mid-American" | conference == "Conference USA" | conference == "Sun Belt" | conference == "American Athletic" | conference == "FBS Independents") |>
   # filter(team != "Notre Dame") |>
-  filter(team %in% PrevYear3VoA$team) |>
+  # filter(team %in% PrevYear3VoA$team) |>
   select(-one_of("season", "conference")) |>
   select(team, off_ppa, off_success_rate, off_explosiveness, off_power_success,
          off_stuff_rate, off_line_yds, off_second_lvl_yds, off_open_field_yds,
@@ -243,49 +244,49 @@ Adv_Stats_PY3 <- cfbd_stats_season_advanced(2022, excl_garbage_time = FALSE, sta
          def_passing_plays_success_rate, def_passing_plays_explosiveness)
 
 ## making all stats columns numeric
-Adv_Stats_PY3 <- Adv_Stats_PY3 |> mutate_if(is.integer,as.numeric)
+FCS_Adv_Stats_PY3 <- FCS_Adv_Stats_PY3 |> mutate_if(is.integer,as.numeric)
 
 ### computing means of each column and assigning them to FCS teams
 ### I, uh, don't know how to add a row and set all the variable values as the means of the rest of the column
-FCS_Adv_Stats_PY3 <- Adv_Stats_PY3 |>
-  head(length(PY3Teams)) |>
-  # filter(team %in% sample_team_names[1:length(PY3Teams)]) #|>
-  arrange(team) |>
-  # mutate(team_keep = case_when(team == 'Akron' ~ 'Sam Houston',
-  #                              team == 'Ball State' ~ 'Delaware',
-  #                              team == 'Rice' ~ 'Jacksonville State',
-  #                              team == 'Toledo' ~ 'Kennesaw State',
-  #                              team == 'Wyoming' ~ 'Missouri State',
-  #                              TRUE ~ team), .before = 1) |>
-  select(team, off_ppa, off_success_rate, off_explosiveness, off_power_success,
-         off_stuff_rate, off_line_yds, off_second_lvl_yds, off_open_field_yds,
-         off_pts_per_opp, off_field_pos_avg_predicted_points, off_havoc_total, 
-         off_havoc_front_seven, off_havoc_db, off_standard_downs_ppa,
-         off_standard_downs_success_rate, off_standard_downs_explosiveness,
-         off_passing_downs_ppa, off_passing_downs_success_rate,
-         off_passing_downs_explosiveness, off_rushing_plays_ppa,
-         off_rushing_plays_success_rate, off_rushing_plays_explosiveness,
-         off_passing_plays_ppa, off_passing_plays_success_rate,
-         off_passing_plays_explosiveness, def_ppa, def_success_rate,
-         def_explosiveness, def_power_success, def_stuff_rate, def_line_yds,
-         def_second_lvl_yds, def_open_field_yds, def_pts_per_opp, 
-         def_field_pos_avg_predicted_points, def_havoc_total, def_havoc_front_seven,
-         def_havoc_db, def_standard_downs_ppa, def_standard_downs_success_rate,
-         def_standard_downs_explosiveness , def_passing_downs_ppa,
-         def_passing_downs_success_rate, def_passing_downs_explosiveness,
-         def_rushing_plays_ppa, def_rushing_plays_success_rate,
-         def_rushing_plays_explosiveness, def_passing_plays_ppa,
-         def_passing_plays_success_rate, def_passing_plays_explosiveness)
-
-### reassigning team names
-for (i in 1:nrow(FCS_Adv_Stats_PY3)){
-  FCS_Adv_Stats_PY3$team[i] = PY3Teams[i]
-}
-### making all stats columns numeric
-FCS_Adv_Stats_PY3 <- FCS_Adv_Stats_PY3 |> mutate_if(is.integer,as.numeric)
-for (rating in 2:ncol(FCS_Adv_Stats_PY3)) {
-  FCS_Adv_Stats_PY3[,rating] = colMeans(Adv_Stats_PY3[,rating])
-}
+# FCS_Adv_Stats_PY3 <- Adv_Stats_PY3 |>
+#   head(length(PY3Teams)) |>
+#   # filter(team %in% sample_team_names[1:length(PY3Teams)]) #|>
+#   arrange(team) |>
+#   # mutate(team_keep = case_when(team == 'Akron' ~ 'Sam Houston',
+#   #                              team == 'Ball State' ~ 'Delaware',
+#   #                              team == 'Rice' ~ 'Jacksonville State',
+#   #                              team == 'Toledo' ~ 'Kennesaw State',
+#   #                              team == 'Wyoming' ~ 'Missouri State',
+#   #                              TRUE ~ team), .before = 1) |>
+#   select(team, off_ppa, off_success_rate, off_explosiveness, off_power_success,
+#          off_stuff_rate, off_line_yds, off_second_lvl_yds, off_open_field_yds,
+#          off_pts_per_opp, off_field_pos_avg_predicted_points, off_havoc_total,
+#          off_havoc_front_seven, off_havoc_db, off_standard_downs_ppa,
+#          off_standard_downs_success_rate, off_standard_downs_explosiveness,
+#          off_passing_downs_ppa, off_passing_downs_success_rate,
+#          off_passing_downs_explosiveness, off_rushing_plays_ppa,
+#          off_rushing_plays_success_rate, off_rushing_plays_explosiveness,
+#          off_passing_plays_ppa, off_passing_plays_success_rate,
+#          off_passing_plays_explosiveness, def_ppa, def_success_rate,
+#          def_explosiveness, def_power_success, def_stuff_rate, def_line_yds,
+#          def_second_lvl_yds, def_open_field_yds, def_pts_per_opp,
+#          def_field_pos_avg_predicted_points, def_havoc_total, def_havoc_front_seven,
+#          def_havoc_db, def_standard_downs_ppa, def_standard_downs_success_rate,
+#          def_standard_downs_explosiveness , def_passing_downs_ppa,
+#          def_passing_downs_success_rate, def_passing_downs_explosiveness,
+#          def_rushing_plays_ppa, def_rushing_plays_success_rate,
+#          def_rushing_plays_explosiveness, def_passing_plays_ppa,
+#          def_passing_plays_success_rate, def_passing_plays_explosiveness)
+# 
+# ### reassigning team names
+# for (i in 1:nrow(FCS_Adv_Stats_PY3)){
+#   FCS_Adv_Stats_PY3$team[i] = PY3Teams[i]
+# }
+# ### making all stats columns numeric
+# FCS_Adv_Stats_PY3 <- FCS_Adv_Stats_PY3 |> mutate_if(is.integer,as.numeric)
+# for (rating in 2:ncol(FCS_Adv_Stats_PY3)) {
+#   FCS_Adv_Stats_PY3[,rating] = colMeans(Adv_Stats_PY3[,rating])
+# }
 
 ### renaming Advanced stats columns to reflect them being from PY3
 colnames(FCS_Adv_Stats_PY3) <- c("team", "off_ppa_PY3", "off_success_rate_PY3", "off_explosiveness_PY3", "off_power_success_PY3", "off_stuff_rate_PY3", "off_line_yds_PY3", "off_second_lvl_yds_PY3", "off_open_field_yds_PY3", "off_pts_per_opp_PY3", "off_field_pos_avg_predicted_points_PY3", "off_havoc_total_PY3", "off_havoc_front_seven_PY3", "off_havoc_db_PY3", "off_standard_downs_ppa_PY3", "off_standard_downs_success_rate_PY3", "off_standard_downs_explosiveness_PY3", "off_passing_downs_ppa_PY3", "off_passing_downs_success_rate_PY3", "off_passing_downs_explosiveness_PY3", "off_rushing_plays_ppa_PY3", "off_rushing_plays_success_rate_PY3", "off_rushing_plays_explosiveness_PY3", "off_passing_plays_ppa_PY3", "off_passing_plays_success_rate_PY3", "off_passing_plays_explosiveness_PY3", "def_ppa_PY3", "def_success_rate_PY3", "def_explosiveness_PY3", "def_power_success_PY3", "def_stuff_rate_PY3", "def_line_yds_PY3", "def_second_lvl_yds_PY3", "def_open_field_yds_PY3", "def_pts_per_opp_PY3", "def_field_pos_avg_predicted_points_PY3", "def_havoc_total_PY3", "def_havoc_front_seven_PY3", "def_havoc_db_PY3", "def_standard_downs_ppa_PY3", "def_standard_downs_success_rate_PY3", "def_standard_downs_explosiveness_PY3", "def_passing_downs_ppa_PY3", "def_passing_downs_success_rate_PY3", "def_passing_downs_explosiveness_PY3", "def_rushing_plays_ppa_PY3", "def_rushing_plays_success_rate_PY3", "def_rushing_plays_explosiveness_PY3", "def_passing_plays_ppa_PY3", "def_passing_plays_success_rate_PY3", "def_passing_plays_explosiveness_PY3")

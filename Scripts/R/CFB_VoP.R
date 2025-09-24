@@ -3,7 +3,7 @@
 ### It will take the VoA Ratings from that csv and use them to project scoring margins for upcoming FBS games
 ### loading packages
 library(pacman)
-p_load(tidyverse, gt, cfbfastR, here, gtExtras, RColorBrewer, cfbplotR, webshot2, betareg, rstanarm)
+p_load(tidyverse, gt, cfbfastR, here, gtExtras, RColorBrewer, cfbplotR, webshot2, betareg)
 ### Inputting year
 year <- readline(prompt = "What Year is it? ")
 ### Inputting upcoming week number

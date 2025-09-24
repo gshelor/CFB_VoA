@@ -113,19 +113,19 @@ if (as.numeric(week) == 0) {
   ### pulling in completed games as part of opponent-adjustment of stats later
   CompletedFBSGames_PY3 <- cfbd_game_info(as.numeric(year) - 3) |>
     filter(completed == TRUE) |>
-    filter(home_classification == "fbs" & away_classification == "fbs" | home_team %in% PY3Teams | away_team %in% PY3Teams)
+    filter(home_division == "fbs" & away_division == "fbs" | home_team %in% PY3Teams | away_team %in% PY3Teams)
   CompletedNeutralGames_PY3 <- CompletedFBSGames_PY3 |>
     filter(neutral_site == TRUE)
   ### PY2 completed games
   CompletedFBSGames_PY2 <- cfbd_game_info(as.numeric(year) - 2) |>
     filter(completed == TRUE) |>
-    filter(home_classification == "fbs" & away_classification == "fbs" | home_team %in% PY2Teams | away_team %in% PY2Teams)
+    filter(home_division == "fbs" & away_division == "fbs" | home_team %in% PY2Teams | away_team %in% PY2Teams)
   CompletedNeutralGames_PY2 <- CompletedFBSGames_PY2 |>
     filter(neutral_site == TRUE)
   ### PY1 completed games
   CompletedFBSGames_PY1 <- cfbd_game_info(as.numeric(year) - 1) |>
     filter(completed == TRUE) |>
-    filter(home_classification == "fbs" & away_classification == "fbs" | home_team %in% PY1Teams | away_team %in% PY1Teams)
+    filter(home_division == "fbs" & away_division == "fbs" | home_team %in% PY1Teams | away_team %in% PY1Teams)
   CompletedNeutralGames_PY1 <- CompletedFBSGames_PY1 |>
     filter(neutral_site == TRUE)
   
@@ -735,7 +735,7 @@ if (as.numeric(week) == 0) {
   ### pulling in completed games as part of opponent-adjustment of stats later
   CompletedFBSGames <- cfbd_game_info(as.numeric(year)) |>
     filter(completed == TRUE) |>
-    filter(home_classification == "fbs" | away_classification == "fbs")
+    filter(home_division == "fbs" | away_division == "fbs")
   CompletedNeutralGames <- CompletedFBSGames |>
     filter(neutral_site == TRUE)
   
@@ -938,7 +938,7 @@ if (as.numeric(week) == 0) {
   ### pulling in completed games as part of opponent-adjustment of stats later
   CompletedFBSGames <- cfbd_game_info(as.numeric(year)) |>
     filter(completed == TRUE) |>
-    filter(home_classification == "fbs" | away_classification == "fbs")
+    filter(home_division == "fbs" | away_division == "fbs")
   CompletedNeutralGames <- CompletedFBSGames |>
     filter(neutral_site == TRUE)
   
@@ -1137,7 +1137,7 @@ if (as.numeric(week) == 0) {
   ### pulling in completed games as part of opponent-adjustment of stats later
   CompletedFBSGames <- cfbd_game_info(as.numeric(year)) |>
     filter(completed == TRUE) |>
-    filter(home_classification == "fbs" | away_classification == "fbs")
+    filter(home_division == "fbs" | away_division == "fbs")
   CompletedNeutralGames <- CompletedFBSGames |>
     filter(neutral_site == TRUE)
   
@@ -1333,7 +1333,7 @@ if (as.numeric(week) == 0) {
   ### pulling in completed games as part of opponent-adjustment of stats later
   CompletedFBSGames <- cfbd_game_info(as.numeric(year)) |>
     filter(completed == TRUE) |>
-    filter(home_classification == "fbs" | away_classification == "fbs")
+    filter(home_division == "fbs" | away_division == "fbs")
   CompletedNeutralGames <- CompletedFBSGames |>
     filter(neutral_site == TRUE)
   ### Current season Play by play data
@@ -4667,12 +4667,12 @@ if (as.numeric(week) == 0){
   }
   
   ### experimenting with making the standard deviation for the random-ish error adjustment bigger so a wider range of values could theoretically be added to the adj ppg vals
+  set.seed(802)
   for (i in 1:nrow(VoA_Variables)){
-    set.seed(802)
     temp_off_ppg <- VoA_Variables$weighted_off_ppg_mean[i]
-    VoA_Variables$weighted_off_ppg_mean[i] = temp_off_ppg + rnorm(1, mean = VoA_Variables$off_error[i] / 3, sd = sd(VoA_Variables$off_error) * 1.15)
+    VoA_Variables$weighted_off_ppg_mean[i] = temp_off_ppg + rnorm(1, mean = VoA_Variables$off_error[i] / 10, sd = sd(VoA_Variables$off_error))
     temp_def_ppg <- VoA_Variables$weighted_def_ppg_mean[i]
-    VoA_Variables$weighted_def_ppg_mean[i] = temp_def_ppg + rnorm(1, mean = VoA_Variables$def_error[i] / 3, sd = sd(VoA_Variables$def_error) * 1.15)
+    VoA_Variables$weighted_def_ppg_mean[i] = temp_def_ppg + rnorm(1, mean = VoA_Variables$def_error[i] / 10, sd = sd(VoA_Variables$def_error))
     
     ### making sure all values are > 0
     set.seed(802)
@@ -4683,7 +4683,6 @@ if (as.numeric(week) == 0){
       VoA_Variables$weighted_def_ppg_mean[i] = abs(VoA_Variables$weighted_def_ppg_mean[i]) + abs(rnorm(1, 5, 1))
     }
   }
-  
 } else if (as.numeric(week) <= 4){
   ##### Week 3 - 4 Off & Def Error Calculations #####
   ### adding dummy off and def error columns, to be filled with real values later
@@ -4692,7 +4691,7 @@ if (as.numeric(week) == 0){
            def_error = -999)
   
   ### reading in previous week's VoA for error calculation
-  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, week, "_", VoAString)))
+  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.numeric(week) - 1, "_", VoAString)))
   ### adding dummy home and away off and def VoA rating columns with values to be filled below
   CompletedFBSGames <- CompletedFBSGames |>
     mutate(home_off_VoA_rating = -999,
@@ -4735,12 +4734,12 @@ if (as.numeric(week) == 0){
   }
   
   ### experimenting with making the standard deviation for the random-ish error adjustment bigger so a wider range of values could theoretically be added to the adj ppg vals
+  set.seed(802)
   for (i in 1:nrow(VoA_Variables)){
-    set.seed(802)
     temp_off_ppg <- VoA_Variables$weighted_off_ppg_mean[i]
-    VoA_Variables$weighted_off_ppg_mean[i] = temp_off_ppg + rnorm(1, mean = VoA_Variables$off_error[i] / 2, sd = sd(VoA_Variables$off_error) * 1.1)
+    VoA_Variables$weighted_off_ppg_mean[i] = temp_off_ppg + rnorm(1, mean = VoA_Variables$off_error[i] / 5, sd = sd(VoA_Variables$off_error))
     temp_def_ppg <- VoA_Variables$weighted_def_ppg_mean[i]
-    VoA_Variables$weighted_def_ppg_mean[i] = temp_def_ppg + rnorm(1, mean = VoA_Variables$def_error[i] / 2, sd = sd(VoA_Variables$def_error) * 1.1)
+    VoA_Variables$weighted_def_ppg_mean[i] = temp_def_ppg + rnorm(1, mean = VoA_Variables$def_error[i] / 5, sd = sd(VoA_Variables$def_error))
     
     ### making sure all values are > 0
     set.seed(802)
@@ -4759,7 +4758,7 @@ if (as.numeric(week) == 0){
            def_error = -999)
   
   ### reading in previous week's VoA for error calculation
-  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, week, "_", VoAString)))
+  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.numeric(week) - 1, "_", VoAString)))
   ### adding dummy home and away off and def VoA rating columns with values to be filled below
   CompletedFBSGames <- CompletedFBSGames |>
     mutate(home_off_VoA_rating = -999,
@@ -4802,12 +4801,12 @@ if (as.numeric(week) == 0){
   }
   
   ### experimenting with making the standard deviation for the random-ish error adjustment bigger so a wider range of values could theoretically be added to the adj ppg vals
+  set.seed(802)
   for (i in 1:nrow(VoA_Variables)){
-    set.seed(802)
     temp_off_ppg <- VoA_Variables$weighted_off_ppg_mean[i]
-    VoA_Variables$weighted_off_ppg_mean[i] = temp_off_ppg + rnorm(1, mean = VoA_Variables$off_error[i], sd = sd(VoA_Variables$off_error) * 1.05)
+    VoA_Variables$weighted_off_ppg_mean[i] = temp_off_ppg + rnorm(1, mean = VoA_Variables$off_error[i] / 2, sd = sd(VoA_Variables$off_error))
     temp_def_ppg <- VoA_Variables$weighted_def_ppg_mean[i]
-    VoA_Variables$weighted_def_ppg_mean[i] = temp_def_ppg + rnorm(1, mean = VoA_Variables$def_error[i], sd = sd(VoA_Variables$def_error) * 1.05)
+    VoA_Variables$weighted_def_ppg_mean[i] = temp_def_ppg + rnorm(1, mean = VoA_Variables$def_error[i] / 2, sd = sd(VoA_Variables$def_error))
     
     ### making sure all values are > 0
     set.seed(802)
@@ -4869,8 +4868,8 @@ if (as.numeric(week) == 0){
   }
   
   ### adding the average offensive and defensive errors to each teams, filling in the dummy columns created at the start of this section
+  set.seed(802)
   for (i in 1:nrow(VoA_Variables)){
-    set.seed(802)
     temp_off_ppg <- VoA_Variables$adj_off_ppg[i]
     VoA_Variables$adj_off_ppg[i] = temp_off_ppg + rnorm(1, mean = VoA_Variables$off_error[i], sd = sd(VoA_Variables$off_error))
     temp_def_ppg <- VoA_Variables$adj_def_ppg[i]
@@ -8648,6 +8647,7 @@ ggsave(Output_Rating_Plot_filename, path = output_dir, width = 50, height = 40, 
 
 
 ##### End of Script #####
+cfbd_api_key_info()
 end_time <- Sys.time()
 end_time - start_time
 
