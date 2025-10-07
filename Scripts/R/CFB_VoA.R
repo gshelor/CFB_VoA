@@ -7162,7 +7162,7 @@ if (as.numeric(week) <= 8) {
   Off_VoA_fit
   
   ### Print the diagnostics
-  print(Off_VoA_fit$cmdstan_diagnose())
+  # print(Off_VoA_fit$cmdstan_diagnose())
   
   
   ### Extracting Parameters
@@ -7205,7 +7205,7 @@ if (as.numeric(week) <= 8) {
   Def_VoA_fit
   
   ### Print the diagnostics
-  print(Def_VoA_fit$cmdstan_diagnose())
+  # print(Def_VoA_fit$cmdstan_diagnose())
   
   
   ### Extracting Parameters
@@ -7248,7 +7248,7 @@ if (as.numeric(week) <= 8) {
   ST_VoA_fit
   
   ### Print the diagnostics
-  print(ST_VoA_fit$cmdstan_diagnose())
+  # print(ST_VoA_fit$cmdstan_diagnose())
   
   ### extracting parameters
   ST_VoA_pars <- ST_VoA_fit$draws(variables = c("b0", "beta_net_kick_return_avg", "beta_net_punt_return_avg", "beta_net_fg_rate", "beta_net_st_ppa", "sigma"), format = "draws_df")

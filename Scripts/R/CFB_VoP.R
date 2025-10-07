@@ -455,7 +455,7 @@ if (as.numeric(upcoming) == 1){
     # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
-      footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
+      footnote = "Data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org,
     Ratings for FCS teams used in these calculations are actually SRS ratings taken from CFB Data API"
     ) |>
     tab_options(table.width = pct(70))
@@ -502,7 +502,7 @@ if (as.numeric(upcoming) == 1){
     # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
-      footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
+      footnote = "Data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org,
     Ratings for FCS teams used in these calculations are actually SRS ratings taken from CFB Data API"
     ) |>
     tab_options(table.width = pct(50))
