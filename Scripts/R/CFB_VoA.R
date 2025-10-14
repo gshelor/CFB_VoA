@@ -8630,6 +8630,7 @@ ggsave(Group5_hist_filename, path = output_dir, width = 50, height = 40, units =
 
 ## Creating Scatterplot of VoA_Output vs VoA_Rating
 VoA_Output_Rating_plot <- ggplot(VoA_Variables, aes(x = VoA_Output, y = VoA_Rating_Ovr)) +
+  theme_bw() +
   geom_point(size = 2) +
   geom_smooth() +
   geom_cfb_logos(aes(team = team), width = 0.035) +
