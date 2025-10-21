@@ -8586,7 +8586,9 @@ Group5_VoA <- VoA_Variables |>
   filter(conference == "American Athletic" | conference == "Conference USA" | conference == "FBS Independents" | conference == "Mid-American" | conference == "Mountain West" | conference == "Sun Belt") |>
   filter(team != "Notre Dame")
 
+### making histogram of ratings for all FBS teams
 FBS_Rating_histogram <- ggplot(VoA_Variables, aes(VoA_Rating_Ovr)) +
+  theme_bw() +
   geom_histogram(binwidth = 5,
                  col = "black",
                  fill = "orange") +
@@ -8600,7 +8602,9 @@ FBS_Rating_histogram <- ggplot(VoA_Variables, aes(VoA_Rating_Ovr)) +
 FBS_Rating_histogram
 ggsave(FBS_hist_filename, path = output_dir, width = 50, height = 40, units = 'cm')
 
+### histogram of ratings for Power 5 (power 4?) teams
 Power5_Rating_histogram <- ggplot(Power5_VoA, aes(VoA_Rating_Ovr)) +
+  theme_bw() +
   geom_histogram(binwidth = 5,
                  col = "black",
                  fill = "blue") +
@@ -8614,7 +8618,9 @@ Power5_Rating_histogram <- ggplot(Power5_VoA, aes(VoA_Rating_Ovr)) +
 Power5_Rating_histogram
 ggsave(Power5_hist_filename, path = output_dir, width = 50, height = 40, units = 'cm')
 
+### histogram of VoA ratings for G5 teams
 Group5_Rating_histogram <- ggplot(Group5_VoA, aes(VoA_Rating_Ovr)) +
+  theme_bw() +
   geom_histogram(binwidth = 5,
                  col = "black",
                  fill = "pink") +

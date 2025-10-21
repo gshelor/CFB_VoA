@@ -313,8 +313,8 @@ if (as.numeric(upcoming) == 1){
     # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
-      footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
-    Ratings for FCS teams used in these calculations are actually SRS ratings taken from CFB Data API"
+      footnote = "Data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org,
+    VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API via cfbfastR"
     ) |>
     tab_options(table.width = pct(60))
   AAC_ProjWins_gt
@@ -361,8 +361,8 @@ if (as.numeric(upcoming) == 1){
     # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
-      footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
-    Ratings for FCS teams used in these calculations are actually SRS ratings taken from CFB Data API"
+      footnote = "Data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org,
+    VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API via cfbfastR"
     ) |>
     tab_options(table.width = pct(70))
   ACC_ProjWins_gt
@@ -408,8 +408,8 @@ if (as.numeric(upcoming) == 1){
     # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
-      footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
-    Ratings for FCS teams used in these calculations are actually SRS ratings taken from CFB Data API"
+      footnote = "Data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org,
+    VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API via cfbfastR"
     ) |>
     tab_options(table.width = pct(70))
   Big12_ProjWins_gt
@@ -549,8 +549,8 @@ if (as.numeric(upcoming) == 1){
     # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
-      footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
-    Ratings for FCS teams used in these calculations are actually SRS ratings taken from CFB Data API"
+      footnote = "Data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org,
+    VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API via cfbfastR"
     ) |>
     tab_options(table.width = pct(40))
   Indy_2Pac_ProjWins_gt
@@ -596,8 +596,8 @@ if (as.numeric(upcoming) == 1){
     # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
-      footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
-    Ratings for FCS teams used in these calculations are actually SRS ratings taken from CFB Data API"
+      footnote = "Data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org,
+    VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API via cfbfastR"
     ) |>
     tab_options(table.width = pct(50))
   MAC_ProjWins_gt
@@ -643,8 +643,8 @@ if (as.numeric(upcoming) == 1){
     # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
-      footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
-    Ratings for FCS teams used in these calculations are actually SRS ratings taken from CFB Data API"
+      footnote = "Data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org,
+    VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API via cfbfastR"
     ) |>
     tab_options(table.width = pct(50))
   MWC_ProjWins_gt
@@ -690,8 +690,8 @@ if (as.numeric(upcoming) == 1){
     # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
-      footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
-    Ratings for FCS teams used in these calculations are actually SRS ratings taken from CFB Data API"
+      footnote = "Data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org,
+    VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API via cfbfastR"
     ) |>
     tab_options(table.width = pct(70))
   SEC_ProjWins_gt
@@ -737,8 +737,8 @@ if (as.numeric(upcoming) == 1){
     # cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(conference)) |>
     tab_footnote(
-      footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
-    Ratings for FCS teams used in these calculations are actually SRS ratings taken from CFB Data API"
+      footnote = "Data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org,
+    VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API via cfbfastR"
     ) |>
     tab_options(table.width = pct(60))
   SunBelt_ProjWins_gt
@@ -805,8 +805,8 @@ if (as.numeric(upcoming) == 16) {
     cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(game_id, season, week, neutral_site)) |>
     tab_footnote(
-      footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
-    VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API"
+      footnote = "Data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org,
+    VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API via cfbfastR"
     )
   
   ### sorting df by projected win margin for ESPN prediction game
@@ -861,8 +861,8 @@ if (as.numeric(upcoming) == 16) {
     cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(game_id, season, week, neutral_site)) |>
     tab_footnote(
-      footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
-    VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API"
+      footnote = "Data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org,
+    VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API via cfbfastR"
     )
   upcoming_games_gt_sorted
 } else {
@@ -914,8 +914,8 @@ if (as.numeric(upcoming) == 16) {
     cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(game_id, season, week, neutral_site)) |>
     tab_footnote(
-      footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
-    VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API"
+      footnote = "Data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org,
+    VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API via cfbfastR"
     )
   
   
@@ -971,8 +971,8 @@ if (as.numeric(upcoming) == 16) {
     cols_move_to_end(columns = "win_prob") |>
     cols_hide(c(game_id, season, week, neutral_site)) |>
     tab_footnote(
-      footnote = "Data from CFB Data API, ESPN.com, and ESPN's Bill Connelly via cfbfastR, FCS data mostly from stats.ncaa.org,
-    VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API"
+      footnote = "Data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org,
+    VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API via cfbfastR"
     )
   upcoming_games_gt_sorted
 }
@@ -982,3 +982,6 @@ upcoming_games_gt |>
     gameprojections_filename, expand = 5,
     path = here("Outputs", "RVoA", paste0("VoA", year), "VoP")
   )
+
+### checking my level of remaining API calls
+cfbd_api_key_info()

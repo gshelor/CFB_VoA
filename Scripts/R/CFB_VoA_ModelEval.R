@@ -153,3 +153,48 @@ if (as.numeric(cfb_week) >= 5){
 } else{
   print("season metrics not being calculated yet!")
 }
+
+
+##### Making Plots of Error Throughout Season #####
+
+WeeklyMAEPlot <- ggplot(CompletedWeeks, aes(x = week, y = mean_ae)) +
+  theme_bw() +
+  geom_line(linewidth = 1.5) +
+  geom_point(size = 5) +
+  geom_line(mapping = aes(y = mean_vegas_ae), col = "blue", linewidth = 1.5) +
+  geom_point(mapping = aes(y = mean_vegas_ae), col = "blue", size = 5) +
+  xlab("Week") +
+  ylab("MAE") +
+  labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
+  ggtitle(paste(season, "MAE by Week"), subtitle = "Vegas Metric in Blue") +
+  theme(plot.title = element_text(size = 35, hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
+WeeklyMAEPlot
+
+WeeklyRMSEPlot <- ggplot(CompletedWeeks, aes(x = week, y = RMSE)) +
+  theme_bw() +
+  geom_line(linewidth = 1.5) +
+  geom_point(size = 5) +
+  geom_line(mapping = aes(y = vegas_RMSE), col = "blue", linewidth = 1.5) +
+  geom_point(mapping = aes(y = vegas_RMSE), col = "blue", size = 5) +
+  xlab("Week") +
+  ylab("MAE") +
+  labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
+  ggtitle(paste(season, "RMSE by Week"), subtitle = "Vegas Metric in Blue") +
+  theme(plot.title = element_text(size = 35, hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
+WeeklyRMSEPlot
+
+WeeklyWinPctPlot <- ggplot(CompletedWeeks, aes(x = week, y = straight_up_win_pct)) +
+  theme_bw() +
+  geom_line(linewidth = 1.5) +
+  geom_point(size = 5) +
+  geom_line(mapping = aes(y = vegas_straight_up_win_pct), col = "blue", linewidth = 1.5) +
+  geom_point(mapping = aes(y = vegas_straight_up_win_pct), col = "blue", size = 5) +
+  xlab("Week") +
+  ylab("MAE") +
+  labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
+  ggtitle(paste(season, "Correct Predicted Winner (%) by Week"), subtitle = "Vegas Metric in Blue") +
+  theme(plot.title = element_text(size = 35, hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
+WeeklyWinPctPlot
+
+### checking remaining API calls
+cfbd_api_key_info()
