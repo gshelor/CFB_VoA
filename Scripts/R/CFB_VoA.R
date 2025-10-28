@@ -4892,7 +4892,7 @@ if (as.numeric(week) == 0){
 ### leaving this outside an if statement because this could be an issue regardless of season or CFB_Week
 ### currently commented out because I added this fix to each individual stat pull in function
 ### uncommented it because I must once again ask that Florida International University go fuck itself
-if (as.numeric(week) %in% c(0, 1, 9:16)){
+if (as.numeric(week) %in% c(0, 1)){
   VoA_Variables$recruit_pts[is.na(VoA_Variables$recruit_pts)] = 0
   VoA_Variables$recruit_pts_PY3[is.na(VoA_Variables$recruit_pts_PY3)] = 0
 }
@@ -7289,7 +7289,7 @@ if (as.numeric(week) <= 8) {
   Off_VoA_fit
   
   ### Print the diagnostics
-  print(Off_VoA_fit$cmdstan_diagnose())
+  # print(Off_VoA_fit$cmdstan_diagnose())
   
   
   ### Extracting Parameters
@@ -7331,10 +7331,10 @@ if (as.numeric(week) <= 8) {
   # Def_VoA_fit
   
   ### Print the diagnostics
-  print(Def_VoA_fit$cmdstan_diagnose())
+  # print(Def_VoA_fit$cmdstan_diagnose())
   
   ### Extracting Parameters
-  Def_VoA_pars <- Def_VoA_fit$draws(variables = c("b0", "beta_def_ppa", "beta_def_ypp", "beta_def_success_rate", "beta_def_explosiveness", "beta_def_third_conv_rate", "beta_def_pts_per_opp", "beta_def_havoc_total", "beta_def_plays_pg", "beta_VoA_Output", "beta_Conference_Strength", "sigma"), format = "list")
+  Def_VoA_pars <- Def_VoA_fit$draws(variables = c("b0", "beta_def_ppa", "beta_def_ypp", "beta_def_success_rate", "beta_def_explosiveness", "beta_def_third_conv_rate", "beta_def_pts_per_opp", "beta_def_havoc_total", "beta_def_plays_pg", "beta_VoA_Output", "beta_Conference_Strength", "sigma"), format = "draws_df")
   
   ### creating matrix to hold ratings
   ### adding in process uncertainty
@@ -7373,10 +7373,10 @@ if (as.numeric(week) <= 8) {
   # ST_VoA_fit
   
   ### Print the diagnostics
-  print(ST_VoA_fit$cmdstan_diagnose())
+  # print(ST_VoA_fit$cmdstan_diagnose())
   
   ### extracting parameters
-  ST_VoA_pars <- ST_VoA_fit$draws(variables = c("b0", "beta_net_kick_return_avg", "beta_net_punt_return_avg", "beta_net_fg_rate", "beta_net_st_ppa", "sigma"), format = "list")
+  ST_VoA_pars <- ST_VoA_fit$draws(variables = c("b0", "beta_net_kick_return_avg", "beta_net_punt_return_avg", "beta_net_fg_rate", "beta_net_st_ppa", "sigma"), format = "draws_df")
   
   ### creating matrix to store special teams VoA_Ratings
   ST_VoA_Ratings <- matrix(NA, nrow = length(ST_VoA_pars$b0), ncol = nrow(VoA_Variables))
