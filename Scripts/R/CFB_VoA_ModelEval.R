@@ -169,7 +169,6 @@ if (as.numeric(cfb_week) >= 4){
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
     ggtitle(paste(season, "MAE by Week"), subtitle = "Vegas Metric in Blue") +
     theme(plot.title = element_text(size = 35, hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
-  WeeklyMAEPlot
   
   WeeklyRMSEPlot <- ggplot(CompletedWeeks, aes(x = week, y = RMSE)) +
     theme_bw() +
@@ -182,7 +181,6 @@ if (as.numeric(cfb_week) >= 4){
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
     ggtitle(paste(season, "RMSE by Week"), subtitle = "Vegas Metric in Blue") +
     theme(plot.title = element_text(size = 35, hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
-  WeeklyRMSEPlot
   
   WeeklyWinPctPlot <- ggplot(CompletedWeeks, aes(x = week, y = straight_up_win_pct)) +
     theme_bw() +
@@ -195,6 +193,10 @@ if (as.numeric(cfb_week) >= 4){
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
     ggtitle(paste(season, "Correct Predicted Winner (%) by Week"), subtitle = "Vegas Metric in Blue") +
     theme(plot.title = element_text(size = 35, hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
+  
+  ### diplaying plots
+  WeeklyMAEPlot
+  WeeklyRMSEPlot
   WeeklyWinPctPlot
 } else{
   print("no plots of error/win pct by week until Week 4")
