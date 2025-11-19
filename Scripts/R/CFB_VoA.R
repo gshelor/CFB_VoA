@@ -50,11 +50,14 @@ Ranking_text <- "_Rankings_Chart.png"
 Histogram_text <- "_RatingHist.png"
 Output_Rating_Plot_text <- "VoA Outputs vs VoA Ratings"
 Output_Rating_Plot_png <- "Output_Rating.png"
+OffDef_Rating_Plot_text <- "VoA Off Rating vs VoA Def Rating"
+OffDef_Rating_Plot_png <- "OffDef_Rating.png"
 
 FBS_hist_title <- paste(year, week_text, week, FBS_text, VoA_text, "Ratings")
 Power5_hist_title <- paste(year, week_text, week, Power_Five_text, VoA_text, "Ratings")
 Group5_hist_title <- paste(year, week_text, week, Group_Five_text, VoA_text, "Ratings")
 Output_Rating_Plot_title <- paste(year, week_text, week, Output_Rating_Plot_text)
+OffDef_Rating_Plot_title <- paste(year, week_text, week, OffDef_Rating_Plot_text)
 top25_file_pathway <- paste(year,week_text,week,"_",top25_png, sep = "")
 resumetop25_file_pathway <- paste(year,week_text,week,resume_text,"_",top25_png, sep = "")
 fulltable_file_pathway <- paste(year,week_text,week,"_",fulltable_png, sep = "")
@@ -85,6 +88,7 @@ FBS_hist_filename <- paste(year, week_text, week, "_", FBS_text, Histogram_text,
 Power5_hist_filename <- paste(year, week_text, week, "_", Power_Five_text, Histogram_text, sep = "")
 Group5_hist_filename <- paste(year, week_text, week, "_", Group_Five_text, Histogram_text, sep = "")
 Output_Rating_Plot_filename <- paste(year, week_text, week, "_", Output_Rating_Plot_png, sep = "")
+OffDef_Rating_Plot_filename <- paste(year, week_text, week, "_", OffDef_Rating_Plot_png, sep = "")
 ### creating string for csv spreadsheet pathway
 file_pathway <- paste0(data_dir, "/", year, week_text, week,"_", VoAString)
 ### creating directories that don't exist
@@ -8223,7 +8227,7 @@ if (as.numeric(week) >= 3) {
   AAC_VoA_Rating_Chart <- ggplot(AAC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8239,7 +8243,7 @@ if (as.numeric(week) >= 3) {
   AAC_VoA_Ranking_Chart <- ggplot(AAC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Ranking") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8255,7 +8259,7 @@ if (as.numeric(week) >= 3) {
   ACC_VoA_Rating_Chart <- ggplot(ACC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8271,7 +8275,7 @@ if (as.numeric(week) >= 3) {
   ACC_VoA_Ranking_Chart <- ggplot(ACC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Ranking") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8287,7 +8291,7 @@ if (as.numeric(week) >= 3) {
   Big12_VoA_Rating_Chart <- ggplot(Big12_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8303,7 +8307,7 @@ if (as.numeric(week) >= 3) {
   Big12_VoA_Ranking_Chart <- ggplot(Big12_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Ranking") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8319,7 +8323,7 @@ if (as.numeric(week) >= 3) {
   Big10_VoA_Rating_Chart <- ggplot(Big10_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8335,7 +8339,7 @@ if (as.numeric(week) >= 3) {
   Big10_VoA_Ranking_Chart <- ggplot(Big10_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8351,7 +8355,7 @@ if (as.numeric(week) >= 3) {
   CUSA_VoA_Rating_Chart <- ggplot(CUSA_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8367,7 +8371,7 @@ if (as.numeric(week) >= 3) {
   CUSA_VoA_Ranking_Chart <- ggplot(CUSA_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Ranking") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8383,7 +8387,7 @@ if (as.numeric(week) >= 3) {
   Indy_VoA_Rating_Chart <- ggplot(Indy_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8399,7 +8403,7 @@ if (as.numeric(week) >= 3) {
   Indy_VoA_Ranking_Chart <- ggplot(Indy_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Ranking") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8415,7 +8419,7 @@ if (as.numeric(week) >= 3) {
   MAC_VoA_Rating_Chart <- ggplot(MAC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8431,7 +8435,7 @@ if (as.numeric(week) >= 3) {
   MAC_VoA_Ranking_Chart <- ggplot(MAC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Ranking") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8447,7 +8451,7 @@ if (as.numeric(week) >= 3) {
   MWC_VoA_Rating_Chart <- ggplot(MWC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8463,7 +8467,7 @@ if (as.numeric(week) >= 3) {
   MWC_VoA_Ranking_Chart <- ggplot(MWC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Ranking") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8511,7 +8515,7 @@ if (as.numeric(week) >= 3) {
   SEC_VoA_Rating_Chart <- ggplot(SEC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8527,7 +8531,7 @@ if (as.numeric(week) >= 3) {
   SEC_VoA_Ranking_Chart <- ggplot(SEC_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Ranking") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8543,7 +8547,7 @@ if (as.numeric(week) >= 3) {
   SunBelt_VoA_Rating_Chart <- ggplot(SunBelt_Ratings_Rks, aes(x = CFB_Week, y = VoA_Rating_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Overall Rating") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8559,7 +8563,7 @@ if (as.numeric(week) >= 3) {
   SunBelt_VoA_Ranking_Chart <- ggplot(SunBelt_Ratings_Rks, aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = team)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Ranking") +
     labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
@@ -8637,7 +8641,7 @@ ggsave(Group5_hist_filename, path = output_dir, width = 50, height = 40, units =
 ## Creating Scatterplot of VoA_Output vs VoA_Rating
 VoA_Output_Rating_plot <- ggplot(VoA_Variables, aes(x = VoA_Output, y = VoA_Rating_Ovr)) +
   theme_bw() +
-  geom_point(size = 2) +
+  # geom_point(size = 2) +
   geom_smooth() +
   geom_cfb_logos(aes(team = team), width = 0.035) +
   scale_x_continuous(breaks = seq(0,135,10)) +
@@ -8649,6 +8653,26 @@ VoA_Output_Rating_plot <- ggplot(VoA_Variables, aes(x = VoA_Output, y = VoA_Rati
   theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
 VoA_Output_Rating_plot
 ggsave(Output_Rating_Plot_filename, path = output_dir, width = 50, height = 40, units = 'cm')
+
+## Creating Scatterplot of VoA Offensive Rating vs VoA Defensive Rating
+VoA_Variables <- read_csv(file_pathway)
+VoA_OffDef_Rating_plot <- ggplot(VoA_Variables, aes(x = OffVoA_MeanRating, y = DefVoA_MeanRating)) +
+  theme_bw() +
+  # geom_point(size = 2) +
+  # geom_smooth() +
+  scale_y_reverse() +
+  geom_cfb_logos(aes(team = team), width = 0.035) +
+  geom_hline(yintercept = mean(VoA_Variables$DefVoA_MeanRating)) +
+  geom_vline(xintercept = mean(VoA_Variables$OffVoA_MeanRating)) +
+  # scale_x_continuous(breaks = seq(0,135,10)) +
+  # scale_y_continuous(breaks = seq(-50,40,5)) +
+  ggtitle(OffDef_Rating_Plot_title) +
+  xlab("VoA Offensive Rating") +
+  ylab("VoA Defensive Rating") +
+  labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
+  theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
+VoA_OffDef_Rating_plot
+ggsave(OffDef_Rating_Plot_filename, path = output_dir, width = 50, height = 40, units = 'cm')
 
 
 
