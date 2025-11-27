@@ -2,7 +2,7 @@
 ### test code for accessing cfb data API
 ## In this script, garbage time is excluded from Advanced Stats
 ## This script uses tidymodels random forest function to predict SP+/FPI-style metric instead of lm() function that main script uses
-## wow all of the above is out of date in some way since main VoA uses Stan and no longer uses SP+/FPI/SRS averages as a target variable and models its own offensive/defensive/special teams team strength
+### wow all of the above is out of date in some way since main VoA uses Stan and no longer uses SP+/FPI/SRS averages as a target variable and models its own offensive/defensive/special teams team strength
 ### At this point this script is mostly for the NA debugging code at the very bottom that I use to figure out which columns in the main VoA script have NAs in them and why and how many and such
 ### Turning this script into an attempt to figure out if I can use exclusively play by play data to create a VoA that ranks both FBS and FCS teams in order to make more complete game projections, especially during early weeks and SoCON saturday (SEC, SEC, SEC!)
 ## haven't messed with the main code here in years, I don't even remember what it does
@@ -136,21 +136,23 @@ if (as.numeric(week) == 0) {
   ### pulling in completed games as part of opponent-adjustment of stats later
   CompletedFBSGames_PY3 <- cfbd_game_info(as.numeric(year) - 3) |>
     filter(completed == TRUE) |>
-    filter(home_team %in% VoATeams | away_team %in% VoATeams)
+    filter(home_team %in% VoATeams$school | away_team %in% VoATeams$school)
     # filter(home_division == "fbs" & away_division == "fbs" | home_team %in% PY3Teams | away_team %in% PY3Teams)
-  CompletedNeutralGames_PY3 <- CompletedFBSGames_PY3 |>
+  CompletedNeutralGames_PY3 <- CompletedGames_PY3 |>
     filter(neutral_site == TRUE)
   ### PY2 completed games
   CompletedFBSGames_PY2 <- cfbd_game_info(as.numeric(year) - 2) |>
-    filter(completed == TRUE) #|>
+    filter(completed == TRUE) |>
+    filter(home_team %in% VoATeams$school | away_team %in% VoATeams$school)#|>
     # filter(home_division == "fbs" & away_division == "fbs" | home_team %in% PY2Teams | away_team %in% PY2Teams)
-  CompletedNeutralGames_PY2 <- CompletedFBSGames_PY2 |>
+  CompletedNeutralGames_PY2 <- CompletedGames_PY2 |>
     filter(neutral_site == TRUE)
   ### PY1 completed games
-  CompletedFBSGames_PY1 <- cfbd_game_info(as.numeric(year) - 1) |>
-    filter(completed == TRUE) #|>
+  CompletedGames_PY1 <- cfbd_game_info(as.numeric(year) - 1) |>
+    filter(completed == TRUE) |>
+    filter(home_team %in% VoATeams$school | away_team %in% VoATeams$school) #|>
     # filter(home_division == "fbs" & away_division == "fbs" | home_team %in% PY1Teams | away_team %in% PY1Teams)
-  CompletedNeutralGames_PY1 <- CompletedFBSGames_PY1 |>
+  CompletedNeutralGames_PY1 <- CompletedGames_PY1 |>
     filter(neutral_site == TRUE)
   
   ### loading in play-by-play data
@@ -473,7 +475,7 @@ if (as.numeric(week) == 0) {
   
   ### reading in regular stats
   Stats_PY1 <- cfbd_stats_season_team(year = as.integer(year) - 1, season_type = "both", start_week = 1, end_week = 15) |>
-    filter(team %nin% PY1Teams) |>
+    # filter(team %nin% PY1Teams) |>
     mutate(total_yds_pg = total_yds/games,
            pass_yds_pg = net_pass_yds / games,
            rush_yds_pg = rush_yds/games,
@@ -2746,9 +2748,9 @@ if (as.numeric(week) == 0) {
   if (dir.exists(here("Data", paste0("VoA", year), "PYData")) == FALSE){
     dir.create(here("Data", paste0("VoA", year), "PYData"), recursive = TRUE)
   }
-  write_csv(PY3_df_NoSeasonConf, here("Data", paste0("VoA", year), "PYData", "PY3.csv"))
-  write_csv(PY2_df, here("Data", paste0("VoA", year), "PYData", "PY2.csv"))
-  write_csv(PY1_df, here("Data", paste0("VoA", year), "PYData", "PY1.csv"))
+  # write_csv(PY3_df_NoSeasonConf, here("Data", paste0("VoA", year), "PYData", "PY3.csv"))
+  # write_csv(PY2_df, here("Data", paste0("VoA", year), "PYData", "PY2.csv"))
+  # write_csv(PY1_df, here("Data", paste0("VoA", year), "PYData", "PY1.csv"))
 } else if (as.numeric(week) == 1) {
   ##### WEEK 1 DF Merge #####
   ### merging data frames together, arranging columns
@@ -7230,7 +7232,7 @@ FinalVoATop25 <- FinalTable |>
 tail(FinalVoATop25)
 
 ## Exporting final data frame as CSV
-write_csv(VoA_Variables_Test, file_pathway)
+# write_csv(VoA_Variables_Test, file_pathway)
 
 ## Top 25 Table
 # adding title and subtitle
@@ -7264,11 +7266,11 @@ VoATop25Table <- FinalVoATop25 |>
     footnote = "Data from CFB Data API, ESPN.com, the NCAA, and ESPN's Bill Connelly via cfbfastR"
   )
 VoATop25Table
-VoATop25Table |>
-  gtsave(
-    top25_file_pathway, expand = 5,
-    path = here("RVoA", "Outputs", "Test")
-  )
+# VoATop25Table |>
+#   gtsave(
+#     top25_file_pathway, expand = 5,
+#     path = here("RVoA", "Outputs", "Test")
+#   )
 
 ## Full 130 teams table
 # adding title and subtitle
@@ -7303,11 +7305,11 @@ VoA_Full_Table <- FinalTable |>
     footnote = "Data from CFB Data API, ESPN.com, the NCAA, and ESPN's Bill Connelly via cfbfastR"
   )
 VoA_Full_Table
-VoA_Full_Table |>
-  gtsave(
-    fulltable_file_pathway, expand = 5,
-    path = here("RVoA", "Outputs", "Test")
-  )
+# VoA_Full_Table |>
+#   gtsave(
+#     fulltable_file_pathway, expand = 5,
+#     path = here("RVoA", "Outputs", "Test")
+#   )
 
 
 #### possible future code for trying out different formats for top 25 tables
