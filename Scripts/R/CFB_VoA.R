@@ -12,7 +12,7 @@ p_load(tidyverse, gt, cfbfastR, here, RColorBrewer, gtExtras, cfbplotR, ggpubr, 
 
 ### Creating Week and Year String for Top 25 Table Title, eventually could be used as part of reading in cfbfastR/cfbdata API data
 year <- readline(prompt = "What year is it? ")
-week <- readline(prompt = "What week just occurred? ")
+cfb_week <- readline(prompt = "What week just occurred? ")
 
 ##### setting strings for table titles, file pathways, unintelligible charts #####
 `%nin%` = Negate(`%in%`)
@@ -22,7 +22,7 @@ tracking_chart_dir <- here("Data", paste0("VoA", year), "TrackingChartCSVs")
 accuracy_data_dir <- here("Data", paste0("VoA", year), "AccuracyMetrics")
 PY_data_dir <- here("Data", paste0("VoA", year), "PYData")
 Projection_data_dir <- here("Data", paste0("VoA", year), "Projections")
-preseason_text <- "Preseason"
+preseason_text <- "CFB Preseason"
 resume_text <- "Resume"
 VoAString <- "VoA.csv"
 week_text <- "Week"
@@ -30,7 +30,7 @@ VoA_Top25_text <- "Vortex of Accuracy Top 25"
 top25_png <- "VoATop25.png"
 fulltable_png <- "VoAFullTable.png"
 VoA_text <- "Vortex of Accuracy"
-Postseason_text <- "Postseason"
+Postseason_text <- " CFB Postseason"
 AAC_text <- "AAC"
 ACC_text <- "ACC"
 Big12_text <- "Big12"
@@ -53,44 +53,70 @@ Output_Rating_Plot_png <- "Output_Rating.png"
 OffDef_Rating_Plot_text <- "VoA Off Rating vs VoA Def Rating"
 OffDef_Rating_Plot_png <- "OffDef_Rating.png"
 
-FBS_hist_title <- paste(year, week_text, week, FBS_text, VoA_text, "Ratings")
-Power5_hist_title <- paste(year, week_text, week, Power_Five_text, VoA_text, "Ratings")
-Group5_hist_title <- paste(year, week_text, week, Group_Five_text, VoA_text, "Ratings")
-Output_Rating_Plot_title <- paste(year, week_text, week, Output_Rating_Plot_text)
-OffDef_Rating_Plot_title <- paste(year, week_text, week, OffDef_Rating_Plot_text)
-top25_file_pathway <- paste(year,week_text,week,"_",top25_png, sep = "")
-resumetop25_file_pathway <- paste(year,week_text,week,resume_text,"_",top25_png, sep = "")
-fulltable_file_pathway <- paste(year,week_text,week,"_",fulltable_png, sep = "")
-resumefulltable_file_pathway <- paste(year,week_text,week,resume_text,"_",fulltable_png, sep = "")
-AAC_Output_filename <- paste(year,week_text, week, AAC_text, Rating_text, sep = "")
-AAC_Ranking_filename <- paste(year,week_text, week, AAC_text, Ranking_text, sep = "")
-ACC_Output_filename <- paste(year,week_text, week, ACC_text, Rating_text, sep = "")
-ACC_Ranking_filename <- paste(year,week_text, week, ACC_text, Ranking_text, sep = "")
-Big12_Output_filename <- paste(year,week_text, week, Big12_text, Rating_text, sep = "")
-Big12_Ranking_filename <- paste(year,week_text, week, Big12_text, Ranking_text, sep = "")
-Big10_Output_filename <- paste(year,week_text, week, Big10_text, Rating_text, sep = "")
-Big10_Ranking_filename <- paste(year,week_text, week, Big10_text, Ranking_text, sep = "")
-CUSA_Output_filename <- paste(year,week_text, week, CUSA_text, Rating_text, sep = "")
-CUSA_Ranking_filename <- paste(year,week_text, week, CUSA_text, Ranking_text, sep = "")
-Indy_Output_filename <- paste(year,week_text, week, Indy_text, Rating_text, sep = "")
-Indy_Ranking_filename <- paste(year,week_text, week, Indy_text, Ranking_text, sep = "")
-MAC_Output_filename <- paste(year,week_text, week, MAC_text, Rating_text, sep = "")
-MAC_Ranking_filename <- paste(year,week_text, week, MAC_text, Ranking_text, sep = "")
-MWC_Output_filename <- paste(year,week_text, week, MWC_text, Rating_text, sep = "")
-MWC_Ranking_filename <- paste(year,week_text, week, MWC_text, Ranking_text, sep = "")
-Pac2_Output_filename <- paste(year,week_text, week, Pac2_text, Rating_text, sep = "")
-Pac2_Ranking_filename <- paste(year,week_text, week, Pac2_text, Ranking_text, sep = "")
-SEC_Output_filename <- paste(year,week_text, week, SEC_text, Rating_text, sep = "")
-SEC_Ranking_filename <- paste(year,week_text, week, SEC_text, Ranking_text, sep = "")
-SunBelt_Output_filename <- paste(year,week_text, week, SunBelt_text, Rating_text, sep = "")
-SunBelt_Ranking_filename <- paste(year,week_text, week, SunBelt_text, Ranking_text, sep = "")
-FBS_hist_filename <- paste(year, week_text, week, "_", FBS_text, Histogram_text, sep = "")
-Power5_hist_filename <- paste(year, week_text, week, "_", Power_Five_text, Histogram_text, sep = "")
-Group5_hist_filename <- paste(year, week_text, week, "_", Group_Five_text, Histogram_text, sep = "")
-Output_Rating_Plot_filename <- paste(year, week_text, week, "_", Output_Rating_Plot_png, sep = "")
-OffDef_Rating_Plot_filename <- paste(year, week_text, week, "_", OffDef_Rating_Plot_png, sep = "")
+FBS_hist_title <- paste(year, week_text, cfb_week, FBS_text, VoA_text, "Ratings")
+Power5_hist_title <- paste(year, week_text, cfb_week, Power_Five_text, VoA_text, "Ratings")
+Group5_hist_title <- paste(year, week_text, cfb_week, Group_Five_text, VoA_text, "Ratings")
+Output_Rating_Plot_title <- paste(year, week_text, cfb_week, Output_Rating_Plot_text)
+OffDef_Rating_Plot_title <- paste(year, week_text, cfb_week, OffDef_Rating_Plot_text)
+top25_file_pathway <- paste(year, week_text, cfb_week, "_", top25_png, sep = "")
+resumetop25_file_pathway <- paste(year, week_text, cfb_week, resume_text, "_", top25_png, sep = "")
+fulltable_file_pathway <- paste(year, week_text, cfb_week, "_", fulltable_png, sep = "")
+resumefulltable_file_pathway <- paste(year, week_text, cfb_week, resume_text, "_", fulltable_png, sep = "")
+AAC_Output_filename <- paste(year, week_text, cfb_week, AAC_text, Rating_text, sep = "")
+AAC_Ranking_filename <- paste(year, week_text, cfb_week, AAC_text, Ranking_text, sep = "")
+ACC_Output_filename <- paste(year, week_text, cfb_week, ACC_text, Rating_text, sep = "")
+ACC_Ranking_filename <- paste(year, week_text, cfb_week, ACC_text, Ranking_text, sep = "")
+Big12_Output_filename <- paste(year, week_text, cfb_week, Big12_text, Rating_text, sep = "")
+Big12_Ranking_filename <- paste(year, week_text, cfb_week, Big12_text, Ranking_text, sep = "")
+Big10_Output_filename <- paste(year, week_text, cfb_week, Big10_text, Rating_text, sep = "")
+Big10_Ranking_filename <- paste(year, week_text, cfb_week, Big10_text, Ranking_text, sep = "")
+CUSA_Output_filename <- paste(year, week_text, cfb_week, CUSA_text, Rating_text, sep = "")
+CUSA_Ranking_filename <- paste(year, week_text, cfb_week, CUSA_text, Ranking_text, sep = "")
+Indy_Output_filename <- paste(year, week_text, cfb_week, Indy_text, Rating_text, sep = "")
+Indy_Ranking_filename <- paste(year, week_text, cfb_week, Indy_text, Ranking_text, sep = "")
+MAC_Output_filename <- paste(year, week_text, cfb_week, MAC_text, Rating_text, sep = "")
+MAC_Ranking_filename <- paste(year, week_text, cfb_week, MAC_text, Ranking_text, sep = "")
+MWC_Output_filename <- paste(year, week_text, cfb_week, MWC_text, Rating_text, sep = "")
+MWC_Ranking_filename <- paste(year, week_text, cfb_week, MWC_text, Ranking_text, sep = "")
+Pac2_Output_filename <- paste(year, week_text, cfb_week, Pac2_text, Rating_text, sep = "")
+Pac2_Ranking_filename <- paste(year, week_text, cfb_week, Pac2_text, Ranking_text, sep = "")
+SEC_Output_filename <- paste(year, week_text, cfb_week, SEC_text, Rating_text, sep = "")
+SEC_Ranking_filename <- paste(year, week_text, cfb_week, SEC_text, Ranking_text, sep = "")
+SunBelt_Output_filename <- paste(year, week_text, cfb_week, SunBelt_text, Rating_text, sep = "")
+SunBelt_Ranking_filename <- paste(year, week_text, cfb_week, SunBelt_text, Ranking_text, sep = "")
+FBS_hist_filename <- paste(year, week_text, cfb_week, "_", FBS_text, Histogram_text, sep = "")
+Power5_hist_filename <- paste(year, week_text, cfb_week, "_", Power_Five_text, Histogram_text, sep = "")
+Group5_hist_filename <- paste(year, week_text, cfb_week, "_", Group_Five_text, Histogram_text, sep = "")
+Output_Rating_Plot_filename <- paste(year, week_text, cfb_week, "_", Output_Rating_Plot_png, sep = "")
+OffDef_Rating_Plot_filename <- paste(year, week_text, cfb_week, "_", OffDef_Rating_Plot_png, sep = "")
+### setting gt title based on whether it's after a playoff week or not
+if (as.numeric(cfb_week) == 15){
+  gt_top25_title <- paste(year, "Conference Championship Week", VoA_Top25_text)
+  gt_title <- paste(year, "Conference Championship Week", VoA_text)
+} else if (as.numeric(cfb_week) == 16){
+  gt_top25_title <- paste(year, "Post Army-Navy Game", VoA_Top25_text)
+  gt_title <- paste(year, "Post Army-Navy Game", VoA_text)
+} else if (as.numeric(cfb_week) == 17){
+  gt_top25_title <- paste(year, "CFP First Round", VoA_Top25_text)
+  gt_title <- paste(year, "CFP First Round", VoA_text)
+} else if (as.numeric(cfb_week) == 18){
+  gt_top25_title <- paste(year, "CFP Quarterfinals", VoA_Top25_text)
+  gt_title <- paste(year, "CFP Quarterfinals", VoA_text)
+} else if (as.numeric(cfb_week) == 19){
+  gt_top25_title <- paste(year, "CFP Semifinals", VoA_Top25_text)
+  gt_title <- paste(year, "CFP Semifinals", VoA_text)
+} else if (as.numeric(cfb_week) == 20){
+  gt_top25_title <- paste(year, Postseason_text, VoA_Top25_text)
+  gt_title <- paste(year, Postseason_text, VoA_text)
+} else if (as.numeric(cfb_week) == 0){
+  gt_top25_title <- paste(year, preseason_text, VoA_Top25_text)
+  gt_title <- paste(year, preseason_text, VoA_text)
+} else{
+  gt_top25_title <- paste(year, week_text, cfb_week, VoA_Top25_text)
+  gt_title <- paste(year, week_text, cfb_week, VoA_text)
+}
 ### creating string for csv spreadsheet pathway
-file_pathway <- paste0(data_dir, "/", year, week_text, week,"_", VoAString)
+file_pathway <- paste0(data_dir, "/", year, week_text, cfb_week,"_", VoAString)
 ### creating directories that don't exist
 for (i in c(data_dir, output_dir, tracking_chart_dir, Projection_data_dir, PY_data_dir, accuracy_data_dir)){
   if (dir.exists(i) == FALSE){
@@ -102,7 +128,7 @@ options(mc.cores = parallel::detectCores() / 2)
 
 ##### Reading in Data #####
 ### pulling in data based on week of the season
-if (as.numeric(week) == 0) {
+if (as.numeric(cfb_week) == 0) {
   ##### WEEK 0 Data Pull #####
   ### storing names of FCS teams for when they need to be filtered out in PY stats grabs
   PY3Teams <- c("Delaware", "Missouri State", "Kennesaw State", "Sam Houston State", "Jacksonville State", "Sam Houston")
@@ -714,7 +740,7 @@ if (as.numeric(week) == 0) {
     select(school, points)
   recruit[,2] <- recruit[,2] |> mutate_if(is.character, as.numeric)
   colnames(recruit) <- c("team", "recruit_pts")
-} else if (as.numeric(week) == 1) {
+} else if (as.numeric(cfb_week) == 1) {
   ##### WEEK 1 Data Pull #####
   ### reading in data for 3 previous years
   ### no need to remove season and conference columns from PY3_df because they are removed before I write the csv in week 0
@@ -851,7 +877,7 @@ if (as.numeric(week) == 0) {
     drop_na()
   
   ### CURRENT SEASON STATS
-  Stats <- cfbd_stats_season_team(year = as.integer(year), start_week = 1, end_week = as.numeric(week)) |>
+  Stats <- cfbd_stats_season_team(year = as.integer(year), start_week = 1, end_week = as.numeric(cfb_week)) |>
     mutate(total_yds_pg = total_yds/games,
            pass_yds_pg = net_pass_yds / games,
            rush_yds_pg = rush_yds/games,
@@ -896,7 +922,7 @@ if (as.numeric(week) == 0) {
   Stats[is.na(Stats)] = 0
   
   ## advanced stats data
-  Adv_Stats <- cfbd_stats_season_advanced(year = as.integer(year), excl_garbage_time = FALSE, start_week = 1, end_week = as.numeric(week)) |>
+  Adv_Stats <- cfbd_stats_season_advanced(year = as.integer(year), excl_garbage_time = FALSE, start_week = 1, end_week = as.numeric(cfb_week)) |>
     select(team, off_ppa, off_success_rate, off_explosiveness, off_power_success,
            off_stuff_rate, off_line_yds, off_second_lvl_yds, off_open_field_yds,
            off_pts_per_opp, off_field_pos_avg_predicted_points, off_havoc_total, 
@@ -929,7 +955,7 @@ if (as.numeric(week) == 0) {
     # filter(school != "Ball State" & school != "Central Michigan" & school != "Louisiana Monroe")
   recruit[,2] <- recruit[,2] |> mutate_if(is.character, as.numeric)
   colnames(recruit) <- c("team", "recruit_pts")
-} else if (as.numeric(week) <= 5) {
+} else if (as.numeric(cfb_week) <= 5) {
   ##### WEEKS 2-5 DATA PULL #####
   ### reading in Previous year's data as csvs so I don't have to read it in again
   PY2_df <- read_csv(here("Data", paste0("VoA", year), "PYData", "PY2.csv"))
@@ -1055,7 +1081,7 @@ if (as.numeric(week) == 0) {
   
   
   ### CURRENT SEASON STATS
-  Stats <- cfbd_stats_season_team(year = as.integer(year), start_week = 1, end_week = as.numeric(week)) |>
+  Stats <- cfbd_stats_season_team(year = as.integer(year), start_week = 1, end_week = as.numeric(cfb_week)) |>
     mutate(total_yds_pg = total_yds/games,
            pass_yds_pg = net_pass_yds / games,
            rush_yds_pg = rush_yds/games,
@@ -1098,7 +1124,7 @@ if (as.numeric(week) == 0) {
   Stats[is.na(Stats)] = 0
   
   ## advanced stats data
-  Adv_Stats <- cfbd_stats_season_advanced(year = as.integer(year), excl_garbage_time = FALSE, start_week = 1, end_week = as.numeric(week)) |>
+  Adv_Stats <- cfbd_stats_season_advanced(year = as.integer(year), excl_garbage_time = FALSE, start_week = 1, end_week = as.numeric(cfb_week)) |>
     select(team, off_ppa, off_success_rate, off_explosiveness, off_power_success,
            off_stuff_rate, off_line_yds, off_second_lvl_yds, off_open_field_yds,
            off_pts_per_opp, off_field_pos_avg_predicted_points, off_havoc_total, 
@@ -1129,7 +1155,7 @@ if (as.numeric(week) == 0) {
     select(school, points)
   recruit[,2] <- recruit[,2] |> mutate_if(is.character, as.numeric)
   colnames(recruit) <- c("team", "recruit_pts")
-} else if (as.numeric(week) <= 8) {
+} else if (as.numeric(cfb_week) <= 8) {
   ##### WEEKS 6-8 Data Pull #####
   ### reading in Previous year's data as csvs so I don't have to read it in again
   PY1_df <- read_csv(here("Data", paste0("VoA", year), "PYData", "PY1.csv"))
@@ -1253,7 +1279,7 @@ if (as.numeric(week) == 0) {
     drop_na()
   
   ### CURRENT SEASON STATS
-  Stats <- cfbd_stats_season_team(year = as.integer(year), start_week = 1, end_week = as.numeric(week)) |>
+  Stats <- cfbd_stats_season_team(year = as.integer(year), start_week = 1, end_week = as.numeric(cfb_week)) |>
     mutate(total_yds_pg = total_yds/games,
            pass_yds_pg = net_pass_yds / games,
            rush_yds_pg = rush_yds/games,
@@ -1297,7 +1323,7 @@ if (as.numeric(week) == 0) {
   Stats[is.na(Stats)] = 0
   
   ### advanced stats data
-  Adv_Stats <- cfbd_stats_season_advanced(year = as.integer(year), excl_garbage_time = FALSE, start_week = 1, end_week = as.numeric(week)) |>
+  Adv_Stats <- cfbd_stats_season_advanced(year = as.integer(year), excl_garbage_time = FALSE, start_week = 1, end_week = as.numeric(cfb_week)) |>
     select(team, off_ppa, off_success_rate, off_explosiveness, off_power_success,
            off_stuff_rate, off_line_yds, off_second_lvl_yds, off_open_field_yds,
            off_pts_per_opp, off_field_pos_avg_predicted_points, off_havoc_total, 
@@ -1448,7 +1474,7 @@ if (as.numeric(week) == 0) {
     drop_na()
   
   ### regular stats
-  Stats <- cfbd_stats_season_team(year = as.integer(year), start_week = 1, end_week = as.numeric(week)) |>
+  Stats <- cfbd_stats_season_team(year = as.integer(year), start_week = 1, end_week = as.numeric(cfb_week)) |>
     mutate(total_yds_pg = total_yds/games,
            pass_yds_pg = net_pass_yds / games,
            rush_yds_pg = rush_yds/games,
@@ -1494,7 +1520,7 @@ if (as.numeric(week) == 0) {
   Stats[is.na(Stats)] = 0
   
   ### advanced stats data
-  Adv_Stats <- cfbd_stats_season_advanced(year = as.integer(year), excl_garbage_time = FALSE, start_week = 1, end_week = as.numeric(week)) |>
+  Adv_Stats <- cfbd_stats_season_advanced(year = as.integer(year), excl_garbage_time = FALSE, start_week = 1, end_week = as.numeric(cfb_week)) |>
     select(team, off_ppa, off_success_rate, off_explosiveness, off_power_success,
            off_stuff_rate, off_line_yds, off_second_lvl_yds, off_open_field_yds,
            off_pts_per_opp, off_field_pos_avg_predicted_points, off_havoc_total, 
@@ -1552,7 +1578,7 @@ if (as.numeric(week) == 0) {
 
 
 ##### merging data frames together #####
-if (as.numeric(week) == 0) {
+if (as.numeric(cfb_week) == 0) {
   ##### WEEK 0 DF Merge #####
   ## merging data frames together, arranging columns
   ## need to merge stats and advanced stats together first so I can change column names to avoid duplicate column names later on
@@ -2729,7 +2755,7 @@ if (as.numeric(week) == 0) {
   write_csv(PY3_df_NoSeasonConf, here("Data", paste0("VoA", year), "PYData", "PY3.csv"))
   write_csv(PY2_df, here("Data", paste0("VoA", year), "PYData", "PY2.csv"))
   write_csv(PY1_df, here("Data", paste0("VoA", year), "PYData", "PY1.csv"))
-} else if (as.numeric(week) == 1) {
+} else if (as.numeric(cfb_week) == 1) {
   ##### WEEK 1 DF Merge #####
   ### merging data frames together, arranging columns
   ## need to merge stats and advanced stats together first so I can change column names to avoid duplicate column names later on
@@ -3151,7 +3177,7 @@ if (as.numeric(week) == 0) {
     }
     VoA_Variables$net_adj_st_ppa[i] = VoA_Variables$adj_st_ppa[i] - VoA_Variables$adj_st_ppa_allowed[i] 
   }
-} else if (as.numeric(week) <= 5) {
+} else if (as.numeric(cfb_week) <= 5) {
   ##### WEEKS 2-5 DF Merge #####
   ### merging data frames together, arranging columns
   ### Current Years dataframes
@@ -3575,7 +3601,7 @@ if (as.numeric(week) == 0) {
     }
     VoA_Variables$net_adj_st_ppa[i] = VoA_Variables$adj_st_ppa[i] - VoA_Variables$adj_st_ppa_allowed[i] 
   }
-} else if (as.numeric(week) <= 8) {
+} else if (as.numeric(cfb_week) <= 8) {
   ##### WEEKS 6-8 DF Merge #####
   ## merging data frames together, arranging columns
   ## need to merge stats and advanced stats together first so I can change column names to avoid duplicate column names later on
@@ -4359,7 +4385,7 @@ if (as.numeric(week) == 0) {
 ### end of if statement
 
 ##### Creating Weighted Variables, weights change by week #####
-if (as.numeric(week) == 0){
+if (as.numeric(cfb_week) == 0){
   ##### Preseason Weighted Variables #####
   VoA_Variables <- VoA_Variables |>
     mutate(weighted_off_ppg_mean = (adj_off_ppg_PY1 * 0.7) + (adj_off_ppg_PY2 * 0.2) + (adj_off_ppg_PY3 * 0.1),
@@ -4390,7 +4416,7 @@ if (as.numeric(week) == 0){
            weighted_net_adj_st_ppa = (net_adj_st_ppa_PY3 * 0.1) + (net_adj_st_ppa_PY2 * 0.2) + (net_adj_st_ppa_PY1 * 0.7),
            weighted_mean_oppdef_ppa = ((oppdef_ppa_PY3 * 0.1) + (oppdef_ppa_PY2 * 0.2) + (oppdef_ppa_PY1 * 0.7)),
            weighted_mean_oppoff_ppa = (oppoff_ppa_PY3 * 0.1) + (oppoff_ppa_PY2 * 0.2) + (oppoff_ppa_PY1 * 0.7))
-} else if (as.numeric(week) == 1){
+} else if (as.numeric(cfb_week) == 1){
   ##### Week 1 Weighted Variables #####
   ### PY1-3, 1 week of current season
   VoA_Variables <- VoA_Variables |>
@@ -4422,7 +4448,7 @@ if (as.numeric(week) == 0){
            weighted_net_adj_st_ppa = (net_adj_st_ppa_PY3 * 0.05) + (net_adj_st_ppa_PY2 * 0.15) + (net_adj_st_ppa_PY1 * 0.7) + (net_adj_st_ppa * 0.1),
            weighted_mean_oppdef_ppa = (oppdef_ppa_PY3 * 0.05) + (oppdef_ppa_PY2 * 0.15) + (oppdef_ppa_PY1 * 0.7) + (oppdef_ppa * 0.1),
            weighted_mean_oppoff_ppa = (oppoff_ppa_PY3 * 0.05) + (oppoff_ppa_PY2 * 0.15) + (oppoff_ppa_PY1 * 0.7) + (oppoff_ppa * 0.1))
-} else if (as.numeric(week) <= 3){
+} else if (as.numeric(cfb_week) <= 3){
   ##### Week 2 - Week 3 Weighted Variables #####
   ### PY2, PY1, current data
   VoA_Variables <- VoA_Variables |>
@@ -4454,7 +4480,7 @@ if (as.numeric(week) == 0){
            weighted_net_adj_st_ppa = (net_adj_st_ppa_PY2 * 0.1) + (net_adj_st_ppa_PY1 * 0.5) + (net_adj_st_ppa * 0.4),
            weighted_mean_oppdef_ppa = (oppdef_ppa_PY2 * 0.1) + (oppdef_ppa_PY1 * 0.5) + (oppdef_ppa * 0.4),
            weighted_mean_oppoff_ppa = (oppoff_ppa_PY2 * 0.1) + (oppoff_ppa_PY1 * 0.5) + (oppoff_ppa * 0.4))
-} else if (as.numeric(week) == 4){
+} else if (as.numeric(cfb_week) == 4){
   ##### Week 4 Weighted Variables #####
   VoA_Variables <- VoA_Variables |>
     mutate(weighted_off_ppg_mean = (adj_off_ppg_PY1 * 0.4) + (adj_off_ppg_PY2 * 0.1) + (adj_off_ppg * 0.5),
@@ -4485,7 +4511,7 @@ if (as.numeric(week) == 0){
            weighted_net_adj_st_ppa = (net_adj_st_ppa_PY2 * 0.1) + (net_adj_st_ppa_PY1 * 0.4) + (net_adj_st_ppa * 0.5),
            weighted_mean_oppdef_ppa = (oppdef_ppa_PY2 * 0.1) + (oppdef_ppa_PY1 * 0.4) + (oppdef_ppa * 0.5),
            weighted_mean_oppoff_ppa = (oppoff_ppa_PY2 * 0.1) + (oppoff_ppa_PY1 * 0.4) + (oppoff_ppa * 0.5))
-} else if (as.numeric(week) == 5){
+} else if (as.numeric(cfb_week) == 5){
   ##### Week 5 Weighted Variables #####
   VoA_Variables <- VoA_Variables |>
     mutate(weighted_off_ppg_mean = (adj_off_ppg_PY1 * 0.35) + (adj_off_ppg_PY2 * 0.05) + (adj_off_ppg * 0.6),
@@ -4516,7 +4542,7 @@ if (as.numeric(week) == 0){
            weighted_net_adj_st_ppa = (net_adj_st_ppa_PY2 * 0.05) + (net_adj_st_ppa_PY1 * 0.35) + (net_adj_st_ppa * 0.6),
            weighted_mean_oppdef_ppa = (oppdef_ppa_PY2 * 0.05) + (oppdef_ppa_PY1 * 0.35) + (oppdef_ppa * 0.6),
            weighted_mean_oppoff_ppa = (oppoff_ppa_PY2 * 0.05) + (oppoff_ppa_PY1 * 0.35) + (oppoff_ppa * 0.6))
-} else if (as.numeric(week) == 6){
+} else if (as.numeric(cfb_week) == 6){
   ##### Week 6 Weighted Variables #####
   ### only PY1 and current data
   ### adding weighted variables
@@ -4549,7 +4575,7 @@ if (as.numeric(week) == 0){
            weighted_net_adj_st_ppa = (net_adj_st_ppa_PY1 * 0.3) + (net_adj_st_ppa * 0.7),
            weighted_mean_oppdef_ppa = (oppdef_ppa_PY1 * 0.3) + (oppdef_ppa * 0.7),
            weighted_mean_oppoff_ppa = (oppoff_ppa_PY1 * 0.3) + (oppoff_ppa * 0.7))
-} else if (as.numeric(week) == 7){
+} else if (as.numeric(cfb_week) == 7){
   ##### Week 7 Weighted Variables #####
   ### adding weighted variables
   VoA_Variables <- VoA_Variables |>
@@ -4581,7 +4607,7 @@ if (as.numeric(week) == 0){
            weighted_net_adj_st_ppa = (net_adj_st_ppa_PY1 * 0.2) + (net_adj_st_ppa * 0.8),
            weighted_mean_oppdef_ppa = (oppdef_ppa_PY1 * 0.2) + (oppdef_ppa * 0.8),
            weighted_mean_oppoff_ppa = (oppoff_ppa_PY1 * 0.2) + (oppoff_ppa * 0.8))
-} else if (as.numeric(week) == 8){
+} else if (as.numeric(cfb_week) == 8){
   ##### Week 8 Weighted Variables #####
   ### adding weighted variables
   VoA_Variables <- VoA_Variables |>
@@ -4618,9 +4644,9 @@ if (as.numeric(week) == 0){
 }
 
 ##### Calculating Mean Error of Offensive and Defensive Ratings in Completed FBS games based on previous week's VoA #####
-if (as.numeric(week) == 0){
+if (as.numeric(cfb_week) == 0){
   print("no error adjustment this week!")
-} else if (as.numeric(week) <= 2){
+} else if (as.numeric(cfb_week) <= 2){
   ##### Week 1 - 2 Off & Def Error Calculations #####
   ### adding dummy off and def error columns, to be filled with real values later
   VoA_Variables <- VoA_Variables |>
@@ -4628,7 +4654,7 @@ if (as.numeric(week) == 0){
            def_error = -999)
 
   ### reading in previous week's VoA for error calculation
-  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.numeric(week) - 1, "_", VoAString)))
+  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.numeric(cfb_week) - 1, "_", VoAString)))
   ### adding dummy home and away off and def VoA rating columns with values to be filled below
   CompletedFBSGames <- CompletedFBSGames |>
     mutate(home_off_VoA_rating = -999,
@@ -4687,7 +4713,7 @@ if (as.numeric(week) == 0){
       VoA_Variables$weighted_def_ppg_mean[i] = abs(VoA_Variables$weighted_def_ppg_mean[i]) + abs(rnorm(1, 5, 1))
     }
   }
-} else if (as.numeric(week) <= 4){
+} else if (as.numeric(cfb_week) <= 4){
   ##### Week 3 - 4 Off & Def Error Calculations #####
   ### adding dummy off and def error columns, to be filled with real values later
   VoA_Variables <- VoA_Variables |>
@@ -4695,7 +4721,7 @@ if (as.numeric(week) == 0){
            def_error = -999)
 
   ### reading in previous week's VoA for error calculation
-  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.numeric(week) - 1, "_", VoAString)))
+  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.numeric(cfb_week) - 1, "_", VoAString)))
   ### adding dummy home and away off and def VoA rating columns with values to be filled below
   CompletedFBSGames <- CompletedFBSGames |>
     mutate(home_off_VoA_rating = -999,
@@ -4754,7 +4780,7 @@ if (as.numeric(week) == 0){
       VoA_Variables$weighted_def_ppg_mean[i] = abs(VoA_Variables$weighted_def_ppg_mean[i]) + abs(rnorm(1, 5, 1))
     }
   }
-} else if (as.numeric(week) == 5){
+} else if (as.numeric(cfb_week) == 5){
   ##### Week 5 Off & Def Error Calculations #####
   ### adding dummy off and def error columns, to be filled with real values later
   VoA_Variables <- VoA_Variables |>
@@ -4762,7 +4788,7 @@ if (as.numeric(week) == 0){
            def_error = -999)
 
   ### reading in previous week's VoA for error calculation
-  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.numeric(week) - 1, "_", VoAString)))
+  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.numeric(cfb_week) - 1, "_", VoAString)))
   ### adding dummy home and away off and def VoA rating columns with values to be filled below
   CompletedFBSGames <- CompletedFBSGames |>
     mutate(home_off_VoA_rating = -999,
@@ -4829,7 +4855,7 @@ if (as.numeric(week) == 0){
            def_error = -999)
 
   ### reading in previous week's VoA ratings for error calculations
-  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.numeric(week) - 1, "_", VoAString)))
+  PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.numeric(cfb_week) - 1, "_", VoAString)))
 
   ### adding dummy rating columns to completed games df, adding in ratings in for loop
   CompletedFBSGames <- CompletedFBSGames |>
@@ -4896,13 +4922,13 @@ if (as.numeric(week) == 0){
 ### leaving this outside an if statement because this could be an issue regardless of season or CFB_Week
 ### currently commented out because I added this fix to each individual stat pull in function
 ### uncommented it because I must once again ask that Florida International University go fuck itself
-if (as.numeric(week) %in% c(0, 1)){
+if (as.numeric(cfb_week) %in% c(0, 1)){
   VoA_Variables$recruit_pts[is.na(VoA_Variables$recruit_pts)] = 0
   VoA_Variables$recruit_pts_PY3[is.na(VoA_Variables$recruit_pts_PY3)] = 0
 }
 
 ### Fixing conference errors for Week 0 (Preseason)
-if (as.numeric(week) == 0) {
+if (as.numeric(cfb_week) == 0) {
   VoA_Variables <- VoA_Variables |>
     select(-conference)
   current_conferences <- cfbd_team_info(year = as.integer(year)) |>
@@ -4918,12 +4944,12 @@ if (as.numeric(week) == 0) {
 ## Adding Column with CFB Week number
 # same number for each team, numeric version of number input in readline function at beginning of script
 VoA_Variables <- VoA_Variables |>
-  mutate(CFB_Week = rep(as.numeric(week), nrow(VoA_Variables)), .before = 2)
+  mutate(CFB_Week = rep(as.numeric(cfb_week), nrow(VoA_Variables)), .before = 2)
 
 
 ##### checking which column to start ranking at #####
 VoA_Ncols <- ncol(VoA_Variables) + 1
-# if (as.numeric(week) == 0 | as.numeric(week) == 1 | as.numeric(week) == 2 | as.numeric(week) == 6 | as.numeric(week) == 9){
+# if (as.numeric(cfb_week) == 0 | as.numeric(cfb_week) == 1 | as.numeric(cfb_week) == 2 | as.numeric(cfb_week) == 6 | as.numeric(cfb_week) == 9){
 #   break
 # } else{
 #   print("Same number of VoA columns this week as last week, or it's preseason and this is being done section by section to make sure it works")
@@ -4951,7 +4977,7 @@ VoA_Ncols <- ncol(VoA_Variables) + 1
 ## recruiting 3x in PY3 and PY2, 2x in PY1, 1x for current year
 # recruiting phased out after only current season stats are being used (currently week 7)
 ## talent ranked 1x in PY3 and PY2, 3x in PY1
-if (as.numeric(week) == 0) {
+if (as.numeric(cfb_week) == 0) {
   ##### Week 0 Variable Ranks #####
   # PY3 weighted 1x, PY2 weighted 2x, PY1 weighted 3x
   ## PY3 ranks added first, weighted once
@@ -5327,7 +5353,7 @@ if (as.numeric(week) == 0) {
            Rank_Talent_PY1_col3 = dense_rank(desc(talent_PY1)),
            ## incoming recruiting class, weighted once
            Rank_Recruit_Pts = dense_rank(desc(recruit_pts)))
-} else if (as.numeric(week) == 1) {
+} else if (as.numeric(cfb_week) == 1) {
   ##### Week 1 Variable Ranks #####
   # PY3 weighted 1x, PY2 weighted 2x, PY1 weighted 3x, current weighted 1x
   ## PY3 ranks added first, weighted once
@@ -5889,7 +5915,7 @@ if (as.numeric(week) == 0) {
            Rank_SuccessRt_diff_col2 = dense_rank(desc(SuccessRt_diff)),
            Rank_HavocRt_diff_col2 = dense_rank(desc(HavocRt_diff)),
            Rank_Explosiveness_diff_col2 = dense_rank(desc(Explosiveness_diff)))
-} else if (as.numeric(week) <= 3) {
+} else if (as.numeric(cfb_week) <= 3) {
   ##### Weeks 2-3 Variable Ranks #####
   # PY2 weighted 2x, PY1 weighted 3x, current weighted 1x
   VoA_Variables <- VoA_Variables |>
@@ -6302,7 +6328,7 @@ if (as.numeric(week) == 0) {
       Rank_SuccessRt_diff_col2 = dense_rank(desc(SuccessRt_diff)),
       Rank_HavocRt_diff_col2 = dense_rank(desc(HavocRt_diff)),
       Rank_Explosiveness_diff_col2 = dense_rank(desc(Explosiveness_diff)))
-} else if (as.numeric(week) <= 5) {
+} else if (as.numeric(cfb_week) <= 5) {
   ##### Weeks 4-5 Variable Ranks #####
   # PY2 weighted 1x, PY1 weighted 1x, current weighted 2x
   ## PY2 ranks
@@ -6642,7 +6668,7 @@ if (as.numeric(week) == 0) {
       Rank_SuccessRt_diff_col3 = dense_rank(desc(SuccessRt_diff)),
       Rank_HavocRt_diff_col3 = dense_rank(desc(HavocRt_diff)),
       Rank_Explosiveness_diff_col3 = dense_rank(desc(Explosiveness_diff)))
-} else if (as.numeric(week) <= 8) {
+} else if (as.numeric(cfb_week) <= 8) {
   ##### Weeks 6-8 Variable Ranks #####
   # PY1 weighted 1x, current weighted 2x
   VoA_Variables <- VoA_Variables |>
@@ -7056,7 +7082,7 @@ if (as.numeric(week) == 0) {
 
 
 ##### calculating the mean stat ranking, VoA_Output #####
-if (as.numeric(week) == 0) {
+if (as.numeric(cfb_week) == 0) {
   ## correcting "season" column to reflect the season for which these rankings are being produced
   VoA_Variables$season = rep(as.numeric(year), nrow(VoA_Variables))
   ### Append new column of Model output, which is the mean of all rank columns
@@ -7065,18 +7091,18 @@ if (as.numeric(week) == 0) {
   ## Append column of VoA Final Rankings
   # VoA_Variables <- VoA_Variables |>
   #   mutate(VoA_Ranking = dense_rank(VoA_Output))
-} else if (as.numeric(week) == 1) {
+} else if (as.numeric(cfb_week) == 1) {
   ## Append new column of Model output, which is the mean of all variables in VoARanks
   VoA_Variables <- VoA_Variables |>
     mutate(VoA_Output = (rowMeans(VoA_Variables[,VoA_Ncols:ncol(VoA_Variables)])))
   ## Append column of VoA Final Rankings
   # VoA_Variables <- VoA_Variables |>
   #   mutate(VoA_Ranking = dense_rank(VoA_Output))
-} else if (as.numeric(week) <= 5) {
+} else if (as.numeric(cfb_week) <= 5) {
   ## Append new column of Model output, which is the mean of all variables in VoARanks
   VoA_Variables <- VoA_Variables |>
     mutate(VoA_Output = (rowMeans(VoA_Variables[,VoA_Ncols:ncol(VoA_Variables)])))
-} else if (as.numeric(week) <= 8) {
+} else if (as.numeric(cfb_week) <= 8) {
   ## Append new column of Model output, which is the mean of all variables in VoARanks
   VoA_Variables <- VoA_Variables |>
     mutate(VoA_Output = (rowMeans(VoA_Variables[,VoA_Ncols:ncol(VoA_Variables)])))
@@ -7124,19 +7150,19 @@ VoA_Variables <- VoA_Variables |>
 
 ##### Re running rowMeans function to get VoA Output #####
 ### script wouldn't run properly without a real number in the later weeks so I'll have to come back and edit the number in during the season as I figure out how big VoA_Variables gets
-if (as.numeric(week) == 0) {
+if (as.numeric(cfb_week) == 0) {
   ### Append new column of Model output, which is the mean of all variables in VoARanks
   VoA_Variables <- VoA_Variables |>
     mutate(VoA_Output = (rowMeans(VoA_Variables[,VoA_Ncols:ncol(VoA_Variables)])))
-} else if (as.numeric(week) == 1) {
+} else if (as.numeric(cfb_week) == 1) {
   ## Append new column of Model output, which is the mean of all variables in VoARanks
   VoA_Variables <- VoA_Variables |>
     mutate(VoA_Output = (rowMeans(VoA_Variables[,VoA_Ncols:ncol(VoA_Variables)])))
-} else if (as.numeric(week) <= 5) {
+} else if (as.numeric(cfb_week) <= 5) {
   ## Append new column of Model output, which is the mean of all variables in VoARanks
   VoA_Variables <- VoA_Variables |>
     mutate(VoA_Output = (rowMeans(VoA_Variables[,VoA_Ncols:ncol(VoA_Variables)])))
-} else if (as.numeric(week) <= 8) {
+} else if (as.numeric(cfb_week) <= 8) {
   ## Append new column of Model output, which is the mean of all variables in VoARanks
   VoA_Variables <- VoA_Variables |>
     mutate(VoA_Output = (rowMeans(VoA_Variables[,VoA_Ncols:ncol(VoA_Variables)])))
@@ -7152,7 +7178,7 @@ if (as.numeric(week) == 0) {
 
 
 ##### using Stan to create FPI/SP+ like metrics #####
-if (as.numeric(week) <= 8) {
+if (as.numeric(cfb_week) <= 8) {
   ##### Week 0-8 Stan Models #####
   ### VoA Offensive Rating Model
   ### making list of data to declare what goes into stan model
@@ -7436,428 +7462,567 @@ FinalVoATop25 <- FinalTable |>
   filter(VoA_Ranking_Ovr < 26)
 
 ##### Creating Top 25 and Full Tables Arranged by VoA Rating #####
-if (as.numeric(week) == 0) {
-  ## Top 25 Table
-  # adding title and subtitle
-  VoATop25Table <- FinalVoATop25 |>
-    gt() |> # use 'gt' to make an awesome table...
-    gt_theme_espn() |>
-    tab_header(
-      title = paste(year, preseason_text, VoA_Top25_text), # ...with this title
-      subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy")  |>  # and this subtitle
-    ## tab_style(style = cell_fill("bisque"),
-    ##           locations = cells_body()) |>  # add fill color to table
-    fmt_number( # A column (numeric data)
-      columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # A column (numeric data)
-      columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # A column (numeric data)
-      columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # A column (numeric data)
-      columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # Another column (also numeric data)
-      columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
-      decimals = 0 # I want this column to have zero decimal places
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(VoA_Rating_Ovr),
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(OffVoA_MedRating), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(DefVoA_MedRating), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = TRUE
-      )
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(STVoA_MedRating), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
-    # cols_move_to_end(columns = "VoA_Rating") |>
-    cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
-    tab_footnote(
-      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
+### Top 25 Table
+# adding title and subtitle
+VoATop25Table <- FinalVoATop25 |>
+  gt() |> # use 'gt' to make an awesome table...
+  gt_theme_espn() |>
+  tab_header(
+    title = gt_top25_title, # ...with this title
+    subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy")  |>  # and this subtitle
+  ## tab_style(style = cell_fill("bisque"),
+  ##           locations = cells_body()) |>  # add fill color to table
+  fmt_number( # A column (numeric data)
+    columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
+    decimals = 3 # With four decimal places
+  ) |>
+  fmt_number( # A column (numeric data)
+    columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+    decimals = 3 # With four decimal places
+  ) |>
+  fmt_number( # A column (numeric data)
+    columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+    decimals = 3 # With four decimal places
+  ) |>
+  fmt_number( # A column (numeric data)
+    columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+    decimals = 3 # With four decimal places
+  ) |>
+  fmt_number( # Another column (also numeric data)
+    columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
+    decimals = 0 # I want this column to have zero decimal places
+  ) |>
+  data_color( # Update cell colors, testing different color palettes
+    columns = c(VoA_Rating_Ovr),
+    fn = scales::col_numeric( # <- bc it's numeric
+      palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+      domain = c(), # Column scale endpoints
+      reverse = FALSE
     )
-  
-  ## Full 134 teams table
-  # adding title and subtitle
-  VoA_Full_Table <- FinalTable |>
-    gt() |> # use 'gt' to make an awesome table...
-    gt_theme_espn() |>
-    tab_header(
-      title = paste(year, preseason_text, VoA_text), # ...with this title
-      subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy")  |>  # and this subtitle
-    ##tab_style(style = cell_fill("bisque"),
-    ##        locations = cells_body()) |>  # add fill color to table
-    fmt_number( # A column (numeric data)
-      columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # A column (numeric data)
-      columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # A column (numeric data)
-      columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # A column (numeric data)
-      columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # Another column (also numeric data)
-      columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
-      decimals = 0 # I want this column to have zero decimal places
-    ) |> 
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(VoA_Rating_Ovr), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(OffVoA_MedRating), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(DefVoA_MedRating), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = TRUE
-      )
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(STVoA_MedRating), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
-    # cols_move_to_end(columns = "VoA_Rating_Ovr") |>
-    cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
-    tab_footnote(
-      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
+  ) |>
+  data_color( # Update cell colors, testing different color palettes
+    columns = c(OffVoA_MedRating), # ...for dose column
+    fn = scales::col_numeric( # <- bc it's numeric
+      palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+      domain = c(), # Column scale endpoints
+      reverse = FALSE
     )
-} else if (as.numeric(week) > 15) {
-  ## Top 25 Table
-  # adding title and subtitle
-  VoATop25Table <- FinalVoATop25 |>
-    gt() |> # use 'gt' to make an awesome table...
-    gt_theme_espn() |>
-    tab_header(
-      title = paste(year, Postseason_text, VoA_Top25_text), # ...with this title
-      subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy")  |>  # and this subtitle
-    ## tab_style(style = cell_fill("bisque"),
-    ##           locations = cells_body()) |>  # add fill color to table
-    fmt_number( # A column (numeric data)
-      columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # A column (numeric data)
-      columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # A column (numeric data)
-      columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # A column (numeric data)
-      columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # Another column (also numeric data)
-      columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
-      decimals = 0 # I want this column to have zero decimal places
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(VoA_Rating_Ovr),
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(OffVoA_MedRating), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(DefVoA_MedRating), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = TRUE
-      )
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(STVoA_MedRating), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
-    # cols_move_to_end(columns = "VoA_Rating") |>
-    cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
-    tab_footnote(
-      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
+  ) |>
+  data_color( # Update cell colors, testing different color palettes
+    columns = c(DefVoA_MedRating), # ...for dose column
+    fn = scales::col_numeric( # <- bc it's numeric
+      palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+      domain = c(), # Column scale endpoints
+      reverse = TRUE
     )
-  
-  ## Full 134 teams table
-  # adding title and subtitle
-  VoA_Full_Table <- FinalTable |>
-    gt() |> # use 'gt' to make an awesome table...
-    gt_theme_espn() |>
-    tab_header(
-      title = paste(year, Postseason_text, VoA_text), # ...with this title
-      subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy")  |>  # and this subtitle
-    ##tab_style(style = cell_fill("bisque"),
-    ##        locations = cells_body()) |>  # add fill color to table
-    fmt_number( # A column (numeric data)
-      columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # A column (numeric data)
-      columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # A column (numeric data)
-      columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # A column (numeric data)
-      columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # Another column (also numeric data)
-      columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
-      decimals = 0 # I want this column to have zero decimal places
-    ) |> 
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(VoA_Rating_Ovr), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(OffVoA_MedRating), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(DefVoA_MedRating), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = TRUE
-      )
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(STVoA_MedRating), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
-    # cols_move_to_end(columns = "VoA_Rating_Ovr") |>
-    cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
-    tab_footnote(
-      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
+  ) |>
+  data_color( # Update cell colors, testing different color palettes
+    columns = c(STVoA_MedRating), # ...for dose column
+    fn = scales::col_numeric( # <- bc it's numeric
+      palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+      domain = c(), # Column scale endpoints
+      reverse = FALSE
     )
-} else {
-  ## Top 25 Table
-  # adding title and subtitle
-  VoATop25Table <- FinalVoATop25 |>
-    gt() |> # use 'gt' to make an awesome table...
-    gt_theme_espn() |>
-    tab_header(
-      title = paste(year, week_text, week, VoA_Top25_text), # ...with this title
-      subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy")  |>  # and this subtitle
-    ## tab_style(style = cell_fill("bisque"),
-    ##           locations = cells_body()) |>  # add fill color to table
-    fmt_number( # A column (numeric data)
-      columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # A column (numeric data)
-      columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # A column (numeric data)
-      columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # A column (numeric data)
-      columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # Another column (also numeric data)
-      columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
-      decimals = 0 # I want this column to have zero decimal places
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(VoA_Rating_Ovr),
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(OffVoA_MedRating), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(DefVoA_MedRating), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = TRUE
-      )
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(STVoA_MedRating), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
-    # cols_move_to_end(columns = "VoA_Rating") |>
-    cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
-    tab_footnote(
-      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
+  ) |>
+  cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
+  # cols_move_to_end(columns = "VoA_Rating") |>
+  cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
+  tab_footnote(
+    footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
+  )
+
+## Full 134 teams table
+# adding title and subtitle
+VoA_Full_Table <- FinalTable |>
+  gt() |> # use 'gt' to make an awesome table...
+  gt_theme_espn() |>
+  tab_header(
+    title = gt_title, # ...with this title
+    subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy")  |>  # and this subtitle
+  ##tab_style(style = cell_fill("bisque"),
+  ##        locations = cells_body()) |>  # add fill color to table
+  fmt_number( # A column (numeric data)
+    columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
+    decimals = 3 # With four decimal places
+  ) |>
+  fmt_number( # A column (numeric data)
+    columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+    decimals = 3 # With four decimal places
+  ) |>
+  fmt_number( # A column (numeric data)
+    columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+    decimals = 3 # With four decimal places
+  ) |>
+  fmt_number( # A column (numeric data)
+    columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+    decimals = 3 # With four decimal places
+  ) |>
+  fmt_number( # Another column (also numeric data)
+    columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
+    decimals = 0 # I want this column to have zero decimal places
+  ) |> 
+  data_color( # Update cell colors, testing different color palettes
+    columns = c(VoA_Rating_Ovr), # ...for dose column
+    fn = scales::col_numeric( # <- bc it's numeric
+      palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+      domain = c(), # Column scale endpoints
+      reverse = FALSE
     )
-  
-  ## Full 134 teams table
-  # adding title and subtitle
-  VoA_Full_Table <- FinalTable |>
-    gt() |> # use 'gt' to make an awesome table...
-    gt_theme_espn() |>
-    tab_header(
-      title = paste(year, week_text, week, VoA_text), # ...with this title
-      subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy")  |>  # and this subtitle
-    ##tab_style(style = cell_fill("bisque"),
-    ##        locations = cells_body()) |>  # add fill color to table
-    fmt_number( # A column (numeric data)
-      columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # A column (numeric data)
-      columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # A column (numeric data)
-      columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # A column (numeric data)
-      columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number( # Another column (also numeric data)
-      columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
-      decimals = 0 # I want this column to have zero decimal places
-    ) |> 
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(VoA_Rating_Ovr), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(OffVoA_MedRating), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(DefVoA_MedRating), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = TRUE
-      )
-    ) |>
-    data_color( # Update cell colors, testing different color palettes
-      columns = c(STVoA_MedRating), # ...for dose column
-      fn = scales::col_numeric( # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
-    # cols_move_to_end(columns = "VoA_Rating") |>
-    cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
-    tab_footnote(
-      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
+  ) |>
+  data_color( # Update cell colors, testing different color palettes
+    columns = c(OffVoA_MedRating), # ...for dose column
+    fn = scales::col_numeric( # <- bc it's numeric
+      palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+      domain = c(), # Column scale endpoints
+      reverse = FALSE
     )
-}
+  ) |>
+  data_color( # Update cell colors, testing different color palettes
+    columns = c(DefVoA_MedRating), # ...for dose column
+    fn = scales::col_numeric( # <- bc it's numeric
+      palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+      domain = c(), # Column scale endpoints
+      reverse = TRUE
+    )
+  ) |>
+  data_color( # Update cell colors, testing different color palettes
+    columns = c(STVoA_MedRating), # ...for dose column
+    fn = scales::col_numeric( # <- bc it's numeric
+      palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+      domain = c(), # Column scale endpoints
+      reverse = FALSE
+    )
+  ) |>
+  cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
+  # cols_move_to_end(columns = "VoA_Rating_Ovr") |>
+  cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
+  tab_footnote(
+    footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
+  )
+
+### old for loop, will delete upon ensuring new code to create title at beginning of script runs as intended in full VoA run
+# if (as.numeric(cfb_week) == 0) {
+#   ### Top 25 Table
+#   # adding title and subtitle
+#   VoATop25Table <- FinalVoATop25 |>
+#     gt() |> # use 'gt' to make an awesome table...
+#     gt_theme_espn() |>
+#     tab_header(
+#       title = gt_top25_title, # ...with this title
+#       subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy")  |>  # and this subtitle
+#     ## tab_style(style = cell_fill("bisque"),
+#     ##           locations = cells_body()) |>  # add fill color to table
+#     fmt_number( # A column (numeric data)
+#       columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # A column (numeric data)
+#       columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # A column (numeric data)
+#       columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # A column (numeric data)
+#       columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # Another column (also numeric data)
+#       columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
+#       decimals = 0 # I want this column to have zero decimal places
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(VoA_Rating_Ovr),
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(OffVoA_MedRating), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(DefVoA_MedRating), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = TRUE
+#       )
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(STVoA_MedRating), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
+#     # cols_move_to_end(columns = "VoA_Rating") |>
+#     cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
+#     tab_footnote(
+#       footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
+#     )
+#   
+#   ## Full 134 teams table
+#   # adding title and subtitle
+#   VoA_Full_Table <- FinalTable |>
+#     gt() |> # use 'gt' to make an awesome table...
+#     gt_theme_espn() |>
+#     tab_header(
+#       title = gt_title, # ...with this title
+#       subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy")  |>  # and this subtitle
+#     ##tab_style(style = cell_fill("bisque"),
+#     ##        locations = cells_body()) |>  # add fill color to table
+#     fmt_number( # A column (numeric data)
+#       columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # A column (numeric data)
+#       columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # A column (numeric data)
+#       columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # A column (numeric data)
+#       columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # Another column (also numeric data)
+#       columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
+#       decimals = 0 # I want this column to have zero decimal places
+#     ) |> 
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(VoA_Rating_Ovr), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(OffVoA_MedRating), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(DefVoA_MedRating), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = TRUE
+#       )
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(STVoA_MedRating), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
+#     # cols_move_to_end(columns = "VoA_Rating_Ovr") |>
+#     cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
+#     tab_footnote(
+#       footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
+#     )
+# } else if (as.numeric(cfb_week) > 15) {
+#   ## Top 25 Table
+#   # adding title and subtitle
+#   VoATop25Table <- FinalVoATop25 |>
+#     gt() |> # use 'gt' to make an awesome table...
+#     gt_theme_espn() |>
+#     tab_header(
+#       title = paste(year, Postseason_text, VoA_Top25_text), # ...with this title
+#       subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy")  |>  # and this subtitle
+#     ## tab_style(style = cell_fill("bisque"),
+#     ##           locations = cells_body()) |>  # add fill color to table
+#     fmt_number( # A column (numeric data)
+#       columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # A column (numeric data)
+#       columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # A column (numeric data)
+#       columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # A column (numeric data)
+#       columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # Another column (also numeric data)
+#       columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
+#       decimals = 0 # I want this column to have zero decimal places
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(VoA_Rating_Ovr),
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(OffVoA_MedRating), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(DefVoA_MedRating), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = TRUE
+#       )
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(STVoA_MedRating), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
+#     # cols_move_to_end(columns = "VoA_Rating") |>
+#     cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
+#     tab_footnote(
+#       footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
+#     )
+#   
+#   ## Full 134 teams table
+#   # adding title and subtitle
+#   VoA_Full_Table <- FinalTable |>
+#     gt() |> # use 'gt' to make an awesome table...
+#     gt_theme_espn() |>
+#     tab_header(
+#       title = paste(year, Postseason_text, VoA_text), # ...with this title
+#       subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy")  |>  # and this subtitle
+#     ##tab_style(style = cell_fill("bisque"),
+#     ##        locations = cells_body()) |>  # add fill color to table
+#     fmt_number( # A column (numeric data)
+#       columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # A column (numeric data)
+#       columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # A column (numeric data)
+#       columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # A column (numeric data)
+#       columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # Another column (also numeric data)
+#       columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
+#       decimals = 0 # I want this column to have zero decimal places
+#     ) |> 
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(VoA_Rating_Ovr), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(OffVoA_MedRating), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(DefVoA_MedRating), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = TRUE
+#       )
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(STVoA_MedRating), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
+#     # cols_move_to_end(columns = "VoA_Rating_Ovr") |>
+#     cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
+#     tab_footnote(
+#       footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
+#     )
+# } else {
+#   ## Top 25 Table
+#   # adding title and subtitle
+#   VoATop25Table <- FinalVoATop25 |>
+#     gt() |> # use 'gt' to make an awesome table...
+#     gt_theme_espn() |>
+#     tab_header(
+#       title = paste(year, week_text, cfb_week, VoA_Top25_text), # ...with this title
+#       subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy")  |>  # and this subtitle
+#     ## tab_style(style = cell_fill("bisque"),
+#     ##           locations = cells_body()) |>  # add fill color to table
+#     fmt_number( # A column (numeric data)
+#       columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # A column (numeric data)
+#       columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # A column (numeric data)
+#       columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # A column (numeric data)
+#       columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # Another column (also numeric data)
+#       columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
+#       decimals = 0 # I want this column to have zero decimal places
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(VoA_Rating_Ovr),
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(OffVoA_MedRating), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(DefVoA_MedRating), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = TRUE
+#       )
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(STVoA_MedRating), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
+#     # cols_move_to_end(columns = "VoA_Rating") |>
+#     cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
+#     tab_footnote(
+#       footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
+#     )
+#   
+#   ## Full 134 teams table
+#   # adding title and subtitle
+#   VoA_Full_Table <- FinalTable |>
+#     gt() |> # use 'gt' to make an awesome table...
+#     gt_theme_espn() |>
+#     tab_header(
+#       title = paste(year, week_text, cfb_week, VoA_text), # ...with this title
+#       subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy")  |>  # and this subtitle
+#     ##tab_style(style = cell_fill("bisque"),
+#     ##        locations = cells_body()) |>  # add fill color to table
+#     fmt_number( # A column (numeric data)
+#       columns = c(VoA_Rating_Ovr), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # A column (numeric data)
+#       columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # A column (numeric data)
+#       columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # A column (numeric data)
+#       columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number( # Another column (also numeric data)
+#       columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
+#       decimals = 0 # I want this column to have zero decimal places
+#     ) |> 
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(VoA_Rating_Ovr), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(OffVoA_MedRating), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(DefVoA_MedRating), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = TRUE
+#       )
+#     ) |>
+#     data_color( # Update cell colors, testing different color palettes
+#       columns = c(STVoA_MedRating), # ...for dose column
+#       fn = scales::col_numeric( # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     cols_label(VoA_Rating_Ovr = "Overall VoA Rating", VoA_Ranking_Ovr = "VoA Ranking", OffVoA_MedRating = "Off VoA Rating", OffVoA_Ranking = "Off Ranking", DefVoA_MedRating = "Def VoA Rating", DefVoA_Ranking = "Def Ranking", STVoA_MedRating = "ST VoA Rating", STVoA_Ranking = "ST Ranking") |> # Update labels
+#     # cols_move_to_end(columns = "VoA_Rating") |>
+#     cols_hide(c(conference, CFB_Week, VoA_Output, Conference_Strength)) |>
+#     tab_footnote(
+#       footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
+#     )
+# }
 
 ##### Resume VoA #####
 ### determining mean VoA Rating of top 12 teams in VoA, comparing how this hypothetical average top 12 team would do given each team's schedule
 ## choosing top 12 because of future playoff expansion which seems likely if not already certain
 ## it really should only be 8 max but whatever, I'm gonna be just fine
 ### Resume VoA only created after week 9 (Week 10 - end of season)
-if (as.numeric(week) > 9) {
+if (as.numeric(cfb_week) > 11) {
   ### adding column to VoA_Variables to hold Resume VoA metric
   ## placing dummy value for now, will be filled in for loop further down
   VoA_Variables <- VoA_Variables |>
@@ -7941,18 +8106,18 @@ if (as.numeric(week) > 9) {
     select(team, Resume_VoA, Resume_VoA_Rank) |>
     arrange(Resume_VoA_Rank)
 } else {
-  print("no Resume VoA until Week 10!")
+  print("no Resume VoA until Week 12!")
 }
 
 ##### Creating Top 25 and Full Tables Arranged by Resume VoA #####
-if (as.numeric(week) > 9) {
+if (as.numeric(cfb_week) > 11) {
   ## Top 25 Table
   # adding title and subtitle
   ResumeVoATop25Table <- ResumeVoATop25 |>
     gt() |> # use 'gt' to make an awesome table...
     gt_theme_espn() |>
     tab_header(
-      title = paste(year, week_text, week, resume_text, VoA_Top25_text), # ...with this title
+      title = paste(year, week_text, cfb_week, resume_text, VoA_Top25_text), # ...with this title
       subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy")  |>  # and this subtitle
     ## tab_style(style = cell_fill("bisque"),
     ##           locations = cells_body()) |>  # add fill color to table
@@ -7985,7 +8150,7 @@ if (as.numeric(week) > 9) {
     gt() |> # use 'gt' to make an awesome table...
     gt_theme_espn() |>
     tab_header(
-      title = paste(year, week_text, week, resume_text, VoA_text), # ...with this title
+      title = paste(year, week_text, cfb_week, resume_text, VoA_text), # ...with this title
       subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy")  |>  # and this subtitle
     ##tab_style(style = cell_fill("bisque"),
     ##        locations = cells_body()) |>  # add fill color to table
@@ -8011,7 +8176,7 @@ if (as.numeric(week) > 9) {
     tab_footnote(
       footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
     )
-} else if (as.numeric(week) > 15) {
+} else if (as.numeric(cfb_week) == 20) {
   ## Top 25 Table
   # adding title and subtitle
   ResumeVoATop25Table <- ResumeVoATop25 |>
@@ -8098,7 +8263,7 @@ VoA_Full_Table |>
   )
 
 ## Resume VoA not produced until Week 10
-if (as.numeric(week) > 9) {
+if (as.numeric(cfb_week) > 9) {
   ### Resume tables
   ResumeVoATop25Table
   ResumeVoATop25Table |>
@@ -8113,7 +8278,7 @@ if (as.numeric(week) > 9) {
       path = output_dir
     )
 } else{
-  print("No Resume VoA tables until week 10!")
+  print("No Resume VoA tables until week 12!")
 }
 
 ## Exporting final dataframe as csv
@@ -8125,7 +8290,7 @@ write_csv(VoA_Variables, file_pathway)
 ### changing FinalTable to only be columns needed for Unintelligible Charts
 FinalTable <- FinalTable |>
   select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
-if (as.numeric(week) == 3) {
+if (as.numeric(cfb_week) == 3) {
   Week0_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, "Week0_VoA.csv"))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
   Week1_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, "Week1_VoA.csv"))) |>
@@ -8134,67 +8299,67 @@ if (as.numeric(week) == 3) {
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
   Full_Ratings_Rks <- rbind(Week0_VoA, rbind(Week1_VoA, rbind(Week2_VoA, FinalTable)))
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_3Ratings_Rks.csv", sep = ""))
-} else if (as.numeric(week) == 4) {
+} else if (as.numeric(cfb_week) == 4) {
   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_3Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_4Ratings_Rks.csv", sep = ""))
-} else if (as.numeric(week) == 5) {
+} else if (as.numeric(cfb_week) == 5) {
   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_4Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_5Ratings_Rks.csv", sep = ""))
-} else if (as.numeric(week) == 6) {
+} else if (as.numeric(cfb_week) == 6) {
   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_5Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_6Ratings_Rks.csv", sep = ""))
-} else if (as.numeric(week) == 7) {
+} else if (as.numeric(cfb_week) == 7) {
   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_6Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_7Ratings_Rks.csv", sep = ""))
-} else if (as.numeric(week) == 8) {
+} else if (as.numeric(cfb_week) == 8) {
   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_7Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_8Ratings_Rks.csv", sep = ""))
-} else if (as.numeric(week) == 9) {
+} else if (as.numeric(cfb_week) == 9) {
   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_8Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_9Ratings_Rks.csv", sep = ""))
-} else if (as.numeric(week) == 10) {
+} else if (as.numeric(cfb_week) == 10) {
   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_9Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_10Ratings_Rks.csv", sep = ""))
-} else if (as.numeric(week) == 11) {
+} else if (as.numeric(cfb_week) == 11) {
   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_10Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_11Ratings_Rks.csv", sep = ""))
-} else if (as.numeric(week) == 12) {
+} else if (as.numeric(cfb_week) == 12) {
   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_11Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_12Ratings_Rks.csv", sep = ""))
-} else if (as.numeric(week) == 13) {
+} else if (as.numeric(cfb_week) == 13) {
   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_12Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_13Ratings_Rks.csv", sep = ""))
-} else if (as.numeric(week) == 14) {
+} else if (as.numeric(cfb_week) == 14) {
   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_13Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_14Ratings_Rks.csv", sep = ""))
-} else if (as.numeric(week) == 15) {
+} else if (as.numeric(cfb_week) == 15) {
   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_14Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_15Ratings_Rks.csv", sep = ""))
-} else if (as.numeric(week) == 16) {
+} else if (as.numeric(cfb_week) == 16) {
   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_15Ratings_Rks.csv", sep = ""))) |>
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
@@ -8206,7 +8371,7 @@ if (as.numeric(week) == 3) {
 ### end of if statement
 
 ### Filtering by conference for unintelligible charts
-if (as.numeric(week) >= 3) {
+if (as.numeric(cfb_week) >= 3) {
   ### each conference (including independents) gets separate charts
   ### given that the Pac12 is now really the 2Pac, they get lumped in with the Indies
   AAC_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "American Athletic")

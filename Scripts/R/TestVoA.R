@@ -86,6 +86,32 @@ FBS_hist_filename <- paste(year, week_text, week, "_", FBS_text, Histogram_text,
 Power5_hist_filename <- paste(year, week_text, week, "_", Power_Five_text, Histogram_text, sep = "")
 Group5_hist_filename <- paste(year, week_text, week, "_", Group_Five_text, Histogram_text, sep = "")
 Output_Rating_Plot_filename <- paste(year, week_text, week, "_", Output_Rating_Plot_png, sep = "")
+### setting gt title based on whether it's after a playoff week or not
+if (as.numeric(cfb_week) == 15){
+  gt_top25_title <- paste(year, "Conference Championship Week", VoA_Top25_text)
+  gt_title <- paste(year, "Conference Championship Week", VoA_text)
+} else if (as.numeric(cfb_week) == 16){
+  gt_top25_title <- paste(year, "Post Army-Navy Game", VoA_Top25_text)
+  gt_title <- paste(year, "Post Army-Navy Game", VoA_text)
+} else if (as.numeric(cfb_week) == 17){
+  gt_top25_title <- paste(year, "CFP First Round", VoA_Top25_text)
+  gt_title <- paste(year, "CFP First Round", VoA_text)
+} else if (as.numeric(cfb_week) == 18){
+  gt_top25_title <- paste(year, "CFP Quarterfinals", VoA_Top25_text)
+  gt_title <- paste(year, "CFP Quarterfinals", VoA_text)
+} else if (as.numeric(cfb_week) == 19){
+  gt_top25_title <- paste(year, "CFP Semifinals", VoA_Top25_text)
+  gt_title <- paste(year, "CFP Semifinals", VoA_text)
+} else if (as.numeric(cfb_week) == 20){
+  gt_top25_title <- paste(year, Postseason_text, VoA_Top25_text)
+  gt_title <- paste(year, Postseason_text, VoA_text)
+} else if (as.numeric(cfb_week) == 0){
+  gt_top25_title <- paste(year, preseason_text, VoA_Top25_text)
+  gt_title <- paste(year, preseason_text, VoA_text)
+} else{
+  gt_top25_title <- paste(year, week_text, cfb_week, VoA_Top25_text)
+  gt_title <- paste(year, week_text, cfb_week, VoA_text)
+}
 ### creating string for csv spreadsheet pathway
 file_pathway <- paste0(data_dir, "/", year, week_text, week,"_", VoAString)
 ### creating directories that don't exist
@@ -102,26 +128,253 @@ options(mc.cores = parallel::detectCores() / 2)
 if (as.numeric(week) == 0) {
   ##### WEEK 0 Data Pull #####
   ### getting team info for last 3 years
-  Teams_PY3 <- cfbd_team_info(only_fbs = FALSE, year = as.numeric(year) - 3)
-  Teams_PY2 <- cfbd_team_info(only_fbs = FALSE, year = as.numeric(year) - 2)
-  Teams_PY1 <- cfbd_team_info(only_fbs = FALSE, year = as.numeric(year) - 1)
-  Teams <- cfbd_team_info(only_fbs = FALSE, year = as.numeric(year))
-  
-  ### filtering to make sure each dataframe only includes D1 teams
-  D1Teams_PY3 <- Teams_PY3 |>
+  ## filtering to make sure each dataframe only includes D1 teams
+  D1Teams_PY3 <- cfbd_team_info(only_fbs = FALSE, year = as.numeric(year) - 3) |>
     filter(classification == "fbs" | classification == "fcs")
-  D1Teams_PY2 <- Teams_PY2 |>
+  D1Teams_PY2 <- cfbd_team_info(only_fbs = FALSE, year = as.numeric(year) - 2) |>
     filter(classification == "fbs" | classification == "fcs")
-  D1Teams_PY1 <- Teams_PY1 |>
+  D1Teams_PY1 <- cfbd_team_info(only_fbs = FALSE, year = as.numeric(year) - 1) |>
     filter(classification == "fbs" | classification == "fcs")
-  D1Teams <- Teams |>
+  D1Teams <- cfbd_team_info(only_fbs = FALSE, year = as.numeric(year)) |>
     filter(classification == "fbs" | classification == "fcs")
   
   ### filtering out teams that haven't played D1 football for the last 3 years so I'm only dealing with teams that have reliable stats
-  VoATeams <- D1Teams |>
+  VoAVariables <- D1Teams |>
     filter(school %in% D1Teams_PY1$school & school %in% D1Teams_PY2$school & school %in% D1Teams_PY3$school) |>
-    select(team_id, school, conference, division, classification, state, latitude, longitude, elevation)
-  VoATeams$elevation <- as.numeric(VoATeams$elevation)
+    select(team_id, school, conference, division, classification, state, latitude, longitude, elevation) |>
+    ### adding columns which will be filled in later using pbp data
+    mutate(total_yds_pg_PY3 = 0,
+           pass_yds_pg_PY3 = 0,
+           rush_yds_pg_PY3 = 0,
+           first_downs_pg_PY3 = 0,
+           def_interceptions_pg_PY3 = 0,
+           pass_ypa_PY3 = 0,
+           off_ypp_PY3 = 0,
+           completion_pct_PY3 = 0,
+           pass_ypr_PY3 = 0,
+           int_pct_PY3 = 0,
+           rush_ypc_PY3 = 0,
+           turnovers_pg_PY3 = 0,
+           third_conv_rate_PY3 = 0,
+           fourth_conv_rate_PY3 = 0,
+           penalty_yds_pg_PY3 = 0,
+           yards_per_penalty_PY3 = 0,
+           kick_return_avg_PY3 = 0,
+           punt_return_avg_PY3 = 0,
+           off_plays_pg_PY3 = 0,
+           off_ppg_PY3 = 0,
+           def_ppg_PY3 = 0,
+           def_yds_pg_PY3 = 0,
+           def_plays_pg_PY3 = 0,
+           def_third_conv_rate_PY3 = 0,
+           def_fourth_conv_rate_PY3 = 0,
+           def_ypp_PY3 = 0,
+           fg_rate_PY3 = 0,
+           fg_rate_allowed_PY3 = 0,
+           fg_made_pg_PY3 = 0,
+           fg_made_pg_allowed_PY3 = 0,
+           xpts_pg_PY3 = 0,
+           xpts_allowed_pg_PY3 = 0,
+           kick_return_yds_avg_allowed_PY3 = 0,
+           punt_return_yds_avg_allowed_PY3 = 0,
+           st_ppg_PY3 = 0,
+           st_ppg_allowed_PY3 = 0,
+           off_ppa_PY3 = 0,
+           off_success_rate_PY3 = 0,
+           off_explosiveness_PY3 = 0, 
+           off_power_success_PY3 = 0,
+           off_stuff_rate_PY3 = 0,
+           off_line_yds_PY3 = 0, 
+           off_pts_per_opp_PY3 = 0,
+           off_havoc_total_PY3 = 0, 
+           off_standard_downs_ppa_PY3 = 0,
+           off_standard_downs_success_rate_PY3 = 0,
+           off_standard_downs_explosiveness_PY3 = 0,
+           off_passing_downs_ppa_PY3 = 0,
+           off_passing_downs_success_rate_PY3 = 0,
+           off_passing_downs_explosiveness_PY3 = 0,
+           off_rushing_plays_ppa_PY3 = 0,
+           off_rushing_plays_success_rate_PY3 = 0,
+           off_rushing_plays_explosiveness_PY3 = 0,
+           off_passing_plays_ppa_PY3 = 0,
+           off_passing_plays_success_rate_PY3 = 0,
+           off_passing_plays_explosiveness_PY3 = 0,
+           def_ppa_PY3 = 0,
+           def_success_rate_PY3 = 0,
+           def_explosiveness_PY3 = 0,
+           def_power_success_PY3 = 0,
+           def_stuff_rate_PY3 = 0,
+           def_line_yds_PY3 = 0,
+           def_pts_per_opp_PY3 = 0, 
+           def_havoc_total_PY3 = 0,
+           def_standard_downs_ppa_PY3 = 0,
+           def_standard_downs_success_rate_PY3 = 0,
+           def_standard_downs_explosiveness_PY3 = 0,
+           def_passing_downs_ppa_PY3 = 0,
+           def_passing_downs_success_rate_PY3 = 0,
+           def_passing_downs_explosiveness_PY3 = 0,
+           def_rushing_plays_ppa_PY3 = 0,
+           def_rushing_plays_success_rate_PY3 = 0,
+           def_rushing_plays_explosiveness_PY3 = 0,
+           def_passing_plays_ppa_PY3 = 0,
+           def_passing_plays_success_rate_PY3 = 0,
+           def_passing_plays_explosiveness_PY3 = 0,
+           ### PY2 columns
+           total_yds_pg_PY2 = 0,
+           pass_yds_pg_PY2 = 0,
+           rush_yds_pg_PY2 = 0,
+           first_downs_pg_PY2 = 0,
+           def_interceptions_pg_PY2 = 0,
+           pass_ypa_PY2 = 0,
+           off_ypp_PY2 = 0,
+           completion_pct_PY2 = 0,
+           pass_ypr_PY2 = 0,
+           int_pct_PY2 = 0,
+           rush_ypc_PY2 = 0,
+           turnovers_pg_PY2 = 0,
+           third_conv_rate_PY2 = 0,
+           fourth_conv_rate_PY2 = 0,
+           penalty_yds_pg_PY2 = 0,
+           yards_per_penalty_PY2 = 0,
+           kick_return_avg_PY2 = 0,
+           punt_return_avg_PY2 = 0,
+           off_plays_pg_PY2 = 0,
+           off_ppg_PY2 = 0,
+           def_ppg_PY2 = 0,
+           def_yds_pg_PY2 = 0,
+           def_plays_pg_PY2 = 0,
+           def_third_conv_rate_PY2 = 0,
+           def_fourth_conv_rate_PY2 = 0,
+           def_ypp_PY2 = 0,
+           fg_rate_PY2 = 0,
+           fg_rate_allowed_PY2 = 0,
+           fg_made_pg_PY2 = 0,
+           fg_made_pg_allowed_PY2 = 0,
+           xpts_pg_PY2 = 0,
+           xpts_allowed_pg_PY2 = 0,
+           kick_return_yds_avg_allowed_PY2 = 0,
+           punt_return_yds_avg_allowed_PY2 = 0,
+           st_ppg_PY2 = 0,
+           st_ppg_allowed_PY2 = 0,
+           off_ppa_PY2 = 0,
+           off_success_rate_PY2 = 0,
+           off_explosiveness_PY2 = 0, 
+           off_power_success_PY2 = 0,
+           off_stuff_rate_PY2 = 0,
+           off_line_yds_PY2 = 0, 
+           off_pts_per_opp_PY2 = 0,
+           off_havoc_total_PY2 = 0, 
+           off_standard_downs_ppa_PY2 = 0,
+           off_standard_downs_success_rate_PY2 = 0,
+           off_standard_downs_explosiveness_PY2 = 0,
+           off_passing_downs_ppa_PY2 = 0,
+           off_passing_downs_success_rate_PY2 = 0,
+           off_passing_downs_explosiveness_PY2 = 0,
+           off_rushing_plays_ppa_PY2 = 0,
+           off_rushing_plays_success_rate_PY2 = 0,
+           off_rushing_plays_explosiveness_PY2 = 0,
+           off_passing_plays_ppa_PY2 = 0,
+           off_passing_plays_success_rate_PY2 = 0,
+           off_passing_plays_explosiveness_PY2 = 0,
+           def_ppa_PY2 = 0,
+           def_success_rate_PY2 = 0,
+           def_explosiveness_PY2 = 0,
+           def_power_success_PY2 = 0,
+           def_stuff_rate_PY2 = 0,
+           def_line_yds_PY2 = 0,
+           def_pts_per_opp_PY2 = 0, 
+           def_havoc_total_PY2 = 0,
+           def_standard_downs_ppa_PY2 = 0,
+           def_standard_downs_success_rate_PY2 = 0,
+           def_standard_downs_explosiveness_PY2 = 0,
+           def_passing_downs_ppa_PY2 = 0,
+           def_passing_downs_success_rate_PY2 = 0,
+           def_passing_downs_explosiveness_PY2 = 0,
+           def_rushing_plays_ppa_PY2 = 0,
+           def_rushing_plays_success_rate_PY2 = 0,
+           def_rushing_plays_explosiveness_PY2 = 0,
+           def_passing_plays_ppa_PY2 = 0,
+           def_passing_plays_success_rate_PY2 = 0,
+           def_passing_plays_explosiveness_PY2 = 0,
+           ### PY1 columns
+           total_yds_pg_PY1 = 0,
+           pass_yds_pg_PY1 = 0,
+           rush_yds_pg_PY1 = 0,
+           first_downs_pg_PY1 = 0,
+           def_interceptions_pg_PY1 = 0,
+           pass_ypa_PY1 = 0,
+           off_ypp_PY1 = 0,
+           completion_pct_PY1 = 0,
+           pass_ypr_PY1 = 0,
+           int_pct_PY1 = 0,
+           rush_ypc_PY1 = 0,
+           turnovers_pg_PY1 = 0,
+           third_conv_rate_PY1 = 0,
+           fourth_conv_rate_PY1 = 0,
+           penalty_yds_pg_PY1 = 0,
+           yards_per_penalty_PY1 = 0,
+           kick_return_avg_PY1 = 0,
+           punt_return_avg_PY1 = 0,
+           off_plays_pg_PY1 = 0,
+           off_ppg_PY1 = 0,
+           def_ppg_PY1 = 0,
+           def_yds_pg_PY1 = 0,
+           def_plays_pg_PY1 = 0,
+           def_third_conv_rate_PY1 = 0,
+           def_fourth_conv_rate_PY1 = 0,
+           def_ypp_PY1 = 0,
+           fg_rate_PY1 = 0,
+           fg_rate_allowed_PY1 = 0,
+           fg_made_pg_PY1 = 0,
+           fg_made_pg_allowed_PY1 = 0,
+           xpts_pg_PY1 = 0,
+           xpts_allowed_pg_PY1 = 0,
+           kick_return_yds_avg_allowed_PY1 = 0,
+           punt_return_yds_avg_allowed_PY1 = 0,
+           st_ppg_PY1 = 0,
+           st_ppg_allowed_PY1 = 0,
+           off_ppa_PY1 = 0,
+           off_success_rate_PY1 = 0,
+           off_explosiveness_PY1 = 0, 
+           off_power_success_PY1 = 0,
+           off_stuff_rate_PY1 = 0,
+           off_line_yds_PY1 = 0, 
+           off_pts_per_opp_PY1 = 0,
+           off_havoc_total_PY1 = 0, 
+           off_standard_downs_ppa_PY1 = 0,
+           off_standard_downs_success_rate_PY1 = 0,
+           off_standard_downs_explosiveness_PY1 = 0,
+           off_passing_downs_ppa_PY1 = 0,
+           off_passing_downs_success_rate_PY1 = 0,
+           off_passing_downs_explosiveness_PY1 = 0,
+           off_rushing_plays_ppa_PY1 = 0,
+           off_rushing_plays_success_rate_PY1 = 0,
+           off_rushing_plays_explosiveness_PY1 = 0,
+           off_passing_plays_ppa_PY1 = 0,
+           off_passing_plays_success_rate_PY1 = 0,
+           off_passing_plays_explosiveness_PY1 = 0,
+           def_ppa_PY1 = 0,
+           def_success_rate_PY1 = 0,
+           def_explosiveness_PY1 = 0,
+           def_power_success_PY1 = 0,
+           def_stuff_rate_PY1 = 0,
+           def_line_yds_PY1 = 0,
+           def_pts_per_opp_PY1 = 0, 
+           def_havoc_total_PY1 = 0,
+           def_standard_downs_ppa_PY1 = 0,
+           def_standard_downs_success_rate_PY1 = 0,
+           def_standard_downs_explosiveness_PY1 = 0,
+           def_passing_downs_ppa_PY1 = 0,
+           def_passing_downs_success_rate_PY1 = 0,
+           def_passing_downs_explosiveness_PY1 = 0,
+           def_rushing_plays_ppa_PY1 = 0,
+           def_rushing_plays_success_rate_PY1 = 0,
+           def_rushing_plays_explosiveness_PY1 = 0,
+           def_passing_plays_ppa_PY1 = 0,
+           def_passing_plays_success_rate_PY1 = 0,
+           def_passing_plays_explosiveness_PY1 = 0)
+  ### making sure the elevation column is numeric
+  VoAVariables$elevation <- as.numeric(VoAVariables$elevation)
   
   ### storing names of FCS teams for when they need to be filtered out in PY stats grabs
   # PY3Teams <- c("Delaware", "Missouri State", "Kennesaw State", "Sam Houston State", "Jacksonville State", "Sam Houston")
@@ -134,23 +387,23 @@ if (as.numeric(week) == 0) {
   # FCS_PY1 <- read_csv(here("Data", paste0("VoA", year), "FCSPrevYears", "FCS_PY1.csv"))
   
   ### pulling in completed games as part of opponent-adjustment of stats later
-  CompletedFBSGames_PY3 <- cfbd_game_info(as.numeric(year) - 3) |>
+  CompletedGames_PY3 <- cfbd_game_info(as.numeric(year) - 3) |>
     filter(completed == TRUE) |>
-    filter(home_team %in% VoATeams$school | away_team %in% VoATeams$school)
+    filter(home_team %in% VoAVariables$school | away_team %in% VoAVariables$school)
     # filter(home_division == "fbs" & away_division == "fbs" | home_team %in% PY3Teams | away_team %in% PY3Teams)
   CompletedNeutralGames_PY3 <- CompletedGames_PY3 |>
     filter(neutral_site == TRUE)
   ### PY2 completed games
-  CompletedFBSGames_PY2 <- cfbd_game_info(as.numeric(year) - 2) |>
+  CompletedGames_PY2 <- cfbd_game_info(as.numeric(year) - 2) |>
     filter(completed == TRUE) |>
-    filter(home_team %in% VoATeams$school | away_team %in% VoATeams$school)#|>
+    filter(home_team %in% VoAVariables$school | away_team %in% VoAVariables$school)#|>
     # filter(home_division == "fbs" & away_division == "fbs" | home_team %in% PY2Teams | away_team %in% PY2Teams)
   CompletedNeutralGames_PY2 <- CompletedGames_PY2 |>
     filter(neutral_site == TRUE)
   ### PY1 completed games
   CompletedGames_PY1 <- cfbd_game_info(as.numeric(year) - 1) |>
     filter(completed == TRUE) |>
-    filter(home_team %in% VoATeams$school | away_team %in% VoATeams$school) #|>
+    filter(home_team %in% VoAVariables$school | away_team %in% VoAVariables$school) #|>
     # filter(home_division == "fbs" & away_division == "fbs" | home_team %in% PY1Teams | away_team %in% PY1Teams)
   CompletedNeutralGames_PY1 <- CompletedGames_PY1 |>
     filter(neutral_site == TRUE)
@@ -473,140 +726,7 @@ if (as.numeric(week) == 0) {
                                      TRUE ~ -1))) |>
     drop_na()
   
-  ### reading in regular stats
-  Stats_PY1 <- cfbd_stats_season_team(year = as.integer(year) - 1, season_type = "both", start_week = 1, end_week = 15) |>
-    # filter(team %nin% PY1Teams) |>
-    mutate(total_yds_pg = total_yds/games,
-           pass_yds_pg = net_pass_yds / games,
-           rush_yds_pg = rush_yds/games,
-           first_downs_pg = first_downs/games,
-           def_interceptions_pg = passes_intercepted/games,
-           pass_ypa = net_pass_yds / pass_atts,
-           off_ypp = total_yds / (rush_atts + pass_atts),
-           completion_pct = pass_comps / pass_atts,
-           pass_ypr = net_pass_yds / pass_comps,
-           int_pct = interceptions / pass_atts,
-           rush_ypc = rush_yds / rush_atts,
-           turnovers_pg = turnovers / games,
-           third_conv_rate = third_down_convs / third_downs,
-           fourth_conv_rate = fourth_down_convs / fourth_downs,
-           penalty_yds_pg = penalty_yds / games,
-           yards_per_penalty = penalty_yds / penalties,
-           kick_return_avg = kick_return_yds / kick_returns,
-           punt_return_avg = punt_return_yds / punt_returns,
-           ### adding columns which will be filled in later using pbp data
-           off_plays_pg = 0,
-           off_ppg = 0,
-           def_ppg = 0,
-           def_yds_pg = 0,
-           def_plays_pg = 0,
-           def_third_conv_rate = 0,
-           def_fourth_conv_rate = 0,
-           def_ypp = 0,
-           fg_rate = 0,
-           fg_rate_allowed = 0,
-           fg_made_pg = 0,
-           fg_made_pg_allowed = 0,
-           xpts_pg = 0,
-           xpts_allowed_pg = 0,
-           kick_return_yds_avg_allowed = 0,
-           punt_return_yds_avg_allowed = 0,
-           st_ppg = 0,
-           st_ppg_allowed = 0,
-           oppdef_ppa = 0,
-           oppoff_ppa = 0)
-  ## removing NAs
-  Stats_PY1[is.na(Stats_PY1)] = 0
-  ## PY2 stats
-  Stats_PY2 <- cfbd_stats_season_team(year = as.integer(year) - 2, season_type = "both", start_week = 1, end_week = 15) |>
-    filter(team %nin% PY2Teams) |>
-    mutate(total_yds_pg = total_yds/games,
-           pass_yds_pg = net_pass_yds/games,
-           rush_yds_pg = rush_yds/games,
-           first_downs_pg = first_downs/games,
-           def_interceptions_pg = passes_intercepted/games,
-           pass_ypa = net_pass_yds / pass_atts,
-           off_ypp = total_yds / (rush_atts + pass_atts),
-           completion_pct = pass_comps / pass_atts,
-           pass_ypr = net_pass_yds / pass_comps,
-           int_pct = interceptions / pass_atts,
-           rush_ypc = rush_yds / rush_atts,
-           turnovers_pg = turnovers / games,
-           third_conv_rate = third_down_convs / third_downs,
-           fourth_conv_rate = fourth_down_convs / fourth_downs,
-           penalty_yds_pg = penalty_yds / games,
-           yards_per_penalty = penalty_yds / penalties,
-           kick_return_avg = kick_return_yds / kick_returns,
-           punt_return_avg = punt_return_yds / punt_returns,
-           ### adding columns which will be filled in later using pbp data
-           off_plays_pg = 0,
-           off_ppg = 0,
-           def_ppg = 0,
-           def_yds_pg = 0,
-           def_plays_pg = 0,
-           def_third_conv_rate = 0,
-           def_fourth_conv_rate = 0,
-           def_ypp = 0,
-           fg_rate = 0,
-           fg_rate_allowed = 0,
-           fg_made_pg = 0,
-           fg_made_pg_allowed = 0,
-           xpts_pg = 0,
-           xpts_allowed_pg = 0,
-           kick_return_yds_avg_allowed = 0,
-           punt_return_yds_avg_allowed = 0,
-           st_ppg = 0,
-           st_ppg_allowed = 0,
-           oppdef_ppa = 0,
-           oppoff_ppa = 0)
-  ## removing NAs
-  Stats_PY2[is.na(Stats_PY2)] = 0
-  ## PY3 stats
-  Stats_PY3 <- cfbd_stats_season_team(year = as.integer(year) - 3, season_type = "both", start_week = 1, end_week = 15) #|>
-    filter(team %nin% PY3Teams) |>
-    mutate(total_yds_pg = total_yds/games,
-           pass_yds_pg = net_pass_yds/games,
-           rush_yds_pg = rush_yds/games,
-           first_downs_pg = first_downs/games,
-           def_interceptions_pg = passes_intercepted/games,
-           pass_ypa = net_pass_yds / pass_atts,
-           off_ypp = total_yds / (rush_atts + pass_atts),
-           completion_pct = pass_comps / pass_atts,
-           pass_ypr = net_pass_yds / pass_comps,
-           int_pct = interceptions / pass_atts,
-           rush_ypc = rush_yds / rush_atts,
-           turnovers_pg = turnovers / games,
-           third_conv_rate = third_down_convs / third_downs,
-           fourth_conv_rate = fourth_down_convs / fourth_downs,
-           penalty_yds_pg = penalty_yds / games,
-           yards_per_penalty = penalty_yds / penalties,
-           kick_return_avg = kick_return_yds / kick_returns,
-           punt_return_avg = punt_return_yds / punt_returns,
-           ### adding columns which will be filled in later using pbp data
-           off_plays_pg = 0,
-           off_ppg = 0,
-           def_ppg = 0,
-           def_yds_pg = 0,
-           def_plays_pg = 0,
-           def_third_conv_rate = 0,
-           def_fourth_conv_rate = 0,
-           def_ypp = 0,
-           fg_rate = 0,
-           fg_rate_allowed = 0,
-           fg_made_pg = 0,
-           fg_made_pg_allowed = 0,
-           xpts_pg = 0,
-           xpts_allowed_pg = 0,
-           kick_return_yds_avg_allowed = 0,
-           punt_return_yds_avg_allowed = 0,
-           st_ppg = 0,
-           st_ppg_allowed = 0,
-           oppdef_ppa = 0,
-           oppoff_ppa = 0)
-  ## removing NAs
-  Stats_PY3[is.na(Stats_PY3)] = 0
-  
-  ## advanced stats data
+  ### advanced stats data
   Adv_Stats_PY1 <- cfbd_stats_season_advanced(year = as.integer(year) - 1, excl_garbage_time = FALSE, start_week = 1, end_week = 15) |>
     filter(team %nin% PY1Teams) |>
     select(team, off_ppa, off_success_rate, off_explosiveness, off_power_success,
