@@ -52,12 +52,15 @@ Output_Rating_Plot_text <- "VoA Outputs vs VoA Ratings"
 Output_Rating_Plot_png <- "Output_Rating.png"
 OffDef_Rating_Plot_text <- "VoA Off Rating vs VoA Def Rating"
 OffDef_Rating_Plot_png <- "OffDef_Rating.png"
+OffDef_EPA_Plot_text <- "Offensive Opponent-Adjusted EPA vs Defensive Opponent-Adjusted EPA"
+OffDef_EPA_Plot_png <- "OffDef_AdjEPA.png"
 
 FBS_hist_title <- paste(year, week_text, cfb_week, FBS_text, VoA_text, "Ratings")
 Power5_hist_title <- paste(year, week_text, cfb_week, Power_Five_text, VoA_text, "Ratings")
 Group5_hist_title <- paste(year, week_text, cfb_week, Group_Five_text, VoA_text, "Ratings")
 Output_Rating_Plot_title <- paste(year, week_text, cfb_week, Output_Rating_Plot_text)
 OffDef_Rating_Plot_title <- paste(year, week_text, cfb_week, OffDef_Rating_Plot_text)
+OffDef_EPA_Plot_title <- paste(year, week_text, cfb_week, OffDef_EPA_Plot_text)
 top25_file_pathway <- paste(year, week_text, cfb_week, "_", top25_png, sep = "")
 resumetop25_file_pathway <- paste(year, week_text, cfb_week, resume_text, "_", top25_png, sep = "")
 fulltable_file_pathway <- paste(year, week_text, cfb_week, "_", fulltable_png, sep = "")
@@ -89,6 +92,7 @@ Power5_hist_filename <- paste(year, week_text, cfb_week, "_", Power_Five_text, H
 Group5_hist_filename <- paste(year, week_text, cfb_week, "_", Group_Five_text, Histogram_text, sep = "")
 Output_Rating_Plot_filename <- paste(year, week_text, cfb_week, "_", Output_Rating_Plot_png, sep = "")
 OffDef_Rating_Plot_filename <- paste(year, week_text, cfb_week, "_", OffDef_Rating_Plot_png, sep = "")
+OffDef_EPA_Plot_filename <- paste(year, week_text, cfb_week, "_", OffDef_EPA_Plot_png, sep = "")
 ### setting gt title based on whether it's after a playoff week or not
 if (as.numeric(cfb_week) == 15){
   gt_top25_title <- paste(year, "Conference Championship Week", VoA_Top25_text)
@@ -8838,6 +8842,24 @@ VoA_OffDef_Rating_plot <- ggplot(VoA_Variables, aes(x = OffVoA_MeanRating, y = D
   theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
 VoA_OffDef_Rating_plot
 ggsave(OffDef_Rating_Plot_filename, path = output_dir, width = 50, height = 40, units = 'cm')
+
+VoA_OffDef_EPA_plot <- ggplot(VoA_Variables, aes(x = adj_off_ppa, y = adj_def_ppa)) +
+  theme_bw() +
+  # geom_point(size = 2) +
+  # geom_smooth() +
+  scale_y_reverse() +
+  geom_cfb_logos(aes(team = team), width = 0.035) +
+  geom_hline(yintercept = mean(VoA_Variables$adj_def_ppa)) +
+  geom_vline(xintercept = mean(VoA_Variables$adj_off_ppa)) +
+  # scale_x_continuous(breaks = seq(0,135,10)) +
+  # scale_y_continuous(breaks = seq(-50,40,5)) +
+  ggtitle(OffDef_EPA_Plot_title) +
+  xlab("Offense Opponent-Adjusted EPA") +
+  ylab("Defense Opponent-Adjusted EPA") +
+  labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR") +
+  theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
+VoA_OffDef_EPA_plot
+ggsave(OffDef_EPA_Plot_filename, path = output_dir, width = 50, height = 40, units = 'cm')
 
 
 
