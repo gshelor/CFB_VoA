@@ -17,7 +17,7 @@ gameprojections_filename <- paste(year, week_text, upcoming, gameprojections_png
 if (as.numeric(upcoming) == 15){
   gt_title <- paste(year, "Conference Championship Week Game Projections")
 } else if (as.numeric(upcoming) == 16){
-  gt_title <- paste(year, "Army-Navy Game Projection")
+  gt_title <- paste(year, "Army-Navy Game and Bowl Game Projections")
 } else if (as.numeric(upcoming) == 17){
   gt_title <- paste(year, "Vortex of Accuracy Bowl Game and CFP First Round Projections")
 } else if (as.numeric(upcoming) == 18){
@@ -36,18 +36,6 @@ if (as.numeric(upcoming) == 1){
     select(team, conference, VoA_Rating_Ovr)
   PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.character(as.numeric(upcoming) - 1), "_VoA.csv"))) |>
     select(team, VoA_Rating_Ovr)
-} else if (as.numeric(upcoming) == 16){
-  week16_run <- readline(prompt = "Is this the first week 16 run of week 16 projections? (y/n) ")
-  if (week16_run == "y"){
-    PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.character(as.numeric(upcoming) - 1), "_VoA.csv"))) |>
-      select(team, VoA_Rating_Ovr)
-  } else if (week16_run == "n"){
-    PrevWeek_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.character(as.numeric(upcoming)), "_VoA.csv"))) |>
-      select(team, VoA_Rating_Ovr)
-  } else{
-    print("Error, need 'y' or 'n'")
-    break
-  }
 } else{
   FBS_VoA <- read_csv(here("Data", paste0("VoA", year), paste0(year, week_text, as.character(as.numeric(upcoming) - 1), "_VoA.csv"))) |>
     select(team, conference, VoA_Rating_Ovr)
@@ -85,7 +73,8 @@ if (as.numeric(upcoming) == 16) {
     select(game_id, season, week, neutral_site, home_team, away_team) |>
     mutate(home_VoA_Rating = 0,
            away_VoA_Rating = 0)
-  week16games <- cfbd_game_info(as.numeric(year), week = as.numeric(upcoming)) |>
+  week16games <- cfbd_game_info(as.numeric(year)) |>
+    filter(completed == "FALSE") |>
     filter(home_team %in% PrevWeek_VoA$team | away_team %in% PrevWeek_VoA$team) |>
     select(game_id, season, week, neutral_site, home_team, away_team) |>
     mutate(home_VoA_Rating = 0,
@@ -93,6 +82,12 @@ if (as.numeric(upcoming) == 16) {
   upcoming_games_df <- rbind(week16games, upcoming_games_df)
 } else if (as.numeric(upcoming) == 1){
   FullSeason_Games <- cfbd_game_info(as.numeric(year)) |>
+    filter(home_team %in% PrevWeek_VoA$team | away_team %in% PrevWeek_VoA$team) |>
+    select(game_id, season, week, neutral_site, home_team, away_team) |>
+    mutate(home_VoA_Rating = 0,
+           away_VoA_Rating = 0)
+} else if (as.numeric(upcoming) > 16){
+  upcoming_games_df <- cfbd_game_info(as.numeric(year), season_type = "postseason") |>
     filter(home_team %in% PrevWeek_VoA$team | away_team %in% PrevWeek_VoA$team) |>
     select(game_id, season, week, neutral_site, home_team, away_team) |>
     mutate(home_VoA_Rating = 0,

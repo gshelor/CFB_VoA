@@ -18,9 +18,9 @@ PrevWeekVoA <- read_csv(here("Data", paste0("VoA", season), paste0(season, week_
 
 
 ### reading in completed games
-if (as.numeric(cfb_week) == 17){
-  ### reading in previous week's data
-  PrevWeekVoP <- read_csv(here("Data", paste0("VoA", season), "Projections", paste0(season, VoP_text, week_text, "16Games.csv"))) |>
+if (as.numeric(cfb_week) >= 17){
+  ### reading in most recent week's projections
+  PrevWeekVoP <- read_csv(here("Data", paste0("VoA", season), "Projections", paste0(season, VoP_text, week_text, cfb_week, "Games.csv"))) |>
     filter(home %in% PrevWeekVoA$team & away %in% PrevWeekVoA$team) |>
     select(id, predicted)
   colnames(PrevWeekVoP) <- c("game_id", "proj_margin")
@@ -34,6 +34,39 @@ if (as.numeric(cfb_week) == 17){
                               TRUE ~ home_team))
   
   LastWeekSpreads_temp <- cfbd_betting_lines(year = as.numeric(season), season_type = "postseason") |>
+    filter(game_id %in% PrevWeekVoP$game_id) |>
+    select(game_id, spread)
+} else if (as.numeric(cfb_week) == 16){
+  ### reading in most recent week's projections
+  PrevWeekVoP <- read_csv(here("Data", paste0("VoA", season), "Projections", paste0(season, VoP_text, week_text, cfb_week, "Games.csv"))) |>
+    filter(home %in% PrevWeekVoA$team & away %in% PrevWeekVoA$team) |>
+    select(id, predicted)
+  colnames(PrevWeekVoP) <- c("game_id", "proj_margin")
+  
+  ### reading in completed games from previous week
+  ## in week 16, this should just be Army-Navy, with any completed bowl games being read in separately below
+  LastWeekGames <- cfbd_game_info(as.numeric(season)) |>
+    filter(completed == TRUE) |>
+    filter(week == as.numeric(cfb_week)) |>
+    filter(game_id %in% PrevWeekVoP$game_id) |>
+    select(game_id, season, week, completed, home_team, home_points, away_team, away_points) |>
+    mutate(result = away_points - home_points,
+           winner = case_when(result > 0 ~ away_team,
+                              TRUE ~ home_team))
+  ### because of conference realignment and CFP expansion, bowl games now happen on the same weekend as the Army-Navy game because we as a society insist on constantly creating new personal affronts to god
+  LastWeekBowlGames <- cfbd_game_info(as.numeric(season), season_type = "postseason") |>
+    filter(completed == TRUE) |>
+    filter(game_id %in% PrevWeekVoP$game_id) |>
+    select(game_id, season, week, completed, home_team, home_points, away_team, away_points) |>
+    mutate(result = away_points - home_points,
+           winner = case_when(result > 0 ~ away_team,
+                              TRUE ~ home_team))
+  
+  ### binding regular season games and completed bowl games together for error calculation
+  LastWeekGames <- rbind(LastWeekGames, LastWeekBowlGames)
+  ### pulling spread lines to compare to VoA error
+  LastWeekSpreads_temp <- cfbd_betting_lines(year = as.numeric(season)) |>
+    filter(week == as.numeric(cfb_week)) |>
     filter(game_id %in% PrevWeekVoP$game_id) |>
     select(game_id, spread)
 } else{
