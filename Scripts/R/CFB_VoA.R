@@ -98,8 +98,8 @@ if (as.numeric(cfb_week) == 15){
   gt_top25_title <- paste(year, "Conference Championship Week", VoA_Top25_text)
   gt_title <- paste(year, "Conference Championship Week", VoA_text)
 } else if (as.numeric(cfb_week) == 16){
-  gt_top25_title <- paste(year, "Post Army-Navy Game", VoA_Top25_text)
-  gt_title <- paste(year, "Post Army-Navy Game", VoA_text)
+  gt_top25_title <- paste(year, "Post Army-Navy Game (and Possibly a Bowl or 2)", VoA_Top25_text)
+  gt_title <- paste(year, "Post Army-Navy Game (and Possibly a Bowl or 2)", VoA_text)
 } else if (as.numeric(cfb_week) == 17){
   gt_top25_title <- paste(year, "CFP First Round", VoA_Top25_text)
   gt_title <- paste(year, "CFP First Round", VoA_text)
@@ -1359,13 +1359,236 @@ if (as.numeric(cfb_week) == 0) {
     select(school, points)
   recruit[,2] <- recruit[,2] |> mutate_if(is.character, as.numeric)
   colnames(recruit) <- c("team", "recruit_pts")
+} else if (as.numeric(cfb_week) >= 16){
+  ##### Weeks 16 - End of Season Data Pull #####
+  ### reading in previous year's FCS data so it can be referenced when making ppg adjustments
+  FCS_PY2 <- read_csv(here("Data", paste0("VoA", year), "FCSPrevYears", "FCS_PY2.csv"))
+  FCS_PY1 <- read_csv(here("Data", paste0("VoA", year), "FCSPrevYears", "FCS_PY1.csv"))
+  ### pulling in completed games as part of opponent-adjustment of stats later
+  ### adding argument to game_info call for games after Week 16 because in 2025 they put a bowl game on the same day as Army/Navy
+  ## in previous years Army/Navy had been by itself
+  CompletedFBSGames <- cfbd_game_info(as.numeric(year), season_type = "both") |>
+    filter(completed == TRUE) |>
+    filter(home_division == "fbs" | away_division == "fbs")
+  CompletedNeutralGames <- CompletedFBSGames |>
+    filter(neutral_site == TRUE)
+  ### Current season Play by play data
+  PBP <- load_cfb_pbp(seasons = as.numeric(year))
+  
+  ### pulling out relevant plays used to create/input variables later
+  PBP_Yards <- PBP |>
+    filter(play_type == "Pass Incompletion" | play_type == "Pass Completion" | play_type == "Rush" | play_type == "Sack" | play_type == "Fumble Recovery (Own)" | play_type == "Two Point Pass" | play_type == "Two Point Rush" | play_type == "Safety" | play_type == "Pass Reception" | play_type == "Fumble Recovery (Opponent)" | play_type == "Pass" | play_type == "2pt Conversion" | play_type == "Defensive 2pt Conversion" | play_type == "Passing Touchdown" | play_type == "Rushing Touchdown") |>
+    mutate(home_neutral = case_when(game_id %in% CompletedNeutralGames$game_id ~ "Neutral",
+                                    TRUE ~ "Home"))
+  
+  PBP_3rdDowns <- PBP_Yards |>
+    filter(down == 3)
+  
+  PBP_4thDowns <- PBP_Yards |>
+    filter(down == 4)
+  
+  PBP_TDs <- PBP |>
+    filter(play_type == "Passing Touchdown" | play_type == "Rushing Touchdown")
+  
+  PBP_2PtConvs <- PBP |>
+    filter(play_type == "Two Point Rush" | play_type == "Two Point Pass" | play_type == "2pt Conversion")
+  
+  PBP_2ptPlays <- PBP_TDs |>
+    filter(pos_score_pts == 8)
+  
+  PBP_2ptPlays <- rbind(PBP_2ptPlays, PBP_2PtConvs)
+  
+  PBP_FGPlays <- PBP |>
+    filter(play_type == "Field Goal Good" | play_type == "Field Goal Missed")
+  
+  PBP_XPPlays <- PBP_TDs |>
+    filter(pos_score_pts == 7)
+  
+  ### on ReturnTD plays, pos_team does the scoring (at least based on an admittedly too-quick glance)
+  ## except on punt return TDs
+  PBP_ReturnTDs <- PBP |>
+    filter(play_type == "Kickoff Return Touchdown" | play_type == "Punt Return Touchdown" | play_type == "Blocked Punt Touchdown" | play_type == "Blocked Field Goal Touchdown" | play_type == "Missed Field Goal Touchdown")
+  
+  PBP_PuntReturnTD <- PBP |>
+    filter(play_type == "Punt Return Touchdown")
+  
+  ### on KickReturnPlays, pos_team gains yards/does the returning
+  ## will use data from this subset to evaluate a predictor, kick/punt return yards allowed
+  PBP_KickReturn <- PBP |>
+    filter(play_type == "Kickoff Return Touchdown" | play_type == "Kickoff Return (Offense)" | play_type == "Kickoff")
+  
+  ### on punt plays, pos_team does the punting, def_pos_team does the returning
+  PBP_Punts <- PBP |>
+    filter(play_type == "Punt" | play_type == "Punt Return Touchdown")
+  
+  ### filtering out columns not used to make opponent-adjusted PPA (EPA) stat
+  PBP_PPA_Adjustment <- PBP_Yards[,c("game_id", "home", "pos_team", "def_pos_team", "ppa", "offense_conference", "defense_conference", "home_neutral")] |>
+    mutate(hfa = as.factor(case_when(home_neutral == "Neutral" ~ 0,
+                                     ### home team on offense
+                                     pos_team == home ~ 1,
+                                     ### home team on defense
+                                     TRUE ~ -1))) |>
+    drop_na()
+  
+  ### Extracting just successful plays for opponent-adjusted Explosiveness metric
+  PBP_ExpAdjustment <- PBP_Yards[,c("game_id", "home", "pos_team", "def_pos_team", "success", "ppa", "offense_conference", "defense_conference", "home_neutral")] |>
+    filter(success == 1) |>
+    mutate(hfa = as.factor(case_when(home_neutral == "Neutral" ~ 0,
+                                     ### home team on offense
+                                     pos_team == home ~ 1,
+                                     ### home team on defense
+                                     TRUE ~ -1))) |>
+    drop_na()
+  
+  ### extracting specific columns for opponent-adjusted yards per play stat
+  PBP_YPP_Adjustment <- PBP_Yards[,c("game_id", "home", "pos_team", "def_pos_team", "yards_gained", "offense_conference", "defense_conference", "home_neutral")] |>
+    mutate(hfa = as.factor(case_when(home_neutral == "Neutral" ~ 0,
+                                     ### home team on offense
+                                     pos_team == home ~ 1,
+                                     ### home team on defense
+                                     TRUE ~ -1))) |>
+    drop_na()
+  
+  ### Extracting PBP for scoring plays
+  PBP_PPG_Adjustment <- PBP_Yards[,c("game_id", "home", "pos_team", "def_pos_team", "offense_score_play", "rush_td", "pass_td", "offense_conference", "defense_conference", "home_neutral")] |>
+    mutate(play_pts_scored = case_when(offense_score_play == 1 & rush_td == 1 ~ 6,
+                                       offense_score_play == 1 & pass_td == 1 ~ 6,
+                                       TRUE ~ 0),
+           hfa = as.factor(case_when(home_neutral == "Neutral" ~ 0,
+                                     ### home team on offense
+                                     pos_team == home ~ 1,
+                                     ### home team on defense
+                                     TRUE ~ -1))) |>
+    drop_na()
+  
+  ### Setting up PBP for adjusted special teams ppa stats
+  PBP_STPlays <- rbind(PBP_FGPlays, PBP_XPPlays, PBP_KickReturn, PBP_Punts) |>
+    mutate(real_pos_team = case_when(play_type %in% c("Field Goal Good", "Field Goal Missed", "Kickoff Return Touchdown", "Kickoff Return (Offense)", "Kickoff") | pos_score_pts == 7 ~ pos_team,
+                                     TRUE ~ def_pos_team),
+           real_def_pos_team = case_when(play_type %in% c("Field Goal Good", "Field Goal Missed", "Kickoff Return Touchdown", "Kickoff Return (Offense)", "Kickoff") | pos_score_pts == 7 ~ def_pos_team,
+                                         TRUE ~ pos_team),
+           home_neutral = case_when(game_id %in% CompletedNeutralGames$game_id ~ "Neutral",
+                                    TRUE ~ "Home"))
+  
+  PBP_STPPA_Adjustment <- PBP_STPlays |>
+    select(game_id, home, real_pos_team, real_def_pos_team, ppa, home_neutral) |>
+    mutate(hfa = as.factor(case_when(home_neutral == "Neutral" ~ 0,
+                                     ### home team on offense
+                                     real_pos_team == home ~ 1,
+                                     ### home team on defense
+                                     TRUE ~ -1))) |>
+    drop_na()
+  
+  ### regular stats
+  Stats <- cfbd_stats_season_team(year = as.integer(year)) |>
+    mutate(total_yds_pg = total_yds/games,
+           pass_yds_pg = net_pass_yds / games,
+           rush_yds_pg = rush_yds/games,
+           first_downs_pg = first_downs/games,
+           def_interceptions_pg = passes_intercepted/games,
+           pass_ypa = net_pass_yds / pass_atts,
+           off_ypp = total_yds / (rush_atts + pass_atts),
+           completion_pct = pass_comps / pass_atts,
+           pass_ypr = net_pass_yds / pass_comps,
+           int_pct = interceptions / pass_atts,
+           rush_ypc = rush_yds / rush_atts,
+           turnovers_pg = turnovers / games,
+           third_conv_rate = third_down_convs / third_downs,
+           fourth_conv_rate = fourth_down_convs / fourth_downs,
+           penalty_yds_pg = penalty_yds / games,
+           yards_per_penalty = penalty_yds / penalties,
+           kick_return_avg = kick_return_yds / kick_returns,
+           punt_return_avg = punt_return_yds / punt_returns,
+           ### adding columns which will be filled in later using pbp data
+           off_plays_pg = 0,
+           off_ppg = 0,
+           def_ppg = 0,
+           def_yds_pg = 0,
+           def_plays_pg = 0,
+           def_third_conv_rate = 0,
+           def_fourth_conv_rate = 0,
+           def_ypp = 0,
+           st_ppa = 0,
+           st_ppa_allowed = 0,
+           fg_rate = 0,
+           fg_rate_allowed = 0,
+           fg_made_pg = 0,
+           fg_made_pg_allowed = 0,
+           xpts_pg = 0,
+           xpts_allowed_pg = 0,
+           kick_return_yds_avg_allowed = 0,
+           punt_return_yds_avg_allowed = 0,
+           st_ppg = 0,
+           st_ppg_allowed = 0,
+           oppdef_ppa = 0,
+           oppoff_ppa = 0)
+  ### removing NAs
+  Stats[is.na(Stats)] = 0
+  
+  ### advanced stats data
+  Adv_Stats <- cfbd_stats_season_advanced(year = as.integer(year), excl_garbage_time = FALSE) |>
+    select(team, off_ppa, off_success_rate, off_explosiveness, off_power_success,
+           off_stuff_rate, off_line_yds, off_second_lvl_yds, off_open_field_yds,
+           off_pts_per_opp, off_field_pos_avg_predicted_points, off_havoc_total, 
+           off_havoc_front_seven, off_havoc_db, off_standard_downs_ppa,
+           off_standard_downs_success_rate, off_standard_downs_explosiveness,
+           off_passing_downs_ppa, off_passing_downs_success_rate,
+           off_passing_downs_explosiveness, off_rushing_plays_ppa,
+           off_rushing_plays_success_rate, off_rushing_plays_explosiveness,
+           off_passing_plays_ppa, off_passing_plays_success_rate,
+           off_passing_plays_explosiveness, def_ppa, def_success_rate,
+           def_explosiveness, def_power_success, def_stuff_rate, def_line_yds,
+           def_second_lvl_yds, def_open_field_yds, def_pts_per_opp, 
+           def_field_pos_avg_predicted_points, def_havoc_total, def_havoc_front_seven,
+           def_havoc_db, def_standard_downs_ppa, def_standard_downs_success_rate,
+           def_standard_downs_explosiveness, def_passing_downs_ppa,
+           def_passing_downs_success_rate, def_passing_downs_explosiveness,
+           def_rushing_plays_ppa, def_rushing_plays_success_rate,
+           def_rushing_plays_explosiveness, def_passing_plays_ppa,
+           def_passing_plays_success_rate, def_passing_plays_explosiveness)
+  ## removing NAs
+  Adv_Stats[is.na(Adv_Stats)] = 0
+  
+  ### incoming recruiting class rankings
+  recruit <- cfbd_recruiting_team(year = as.numeric(year)) |>
+    select(team, points)
+  recruit <- recruit |>
+    mutate(school = case_when(team == "Florida Intl" ~ "Florida International",
+                              TRUE ~ team)) |>
+    filter(school %in% Stats$team) |>
+    select(school, points)
+  recruit[,2] <- recruit[,2] |> mutate_if(is.character, as.numeric)
+  colnames(recruit) <- c("team", "recruit_pts")
+  
+  ## pulling in recruiting rankings
+  recruit_PY1 <- cfbd_recruiting_team(year = as.numeric(year) - 1) |>
+    filter(team %in% Stats$team) |>
+    select(team, points)
+  recruit_PY1[,2] <- recruit_PY1[,2] |> mutate_if(is.character, as.numeric)
+  colnames(recruit_PY1) <- c("team", "recruit_pts_PY1")
+  
+  ## pulling in recruiting rankings
+  recruit_PY2 <- cfbd_recruiting_team(year = as.numeric(year) - 2) |>
+    filter(team %in% Stats$team) |>
+    select(team, points)
+  recruit_PY2[,2] <- recruit_PY2[,2] |> mutate_if(is.character, as.numeric)
+  colnames(recruit_PY2) <- c("team", "recruit_pts_PY2")
+  
+  ## pulling in recruiting rankings
+  recruit_PY3 <- cfbd_recruiting_team(year = as.numeric(year) - 3) |>
+    filter(team %in% Stats$team) |>
+    select(team, points)
+  recruit_PY3[,2] <- recruit_PY3[,2] |> mutate_if(is.character, as.numeric)
+  colnames(recruit_PY3) <- c("team", "recruit_pts_PY3")
 } else {
   ##### CURRENT SEASON STATS ONLY Data Pull #####
   ### reading in previous year's FCS data so it can be referenced when making ppg adjustments
   FCS_PY2 <- read_csv(here("Data", paste0("VoA", year), "FCSPrevYears", "FCS_PY2.csv"))
   FCS_PY1 <- read_csv(here("Data", paste0("VoA", year), "FCSPrevYears", "FCS_PY1.csv"))
   ### pulling in completed games as part of opponent-adjustment of stats later
-  CompletedFBSGames <- cfbd_game_info(as.numeric(year)) |>
+  ### adding argument to game_info call for games after Week 16 because in 2025 they put a bowl game on the same day as Army/Navy
+  ## in previous years Army/Navy had been by itself
+  CompletedFBSGames <- cfbd_game_info(as.numeric(year), season_type = "both") |>
     filter(completed == TRUE) |>
     filter(home_division == "fbs" | away_division == "fbs")
   CompletedNeutralGames <- CompletedFBSGames |>

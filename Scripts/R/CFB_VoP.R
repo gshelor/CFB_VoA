@@ -89,6 +89,7 @@ if (as.numeric(upcoming) == 16) {
 } else if (as.numeric(upcoming) > 16){
   upcoming_games_df <- cfbd_game_info(as.numeric(year), season_type = "postseason") |>
     filter(home_team %in% PrevWeek_VoA$team | away_team %in% PrevWeek_VoA$team) |>
+    filter(completed == FALSE) |>
     select(game_id, season, week, neutral_site, home_team, away_team) |>
     mutate(home_VoA_Rating = 0,
            away_VoA_Rating = 0)
@@ -226,7 +227,7 @@ if (as.numeric(upcoming) == 1){
     filter(week == as.numeric(upcoming)) |>
     filter(home_team %in% FBS_VoA$team | away_team %in% FBS_VoA$team)
 } else{
-  ### making gt table of upcoming games df to display games with close spreads
+  ### preparing df for making gt table of upcoming games df to display games with close spreads
   upcoming_games_df <- upcoming_games_df |>
     mutate(Proj_Winner = case_when(neutral_site == FALSE & (home_VoA_Rating + 2) > away_VoA_Rating ~ home_team, 
                                    neutral_site == FALSE & away_VoA_Rating > (home_VoA_Rating + 2) ~ away_team, 
