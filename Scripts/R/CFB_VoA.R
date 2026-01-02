@@ -1701,7 +1701,7 @@ if (as.numeric(cfb_week) == 0) {
     drop_na()
   
   ### regular stats
-  Stats <- cfbd_stats_season_team(year = as.integer(year), start_week = 1, end_week = as.numeric(cfb_week)) |>
+  Stats <- cfbd_stats_season_team(year = as.integer(year), start_week = 1, end_week = ifelse(as.numeric(cfb_week) <= 15, as.numeric(cfb_week), 15)) |>
     mutate(total_yds_pg = total_yds/games,
            pass_yds_pg = net_pass_yds / games,
            rush_yds_pg = rush_yds/games,
