@@ -8115,72 +8115,6 @@ if (as.numeric(cfb_week) == 3) {
     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
   write_csv(Full_Ratings_Rks, paste0(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_", cfb_week, "Ratings_Rks.csv"))
-# } else if (as.numeric(cfb_week) == 4) {
-#   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_3Ratings_Rks.csv", sep = ""))) |>
-#     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
-#   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
-#   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_4Ratings_Rks.csv", sep = ""))
-# } else if (as.numeric(cfb_week) == 5) {
-#   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_4Ratings_Rks.csv", sep = ""))) |>
-#     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
-#   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
-#   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_5Ratings_Rks.csv", sep = ""))
-# } else if (as.numeric(cfb_week) == 6) {
-#   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_5Ratings_Rks.csv", sep = ""))) |>
-#     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
-#   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
-#   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_6Ratings_Rks.csv", sep = ""))
-# } else if (as.numeric(cfb_week) == 7) {
-#   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_6Ratings_Rks.csv", sep = ""))) |>
-#     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
-#   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
-#   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_7Ratings_Rks.csv", sep = ""))
-# } else if (as.numeric(cfb_week) == 8) {
-#   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_7Ratings_Rks.csv", sep = ""))) |>
-#     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
-#   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
-#   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_8Ratings_Rks.csv", sep = ""))
-# } else if (as.numeric(cfb_week) == 9) {
-#   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_8Ratings_Rks.csv", sep = ""))) |>
-#     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
-#   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
-#   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_9Ratings_Rks.csv", sep = ""))
-# } else if (as.numeric(cfb_week) == 10) {
-#   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_9Ratings_Rks.csv", sep = ""))) |>
-#     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
-#   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
-#   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_10Ratings_Rks.csv", sep = ""))
-# } else if (as.numeric(cfb_week) == 11) {
-#   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_10Ratings_Rks.csv", sep = ""))) |>
-#     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
-#   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
-#   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_11Ratings_Rks.csv", sep = ""))
-# } else if (as.numeric(cfb_week) == 12) {
-#   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_11Ratings_Rks.csv", sep = ""))) |>
-#     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
-#   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
-#   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_12Ratings_Rks.csv", sep = ""))
-# } else if (as.numeric(cfb_week) == 13) {
-#   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_12Ratings_Rks.csv", sep = ""))) |>
-#     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
-#   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
-#   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_13Ratings_Rks.csv", sep = ""))
-# } else if (as.numeric(cfb_week) == 14) {
-#   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_13Ratings_Rks.csv", sep = ""))) |>
-#     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
-#   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
-#   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_14Ratings_Rks.csv", sep = ""))
-# } else if (as.numeric(cfb_week) == 15) {
-#   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_14Ratings_Rks.csv", sep = ""))) |>
-#     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
-#   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
-#   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_15Ratings_Rks.csv", sep = ""))
-# } else if (as.numeric(cfb_week) == 16) {
-#   Full_Ratings_Rks <- read_csv(here("Data", paste0("VoA", year), "TrackingChartCSVs", paste(year, week_text, "0_15Ratings_Rks.csv", sep = ""))) |>
-#     select(team, conference, CFB_Week, VoA_Output, VoA_Ranking_Ovr, VoA_Rating_Ovr)
-#   Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
-#   ## no need to write out a new tracking csv since "week 16" is the postseason VoA
-#   write_csv(Full_Ratings_Rks, paste(data_dir, "/TrackingChartCSVs", "/", year, week_text, "0_16Ratings_Rks.csv", sep = ""))
 } else {
   print("No charts until Week 3!")
 }
@@ -8215,7 +8149,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("American Conference Vortex of Accuracy Overall Ratings by Week") +
     expand_limits(y = c(floor(floor(min(AAC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(AAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
     scale_y_continuous(breaks = seq((floor((floor(min(AAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(AAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   AAC_VoA_Rating_Chart
@@ -8231,7 +8165,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("American Conference Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   AAC_VoA_Ranking_Chart
@@ -8247,7 +8181,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("ACC Vortex of Accuracy Overall Ratings by Week") +
     expand_limits(y = c(floor(floor(min(ACC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(ACC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
     scale_y_continuous(breaks = seq((floor((floor(min(ACC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(ACC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   ACC_VoA_Rating_Chart
@@ -8263,7 +8197,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("ACC Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   ACC_VoA_Ranking_Chart
@@ -8279,7 +8213,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("Big 12 Vortex of Accuracy Overall Ratings by Week") +
     expand_limits(y = c(floor(floor(min(Big12_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(Big12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
     scale_y_continuous(breaks = seq((floor((floor(min(Big12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(Big12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   Big12_VoA_Rating_Chart
@@ -8295,7 +8229,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("Big 12 Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   Big12_VoA_Ranking_Chart
@@ -8311,7 +8245,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("Big 10 Vortex of Accuracy Overall Ratings by Week") +
     expand_limits(y = c(floor(floor(min(Big10_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(Big10_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
     scale_y_continuous(breaks = seq((floor((floor(min(Big10_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(Big10_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   Big10_VoA_Rating_Chart
@@ -8327,7 +8261,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("Big 10 Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   Big10_VoA_Ranking_Chart
@@ -8343,7 +8277,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("CUSA Vortex of Accuracy Overall Ratings by Week") +
     expand_limits(y = c(floor(floor(min(CUSA_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(CUSA_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
     scale_y_continuous(breaks = seq((floor((floor(min(CUSA_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(CUSA_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   CUSA_VoA_Rating_Chart
@@ -8359,7 +8293,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("CUSA Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   CUSA_VoA_Ranking_Chart
@@ -8375,7 +8309,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("Independents Vortex of Accuracy Overall Ratings by Week") +
     expand_limits(y = c(floor(floor(min(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
     scale_y_continuous(breaks = seq((floor((floor(min(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   Indy_VoA_Rating_Chart
@@ -8391,7 +8325,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("Independents Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   Indy_VoA_Ranking_Chart
@@ -8407,7 +8341,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("MAC Vortex of Accuracy Overall Ratings by Week") +
     expand_limits(y = c(floor(floor(min(MAC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(MAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
     scale_y_continuous(breaks = seq((floor((floor(min(MAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(MAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   MAC_VoA_Rating_Chart
@@ -8423,7 +8357,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("MAC Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   MAC_VoA_Ranking_Chart
@@ -8439,7 +8373,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("Mountain West Vortex of Accuracy Overall Ratings by Week") +
     expand_limits(y = c(floor(floor(min(MWC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(MWC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
     scale_y_continuous(breaks = seq((floor((floor(min(MWC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(MWC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   MWC_VoA_Rating_Chart
@@ -8455,7 +8389,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("Mountain West Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   MWC_VoA_Ranking_Chart
@@ -8471,7 +8405,7 @@ if (as.numeric(cfb_week) >= 3) {
   #   ggtitle("Pac 12 Vortex of Accuracy Overall Ratings by Week") +
   #   expand_limits(y = c(floor(floor(min(Pac12_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(Pac12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
   #   scale_y_continuous(breaks = seq((floor((floor(min(Pac12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(Pac12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
-  #   scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+  #   scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
   #   geom_cfb_logos(aes(team = team, width = 0.035)) +
   #   theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   # Pac12_VoA_Rating_Chart
@@ -8487,7 +8421,7 @@ if (as.numeric(cfb_week) >= 3) {
   #   ggtitle("Pac 12 Vortex of Accuracy Rankings by Week") +
   #   expand_limits(y = c(0,130)) +
   #   scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
-  #   scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+  #   scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
   #   geom_cfb_logos(aes(team = team, width = 0.035)) +
   #   theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   # Pac12_VoA_Ranking_Chart
@@ -8503,7 +8437,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("SEC Vortex of Accuracy Overall Ratings by Week") +
     expand_limits(y = c(floor(floor(min(SEC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(SEC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
     scale_y_continuous(breaks = seq((floor((floor(min(SEC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(SEC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   SEC_VoA_Rating_Chart
@@ -8519,7 +8453,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("SEC Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   SEC_VoA_Ranking_Chart
@@ -8540,7 +8474,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("Sun Belt Vortex of Accuracy Overall Ratings by Week") +
     expand_limits(y = c(floor(floor(min(SunBelt_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10, ceiling((ceiling(max(SunBelt_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10)) +
     scale_y_continuous(breaks = seq((floor((floor(min(SunBelt_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), (ceiling((ceiling(max(SunBelt_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10), by = 5)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   SunBelt_VoA_Rating_Chart
@@ -8556,7 +8490,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("Sun Belt Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
-    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
   SunBelt_VoA_Ranking_Chart
