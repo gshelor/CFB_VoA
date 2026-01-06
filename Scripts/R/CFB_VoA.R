@@ -8165,6 +8165,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("American Conference Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
+    scale_y_reverse() +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
@@ -8197,6 +8198,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("ACC Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
+    scale_y_reverse() +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
@@ -8229,6 +8231,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("Big 12 Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
+    scale_y_reverse() +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
@@ -8261,6 +8264,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("Big 10 Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
+    scale_y_reverse() +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
@@ -8293,6 +8297,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("CUSA Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
+    scale_y_reverse() +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
@@ -8325,6 +8330,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("Independents Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
+    scale_y_reverse() +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
@@ -8357,6 +8363,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("MAC Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
+    scale_y_reverse() +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
@@ -8389,6 +8396,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("Mountain West Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
+    scale_y_reverse() +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
@@ -8421,6 +8429,7 @@ if (as.numeric(cfb_week) >= 3) {
   #   ggtitle("Pac 12 Vortex of Accuracy Rankings by Week") +
   #   expand_limits(y = c(0,130)) +
   #   scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
+  #   scale_y_reverse() +
   #   scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
   #   geom_cfb_logos(aes(team = team, width = 0.035)) +
   #   theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
@@ -8453,6 +8462,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("SEC Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
+    scale_y_reverse() +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
@@ -8490,6 +8500,7 @@ if (as.numeric(cfb_week) >= 3) {
     ggtitle("Sun Belt Vortex of Accuracy Rankings by Week") +
     expand_limits(y = c(0,130)) +
     scale_y_continuous(breaks = c(0,20,40,60,80,100,120,140)) +
+    scale_y_reverse() +
     scale_x_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 17, 18, 19, 20)) +
     geom_cfb_logos(aes(team = team, width = 0.035)) +
     theme(plot.title = element_text(size = 35, hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
