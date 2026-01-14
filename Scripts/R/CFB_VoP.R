@@ -25,7 +25,7 @@ if (as.numeric(upcoming) == 15){
 } else if (as.numeric(upcoming) == 19){
   gt_title <- paste(year, "Vortex of Accuracy Bowl Game and CFP Semifinals Projections")
 } else if (as.numeric(upcoming) == 20){
-  gt_title <- paste(year, "Vortex of Accuracy Bowl Game and CFP Championship Projections")
+  gt_title <- paste(year, "Vortex of Accuracy CFP Championship Projection")
 } else{
   paste(year, week_text, upcoming, "Vortex of Accuracy Game Projections")
 }
