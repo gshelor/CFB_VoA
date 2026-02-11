@@ -4,7 +4,7 @@
 ## This script uses tidymodels random forest function to predict SP+/FPI-style metric instead of lm() function that main script uses
 ### wow all of the above is out of date in some way since main VoA uses Stan and no longer uses SP+/FPI/SRS averages as a target variable and models its own offensive/defensive/special teams team strength
 ### At this point this script is mostly for the NA debugging code at the very bottom that I use to figure out which columns in the main VoA script have NAs in them and why and how many and such
-### Turning this script into an attempt to figure out if I can use exclusively play by play data to create a VoA that ranks both FBS and FCS teams in order to make more complete game projections, especially during early weeks and SoCON saturday (SEC, SEC, SEC!)
+### Turning this script into an attempt to figure out if I can use exclusively play by play data to create a VoA that ranks both FBS and FCS teams in order to make more complete game projections, especially during early weeks and weeks with lots of FBS vs FCS games
 ## haven't messed with the main code here in years, I don't even remember what it does
 ## I have added in the packages and string setup from the main script though, just need to get into the data loading and formatting
 ### if some advanced stats can't be gotten from pbp (especially FCS teams) (probably can honestly, I assume that's how Bill creates them so they can be accessed from the API to begin with), then I might just take a lm or random forest or something and predict them using whatever stats I can get from PBP or train using adjusted stats that I know I can get from PBP
