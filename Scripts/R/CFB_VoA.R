@@ -6,22 +6,8 @@
 ##### Loading Packages #####
 start_time <- Sys.time()
 library(pacman)
-p_load(
-  tidyverse,
-  gt,
-  cfbfastR,
-  here,
-  RColorBrewer,
-  gtExtras,
-  cfbplotR,
-  ggpubr,
-  webshot2,
-  cmdstanr,
-  parallel,
-  fastDummies,
-  glmnet,
-  posterior
-)
+# fmt: skip
+p_load(tidyverse, gt, cfbfastR, here, RColorBrewer, gtExtras, cfbplotR, ggpubr, webshot2, cmdstanr, parallel, fastDummies, glmnet, posterior, data.table)
 ## used to use these packages
 # viridis, and also rstan since I'm switching to cmdstanr
 
