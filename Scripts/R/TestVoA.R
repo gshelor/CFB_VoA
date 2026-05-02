@@ -10,14 +10,14 @@
 ### if some advanced stats can't be gotten from pbp (especially FCS teams) (probably can honestly, I assume that's how Bill creates them so they can be accessed from the API to begin with), then I might just take a lm or random forest or something and predict them using whatever stats I can get from PBP or train using adjusted stats that I know I can get from PBP
 library(pacman)
 # fmt: skip
-p_load(tidyverse, gt, cfbfastR, here, RColorBrewer, gtExtras, cfbplotR, ggpubr, webshot2, cmdstanr, parallel, fastDummies, glmnet, posterior, data.table, lme4)
+p_load(tidyverse, gt, cfbfastR, here, RColorBrewer, gtExtras, cfbplotR, ggpubr, webshot2, cmdstanr, parallel, fastDummies, glmnet, posterior, data.table, lme4, arrow)
 ### reading in script of functions (will be called later)
 source(here("Scripts", "R", "CFBVoA_funcs.R"))
 cfbd_api_key_info()
 
 ## inputting week and year info using
 year <- readline(prompt = "What year is it? ")
-week <- readline(prompt = "What week is it? ")
+cfb_week <- readline(prompt = "What week is it? ")
 
 ##### setting strings for table titles, file pathways, unintelligible charts #####
 `%nin%` = Negate(`%in%`)
@@ -57,84 +57,84 @@ Output_Rating_Plot_text <- "VoA Outputs vs VoA Ratings"
 Output_Rating_Plot_png <- "TestOutput_Rating.png"
 
 # fmt: skip
-FBS_hist_title <- paste(year, week_text, week, FBS_text, VoA_text, "Ratings")
+FBS_hist_title <- paste(year, week_text, cfb_week, FBS_text, VoA_text, "Ratings")
 # fmt: skip
-Power5_hist_title <- paste(year, week_text, week, Power_Five_text, VoA_text, "Ratings")
+Power5_hist_title <- paste(year, week_text, cfb_week, Power_Five_text, VoA_text, "Ratings")
 # fmt: skip
-Group5_hist_title <- paste(year, week_text, week, Group_Five_text, VoA_text, "Ratings")
+Group5_hist_title <- paste(year, week_text, cfb_week, Group_Five_text, VoA_text, "Ratings")
 # fmt: skip
-Output_Rating_Plot_title <- paste(year, week_text, week, Output_Rating_Plot_text)
-top25_file_pathway <- paste(year, week_text, week, "_", top25_png, sep = "")
+Output_Rating_Plot_title <- paste(year, week_text, cfb_week, Output_Rating_Plot_text)
+top25_file_pathway <- paste(year, week_text, cfb_week, "_", top25_png, sep = "")
 # fmt: skip
-resumetop25_file_pathway <- paste(year,week_text,week,resume_text,"_",top25_png, sep = "")
+resumetop25_file_pathway <- paste(year,week_text, cfb_week,resume_text,"_",top25_png, sep = "")
 # fmt: skip
-fulltable_file_pathway <- paste(year,week_text,week,"_",fulltable_png, sep = "")
+fulltable_file_pathway <- paste(year,week_text, cfb_week, "_",fulltable_png, sep = "")
 # fmt: skip
-resumefulltable_file_pathway <- paste(year,week_text,week,resume_text,"_",fulltable_png, sep = "")
+resumefulltable_file_pathway <- paste(year,week_text, cfb_week, resume_text,"_",fulltable_png, sep = "")
 AAC_Output_filename <- paste(
   year,
   week_text,
-  week,
+  cfb_week,
   AAC_text,
   Rating_text,
   sep = ""
 )
 # fmt: skip
-AAC_Ranking_filename <- paste(year,week_text, week, AAC_text, Ranking_text, sep = "")
+AAC_Ranking_filename <- paste(year,week_text, cfb_week, AAC_text, Ranking_text, sep = "")
 ACC_Output_filename <- paste(
   year,
   week_text,
-  week,
+  cfb_week,
   ACC_text,
   Rating_text,
   sep = ""
 )
 # fmt: skip
-ACC_Ranking_filename <- paste(year,week_text, week, ACC_text, Ranking_text, sep = "")
+ACC_Ranking_filename <- paste(year,week_text, cfb_week, ACC_text, Ranking_text, sep = "")
 # fmt: skip
-Big12_Output_filename <- paste(year,week_text, week, Big12_text, Rating_text, sep = "")
+Big12_Output_filename <- paste(year,week_text, cfb_week, Big12_text, Rating_text, sep = "")
 # fmt: skip
-Big12_Ranking_filename <- paste(year,week_text, week, Big12_text, Ranking_text, sep = "")
+Big12_Ranking_filename <- paste(year,week_text, cfb_week, Big12_text, Ranking_text, sep = "")
 # fmt: skip
-Big10_Output_filename <- paste(year,week_text, week, Big10_text, Rating_text, sep = "")
+Big10_Output_filename <- paste(year,week_text, cfb_week, Big10_text, Rating_text, sep = "")
 # fmt: skip
-Big10_Ranking_filename <- paste(year,week_text, week, Big10_text, Ranking_text, sep = "")
+Big10_Ranking_filename <- paste(year,week_text, cfb_week, Big10_text, Ranking_text, sep = "")
 # fmt: skip
-CUSA_Output_filename <- paste(year,week_text, week, CUSA_text, Rating_text, sep = "")
+CUSA_Output_filename <- paste(year,week_text, cfb_week, CUSA_text, Rating_text, sep = "")
 # fmt: skip
-CUSA_Ranking_filename <- paste(year,week_text, week, CUSA_text, Ranking_text, sep = "")
+CUSA_Ranking_filename <- paste(year,week_text, cfb_week, CUSA_text, Ranking_text, sep = "")
 # fmt: skip
-Indy_Output_filename <- paste(year,week_text, week, Indy_text, Rating_text, sep = "")
+Indy_Output_filename <- paste(year,week_text, cfb_week, Indy_text, Rating_text, sep = "")
 # fmt: skip
-Indy_Ranking_filename <- paste(year,week_text, week, Indy_text, Ranking_text, sep = "")
+Indy_Ranking_filename <- paste(year,week_text, cfb_week, Indy_text, Ranking_text, sep = "")
 MAC_Output_filename <- paste(
   year,
   week_text,
-  week,
+  cfb_week,
   MAC_text,
   Rating_text,
   sep = ""
 )
 # fmt: skip
-MAC_Ranking_filename <- paste(year,week_text, week, MAC_text, Ranking_text, sep = "")
+MAC_Ranking_filename <- paste(year,week_text, cfb_week, MAC_text, Ranking_text, sep = "")
 MWC_Output_filename <- paste(
   year,
   week_text,
-  week,
+  cfb_week,
   MWC_text,
   Rating_text,
   sep = ""
 )
 # fmt: skip
-MWC_Ranking_filename <- paste(year,week_text, week, MWC_text, Ranking_text, sep = "")
+MWC_Ranking_filename <- paste(year,week_text, cfb_week, MWC_text, Ranking_text, sep = "")
 # fmt: skip
-Pac2_Output_filename <- paste(year,week_text, week, Pac2_text, Rating_text, sep = "")
+Pac2_Output_filename <- paste(year,week_text, cfb_week, Pac2_text, Rating_text, sep = "")
 # fmt: skip
-Pac2_Ranking_filename <- paste(year,week_text, week, Pac2_text, Ranking_text, sep = "")
+Pac2_Ranking_filename <- paste(year,week_text, cfb_week, Pac2_text, Ranking_text, sep = "")
 SEC_Output_filename <- paste(
   year,
   week_text,
-  week,
+  cfb_week,
   SEC_text,
   Rating_text,
   sep = ""
@@ -142,23 +142,23 @@ SEC_Output_filename <- paste(
 SEC_Ranking_filename <- paste(
   year,
   week_text,
-  week,
+  cfb_week,
   SEC_text,
   Ranking_text,
   sep = ""
 )
 # fmt: skip
-SunBelt_Output_filename <- paste(year,week_text, week, SunBelt_text, Rating_text, sep = "")
+SunBelt_Output_filename <- paste(year,week_text, cfb_week, SunBelt_text, Rating_text, sep = "")
 # fmt: skip
-SunBelt_Ranking_filename <- paste(year,week_text, week, SunBelt_text, Ranking_text, sep = "")
+SunBelt_Ranking_filename <- paste(year,week_text, cfb_week, SunBelt_text, Ranking_text, sep = "")
 # fmt: skip
-FBS_hist_filename <- paste(year, week_text, week, "_", FBS_text, Histogram_text, sep = "")
+FBS_hist_filename <- paste(year, week_text, cfb_week, "_", FBS_text, Histogram_text, sep = "")
 # fmt: skip
-Power5_hist_filename <- paste(year, week_text, week, "_", Power_Five_text, Histogram_text, sep = "")
+Power5_hist_filename <- paste(year, week_text, cfb_week, "_", Power_Five_text, Histogram_text, sep = "")
 # fmt: skip
-Group5_hist_filename <- paste(year, week_text, week, "_", Group_Five_text, Histogram_text, sep = "")
+Group5_hist_filename <- paste(year, week_text, cfb_week, "_", Group_Five_text, Histogram_text, sep = "")
 # fmt: skip
-Output_Rating_Plot_filename <- paste(year, week_text, week, "_", Output_Rating_Plot_png, sep = "")
+Output_Rating_Plot_filename <- paste(year, week_text, cfb_week, "_", Output_Rating_Plot_png, sep = "")
 ### setting gt title based on whether it's after a playoff week or not
 if (as.numeric(cfb_week) == 15) {
   gt_top25_title <- paste(year, "Conference Championship Week", VoA_Top25_text)
@@ -186,7 +186,7 @@ if (as.numeric(cfb_week) == 15) {
   gt_title <- paste(year, week_text, cfb_week, VoA_text)
 }
 ### creating string for csv spreadsheet pathway
-file_pathway <- paste0(data_dir, "/", year, week_text, week, "_", VoAString)
+file_pathway <- paste0(data_dir, "/", year, week_text, cfb_week, "_", VoAString)
 ### creating directories that don't exist
 # fmt: skip
 for (i in c(data_dir, output_dir, tracking_chart_dir, Projection_data_dir, PY_data_dir, accuracy_data_dir)){
@@ -527,286 +527,14 @@ if (as.numeric(week) == 0) {
   ### loading in play-by-play data
   PBP_PY4 <- load_cfb_pbp(seasons = as.numeric(year) - 4) |>
     filter(home %in% D1Teams_PY4$school & away %in% D1Teams_PY4$school)
+  VoAVariables_PY4 <- create_voavars_df(D1Teams_PY4, PBP_PY4)
   PBP_PY3 <- load_cfb_pbp(seasons = as.numeric(year) - 3) |>
     filter(home %in% D1Teams_PY3$school & away %in% D1Teams_PY3$school)
-  VoAVariables_PY3 <- D1Teams_PY3 |>
-    filter(school %in% PBP_PY3$home & school %in% PBP_PY3$away) |>
-    select(
-      team_id,
-      school,
-      conference,
-      division,
-      classification,
-      state,
-      latitude,
-      longitude,
-      elevation
-    ) |>
-    ### adding columns which will be filled in later using pbp data
-    mutate(
-      total_yds_pg = 0,
-      pass_yds_pg = 0,
-      rush_yds_pg = 0,
-      first_downs_pg = 0,
-      def_interceptions_pg = 0,
-      pass_ypa = 0,
-      off_ypp = 0,
-      completion_pct = 0,
-      pass_ypr = 0,
-      int_pct = 0,
-      rush_ypc = 0,
-      turnovers_pg = 0,
-      third_conv_rate = 0,
-      fourth_conv_rate = 0,
-      penalty_yds_pg = 0,
-      yards_per_penalty = 0,
-      kick_return_avg = 0,
-      punt_return_avg = 0,
-      off_plays_pg = 0,
-      off_ppg = 0,
-      def_ppg = 0,
-      def_yds_pg = 0,
-      def_plays_pg = 0,
-      def_third_conv_rate = 0,
-      def_fourth_conv_rate = 0,
-      def_ypp = 0,
-      fg_rate = 0,
-      fg_rate_allowed = 0,
-      fg_made_pg = 0,
-      fg_made_pg_allowed = 0,
-      xpts_pg = 0,
-      xpts_allowed_pg = 0,
-      kick_return_yds_avg_allowed = 0,
-      punt_return_yds_avg_allowed = 0,
-      st_ppg = 0,
-      st_ppg_allowed = 0,
-      off_ppa = 0,
-      off_success_rate = 0,
-      off_explosiveness = 0,
-      off_power_success = 0,
-      off_stuff_rate = 0,
-      off_line_yds = 0,
-      off_pts_per_opp = 0,
-      off_havoc_total = 0,
-      off_standard_downs_ppa = 0,
-      off_standard_downs_success_rate = 0,
-      off_standard_downs_explosiveness = 0,
-      off_passing_downs_ppa = 0,
-      off_passing_downs_success_rate = 0,
-      off_passing_downs_explosiveness = 0,
-      off_rushing_plays_ppa = 0,
-      off_rushing_plays_success_rate = 0,
-      off_rushing_plays_explosiveness = 0,
-      off_passing_plays_ppa = 0,
-      off_passing_plays_success_rate = 0,
-      off_passing_plays_explosiveness = 0,
-      def_ppa = 0,
-      def_success_rate = 0,
-      def_explosiveness = 0,
-      def_power_success = 0,
-      def_stuff_rate = 0,
-      def_line_yds = 0,
-      def_pts_per_opp = 0,
-      def_havoc_total = 0,
-      def_standard_downs_ppa = 0,
-      def_standard_downs_success_rate = 0,
-      def_standard_downs_explosiveness = 0,
-      def_passing_downs_ppa = 0,
-      def_passing_downs_success_rate = 0,
-      def_passing_downs_explosiveness = 0,
-      def_rushing_plays_ppa = 0,
-      def_rushing_plays_success_rate = 0,
-      def_rushing_plays_explosiveness = 0,
-      def_passing_plays_ppa = 0,
-      def_passing_plays_success_rate = 0,
-      def_passing_plays_explosiveness = 0
-    )
+  VoAVariables_PY3 <- create_voavars_df(D1Teams_PY3, PBP_PY3)
   PBP_PY2 <- load_cfb_pbp(seasons = as.numeric(year) - 2)
-  VoAVariables_PY2 <- D1Teams_PY2 |>
-    filter(school %in% PBP_PY2$home & school %in% PBP_PY2$away) |>
-    select(
-      team_id,
-      school,
-      conference,
-      division,
-      classification,
-      state,
-      latitude,
-      longitude,
-      elevation
-    ) |>
-    ### adding columns which will be filled in later using pbp data
-    mutate(
-      total_yds_pg = 0,
-      pass_yds_pg = 0,
-      rush_yds_pg = 0,
-      first_downs_pg = 0,
-      def_interceptions_pg = 0,
-      pass_ypa = 0,
-      off_ypp = 0,
-      completion_pct = 0,
-      pass_ypr = 0,
-      int_pct = 0,
-      rush_ypc = 0,
-      turnovers_pg = 0,
-      third_conv_rate = 0,
-      fourth_conv_rate = 0,
-      penalty_yds_pg = 0,
-      yards_per_penalty = 0,
-      kick_return_avg = 0,
-      punt_return_avg = 0,
-      off_plays_pg = 0,
-      off_ppg = 0,
-      def_ppg = 0,
-      def_yds_pg = 0,
-      def_plays_pg = 0,
-      def_third_conv_rate = 0,
-      def_fourth_conv_rate = 0,
-      def_ypp = 0,
-      fg_rate = 0,
-      fg_rate_allowed = 0,
-      fg_made_pg = 0,
-      fg_made_pg_allowed = 0,
-      xpts_pg = 0,
-      xpts_allowed_pg = 0,
-      kick_return_yds_avg_allowed = 0,
-      punt_return_yds_avg_allowed = 0,
-      st_ppg = 0,
-      st_ppg_allowed = 0,
-      off_ppa = 0,
-      off_success_rate = 0,
-      off_explosiveness = 0,
-      off_power_success = 0,
-      off_stuff_rate = 0,
-      off_line_yds = 0,
-      off_pts_per_opp = 0,
-      off_havoc_total = 0,
-      off_standard_downs_ppa = 0,
-      off_standard_downs_success_rate = 0,
-      off_standard_downs_explosiveness = 0,
-      off_passing_downs_ppa = 0,
-      off_passing_downs_success_rate = 0,
-      off_passing_downs_explosiveness = 0,
-      off_rushing_plays_ppa = 0,
-      off_rushing_plays_success_rate = 0,
-      off_rushing_plays_explosiveness = 0,
-      off_passing_plays_ppa = 0,
-      off_passing_plays_success_rate = 0,
-      off_passing_plays_explosiveness = 0,
-      def_ppa = 0,
-      def_success_rate = 0,
-      def_explosiveness = 0,
-      def_power_success = 0,
-      def_stuff_rate = 0,
-      def_line_yds = 0,
-      def_pts_per_opp = 0,
-      def_havoc_total = 0,
-      def_standard_downs_ppa = 0,
-      def_standard_downs_success_rate = 0,
-      def_standard_downs_explosiveness = 0,
-      def_passing_downs_ppa = 0,
-      def_passing_downs_success_rate = 0,
-      def_passing_downs_explosiveness = 0,
-      def_rushing_plays_ppa = 0,
-      def_rushing_plays_success_rate = 0,
-      def_rushing_plays_explosiveness = 0,
-      def_passing_plays_ppa = 0,
-      def_passing_plays_success_rate = 0,
-      def_passing_plays_explosiveness = 0
-    )
+  VoAVariables_PY2 <- create_voavars_df(D1Teams_PY2, PBP_PY2)
   PBP_PY1 <- load_cfb_pbp(seasons = as.numeric(year) - 1)
-  VoAVariables_PY1 <- D1Teams_PY1 |>
-    filter(school %in% PBP_PY1$home & school %in% PBP_PY1$away) |>
-    select(
-      team_id,
-      school,
-      conference,
-      division,
-      classification,
-      state,
-      latitude,
-      longitude,
-      elevation
-    ) |>
-    ### adding columns which will be filled in later using pbp data
-    mutate(
-      total_yds_pg = 0,
-      pass_yds_pg = 0,
-      rush_yds_pg = 0,
-      first_downs_pg = 0,
-      def_interceptions_pg = 0,
-      pass_ypa = 0,
-      off_ypp = 0,
-      completion_pct = 0,
-      pass_ypr = 0,
-      int_pct = 0,
-      rush_ypc = 0,
-      turnovers_pg = 0,
-      third_conv_rate = 0,
-      fourth_conv_rate = 0,
-      penalty_yds_pg = 0,
-      yards_per_penalty = 0,
-      kick_return_avg = 0,
-      punt_return_avg = 0,
-      off_plays_pg = 0,
-      off_ppg = 0,
-      def_ppg = 0,
-      def_yds_pg = 0,
-      def_plays_pg = 0,
-      def_third_conv_rate = 0,
-      def_fourth_conv_rate = 0,
-      def_ypp = 0,
-      fg_rate = 0,
-      fg_rate_allowed = 0,
-      fg_made_pg = 0,
-      fg_made_pg_allowed = 0,
-      xpts_pg = 0,
-      xpts_allowed_pg = 0,
-      kick_return_yds_avg_allowed = 0,
-      punt_return_yds_avg_allowed = 0,
-      st_ppg = 0,
-      st_ppg_allowed = 0,
-      off_ppa = 0,
-      off_success_rate = 0,
-      off_explosiveness = 0,
-      off_power_success = 0,
-      off_stuff_rate = 0,
-      off_line_yds = 0,
-      off_pts_per_opp = 0,
-      off_havoc_total = 0,
-      off_standard_downs_ppa = 0,
-      off_standard_downs_success_rate = 0,
-      off_standard_downs_explosiveness = 0,
-      off_passing_downs_ppa = 0,
-      off_passing_downs_success_rate = 0,
-      off_passing_downs_explosiveness = 0,
-      off_rushing_plays_ppa = 0,
-      off_rushing_plays_success_rate = 0,
-      off_rushing_plays_explosiveness = 0,
-      off_passing_plays_ppa = 0,
-      off_passing_plays_success_rate = 0,
-      off_passing_plays_explosiveness = 0,
-      def_ppa = 0,
-      def_success_rate = 0,
-      def_explosiveness = 0,
-      def_power_success = 0,
-      def_stuff_rate = 0,
-      def_line_yds = 0,
-      def_pts_per_opp = 0,
-      def_havoc_total = 0,
-      def_standard_downs_ppa = 0,
-      def_standard_downs_success_rate = 0,
-      def_standard_downs_explosiveness = 0,
-      def_passing_downs_ppa = 0,
-      def_passing_downs_success_rate = 0,
-      def_passing_downs_explosiveness = 0,
-      def_rushing_plays_ppa = 0,
-      def_rushing_plays_success_rate = 0,
-      def_rushing_plays_explosiveness = 0,
-      def_passing_plays_ppa = 0,
-      def_passing_plays_success_rate = 0,
-      def_passing_plays_explosiveness = 0
-    )
+  VoAVariables_PY1 <- create_voavars_df(D1Teams_PY1, PBP_PY1)
 
   ### pulling out relevant plays used to create/input variables later
   ## PY3
@@ -9006,7 +8734,7 @@ VoA_Full_Table <- FinalTable |>
   gt() |> # use 'gt' to make an awesome table...
   gt_theme_538() |>
   tab_header(
-    title = paste(year, week_text, week, VoA_text), # ...with this title
+    title = paste(year, week_text, cfb_week, VoA_text), # ...with this title
     subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy"
   ) |> # and this subtitle
   ##tab_style(style = cell_fill("bisque"),
@@ -9051,7 +8779,7 @@ VoA_Full_Table
 #   gt_theme_538() |>
 #   ## gt_color_rows(VoA_Output, palette = "ggsci::blue_material") |>
 #   tab_header(
-#     title = paste(year, week_text, week, VoA_Top25_text), # Add a title
+#     title = paste(year, week_text, cfb_week, VoA_Top25_text), # Add a title
 #     subtitle = "it's a brand new upgraded version of a table! Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy" # And a subtitle
 #   ) |>
 #   fmt_passthrough( # Not sure about this but it works...
