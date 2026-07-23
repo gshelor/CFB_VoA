@@ -8,7 +8,7 @@
 data {
   int<lower=0> N; // Number of teams
   vector[N] def_ppg; // weighted defensive ppg, used as basis for defensive VoA rating
-  vector[N] def_ppa; // weighted EPA per play
+  vector[N] def_epa; // weighted EPA per play
   vector[N] def_ypp; // weighted Yards per play
   vector[N] def_success_rate; // weighted Play success rate
   vector[N] def_explosiveness; // weighted defensive explosiveness rate
@@ -25,7 +25,7 @@ data {
 // The parameters accepted by the model.
 parameters {
   real b0; // intercept
-  real beta_def_ppa; // Coefficient for EPA
+  real beta_def_epa; // Coefficient for EPA
   real beta_def_ypp; // Coefficient for yards per play
   real beta_def_success_rate; // Coefficient for def success rate
   real beta_def_explosiveness; // Coefficient for def explosiveness rate
@@ -45,7 +45,7 @@ parameters {
 //   real<lower=0> shape [N];
 //   real<lower=0> rate [N];
 //   for (i in 1:N){
-//     mu[i] = exp(b0 + beta_def_ppa*def_ppa[i] + beta_def_ypp*def_ypp[i] + beta_def_success_rate*def_success_rate[i] + beta_def_explosiveness*def_explosiveness[i]) + ;
+//     mu[i] = exp(b0 + beta_def_epa*def_epa[i] + beta_def_ypp*def_ypp[i] + beta_def_success_rate*def_success_rate[i] + beta_def_explosiveness*def_explosiveness[i]) + ;
 //     shape[i] = mu[i]^2 / sigma^2;
 //     rate[i] = mu[i] / sigma^2;
 //   }
@@ -54,8 +54,20 @@ parameters {
 // The model to be estimated. I model the output 'y' to be normally distributed 
 // with mean 'mu' equal to a linear deterministic function and SD 'sigma'.
 model {
+  // priors
+  b0 ~ gamma(20, 1);
+  beta_def_epa ~ normal(3, 1);
+  beta_def_ypp ~ normal(1, 1);
+  beta_def_success_rate ~ normal(3, 1);
+  beta_def_explosiveness ~ normal(0.5, 0.25);
+  beta_def_third_conv_rate ~ normal(0.5, 10);
+  beta_def_pts_per_opp ~ normal(1, 10);
+  beta_def_plays_pg ~ normal(0.25, 0.25);
+  beta_VoA_Output ~ normal(0, 10);
+  beta_Conference_Strength ~ normal(0, 20);
+  sigma ~ gamma(10, 1);
   // Define linear predictor directly in the model block
-  def_ppg ~ normal(b0 + beta_def_ppa * def_ppa + beta_def_ypp * def_ypp + beta_def_success_rate * def_success_rate + beta_def_explosiveness * def_explosiveness + beta_def_third_conv_rate * def_third_conv_rate + beta_def_pts_per_opp * def_pts_per_opp + beta_def_havoc_total * def_havoc_total + beta_def_plays_pg * def_plays_pg + beta_VoA_Output * VoA_Output + beta_Conference_Strength * Conference_Strength, sigma) T[0,];
+  def_ppg ~ normal(b0 + beta_def_epa * def_epa + beta_def_ypp * def_ypp + beta_def_success_rate * def_success_rate + beta_def_explosiveness * def_explosiveness + beta_def_third_conv_rate * def_third_conv_rate + beta_def_pts_per_opp * def_pts_per_opp + beta_def_havoc_total * def_havoc_total + beta_def_plays_pg * def_plays_pg + beta_VoA_Output * VoA_Output + beta_Conference_Strength * Conference_Strength, sigma) T[0,];
 }
 
 

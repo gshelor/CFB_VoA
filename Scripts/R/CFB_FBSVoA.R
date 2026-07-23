@@ -1,25 +1,25 @@
-##### script includes assortment of testing options for data collection, analysis, visualization, etc
-### test code for accessing cfb data API
-## In this script, garbage time is excluded from Advanced Stats
-## This script uses tidymodels random forest function to predict SP+/FPI-style metric instead of lm() function that main script uses
-### wow all of the above is out of date in some way since main VoA uses Stan and no longer uses SP+/FPI/SRS averages as a target variable and models its own offensive/defensive/special teams team strength
-### At this point this script is mostly for the NA debugging code at the very bottom that I use to figure out which columns in the main VoA script have NAs in them and why and how many and such
-### Turning this script into an attempt to figure out if I can use exclusively play by play data to create a VoA that ranks both FBS and FCS teams in order to make more complete game projections, especially during early weeks and weeks with lots of FBS vs FCS games
-## haven't messed with the main code here in years, I don't even remember what it does
-## I have added in the packages and string setup from the main script though, just need to get into the data loading and formatting
-### if some advanced stats can't be gotten from pbp (especially FCS teams) (probably can honestly, I assume that's how Bill creates them so they can be accessed from the API to begin with), then I might just take a lm or random forest or something and predict them using whatever stats I can get from PBP or train using adjusted stats that I know I can get from PBP
+##### The Vortex of Accuracy, Version 5.1.1 #####
+### Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy
+### Created by Griffin Shelor
+### installing packages
+# install.packages(c("devtools", "tidyverse", "gt", "viridis", "webshot", "cfbfastR", "here", "RColorBrewer", "remotes", "pacman", "gtExtras", "cfbplotR", "betareg", "cmdstanr", "parallel", "posterior", "data.table", "lme4", "arrow"))
+##### Loading Packages #####
+start_time <- Sys.time()
 library(pacman)
 # fmt: skip
 p_load(tidyverse, gt, cfbfastR, here, RColorBrewer, gtExtras, cfbplotR, ggpubr, webshot2, cmdstanr, parallel, posterior, data.table, lme4, arrow)
+## used to use these packages
+# viridis, and also rstan since I'm switching to cmdstanr
 ### reading in script of functions (will be called later)
 source(here("Scripts", "R", "CFBVoA_funcs.R"))
 cfbd_api_key_info()
 
-### inputting week and year info using readline
-year <- readline(prompt = "What year is it? (year the season starts in) ")
-cfb_week <- readline(prompt = "What week is it? ")
+### Creating Week and Year String for Top 25 Table Title, eventually could be used as part of reading in cfbfastR/cfbdata API data
+## might switch the year one to use Sys.Date()
+year <- readline(prompt = "What year is it? (year that the season starts in) ")
+cfb_week <- readline(prompt = "What week just occurred? ")
 if (as.integer(cfb_week) == 0) {
-  # PY4 <- as.integer(year) - 4
+  PY4 <- as.integer(year) - 4
   PY3 <- as.integer(year) - 3
   PY2 <- as.integer(year) - 2
   PY1 <- as.integer(year) - 1
@@ -27,21 +27,21 @@ if (as.integer(cfb_week) == 0) {
 
 ##### setting strings for table titles, file pathways, unintelligible charts #####
 `%nin%` <- Negate(`%in%`)
-output_dir <- here("Outputs", "RVoA", paste0("VoA", year), "Test")
-data_dir <- here("Data", paste0("VoA", year), "Test")
-tracking_chart_dir <- here(data_dir, "TrackingChartCSVs")
-accuracy_data_dir <- here(data_dir, "AccuracyMetrics")
-PY_data_dir <- here(data_dir, "PYData")
-Projection_data_dir <- here(data_dir, "Projections")
-preseason_text <- "Preseason"
-resume_text <- "Resume"
-VoAString <- "TestVoA.parquet"
+output_dir <- here("Outputs", "RVoA", paste0("VoA", year))
+data_dir <- here("Data", paste0("VoA", year))
+tracking_chart_dir <- here("Data", paste0("VoA", year), "TrackingChartCSVs")
+accuracy_data_dir <- here("Data", paste0("VoA", year), "AccuracyMetrics")
+PY_data_dir <- here("Data", paste0("VoA", year), "PYData")
+Projection_data_dir <- here("Data", paste0("VoA", year), "Projections")
+preseason_text <- "CFB FBS Preseason"
+resume_text <- "FBS Resume"
+VoAString <- "FBSVoA.parquet"
 week_text <- "Week"
 VoA_Top25_text <- "Vortex of Accuracy Top 25"
-top25_png <- "TestVoATop25.png"
-fulltable_png <- "TestVoAFullTable.png"
-VoA_text <- "Test Vortex of Accuracy"
-Postseason_text <- "Postseason"
+top25_png <- "FBSVoATop25.png"
+fulltable_png <- "FBSVoAFullTable.png"
+VoA_text <- "FBS Vortex of Accuracy"
+Postseason_text <- " CFB Postseason"
 AAC_text <- "AAC"
 ACC_text <- "ACC"
 Big12_text <- "Big12"
@@ -54,30 +54,82 @@ Pac2_text <- "Pac2"
 SEC_text <- "SEC"
 SunBelt_text <- "SunBelt"
 FBS_text <- "FBS"
-FCS_text <- "FCS"
 Power_Five_text <- "Power 5"
 Group_Five_text <- "Group of 5"
-Rating_text <- "_TestRatings_Chart.png"
-Ranking_text <- "_TestRankings_Chart.png"
-Histogram_text <- "_TestRatingHist.png"
-Output_Rating_Plot_text <- "VoA Outputs vs VoA Ratings"
-Output_Rating_Plot_png <- "TestOutput_Rating.png"
+Rating_text <- "_FBSRatings_Chart.png"
+Ranking_text <- "_FBSRankings_Chart.png"
+Histogram_text <- "_FBSRatingHist.png"
+Output_Rating_Plot_text <- "FBS VoA Outputs vs VoA Ratings"
+Output_Rating_Plot_png <- "FBSOutput_Rating.png"
+OffDef_Rating_Plot_text <- "FBS VoA Off Rating vs VoA Def Rating"
+OffDef_Rating_Plot_png <- "FBSOffDef_Rating.png"
+OffDef_EPA_Plot_text <- "FBS Offensive Opponent-Adjusted EPA vs Defensive Opponent-Adjusted EPA"
+OffDef_EPA_Plot_png <- "FBSOffDef_AdjEPA.png"
 
-# fmt: skip
-FBS_hist_title <- paste(year, week_text, cfb_week, FBS_text, VoA_text, "Ratings")
-# fmt: skip
-Power5_hist_title <- paste(year, week_text, cfb_week, Power_Five_text, VoA_text, "Ratings")
-# fmt: skip
-Group5_hist_title <- paste(year, week_text, cfb_week, Group_Five_text, VoA_text, "Ratings")
-# fmt: skip
-Output_Rating_Plot_title <- paste(year, week_text, cfb_week, Output_Rating_Plot_text)
+FBS_hist_title <- paste(
+  year,
+  week_text,
+  cfb_week,
+  FBS_text,
+  VoA_text,
+  "Ratings"
+)
+Power5_hist_title <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Power_Five_text,
+  VoA_text,
+  "Ratings"
+)
+Group5_hist_title <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Group_Five_text,
+  VoA_text,
+  "Ratings"
+)
+Output_Rating_Plot_title <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Output_Rating_Plot_text
+)
+OffDef_Rating_Plot_title <- paste(
+  year,
+  week_text,
+  cfb_week,
+  OffDef_Rating_Plot_text
+)
+OffDef_EPA_Plot_title <- paste(year, week_text, cfb_week, OffDef_EPA_Plot_text)
 top25_file_pathway <- paste(year, week_text, cfb_week, "_", top25_png, sep = "")
-# fmt: skip
-resumetop25_file_pathway <- paste(year,week_text, cfb_week,resume_text,"_",top25_png, sep = "")
-# fmt: skip
-fulltable_file_pathway <- paste(year,week_text, cfb_week, "_",fulltable_png, sep = "")
-# fmt: skip
-resumefulltable_file_pathway <- paste(year,week_text, cfb_week, resume_text,"_",fulltable_png, sep = "")
+resumetop25_file_pathway <- paste(
+  year,
+  week_text,
+  cfb_week,
+  resume_text,
+  "_",
+  top25_png,
+  sep = ""
+)
+fulltable_file_pathway <- paste(
+  year,
+  week_text,
+  cfb_week,
+  "_",
+  fulltable_png,
+  sep = ""
+)
+resumefulltable_file_pathway <- paste(
+  year,
+  week_text,
+  cfb_week,
+  resume_text,
+  "_",
+  fulltable_png,
+  sep = ""
+)
 AAC_Output_filename <- paste(
   year,
   week_text,
@@ -86,8 +138,14 @@ AAC_Output_filename <- paste(
   Rating_text,
   sep = ""
 )
-# fmt: skip
-AAC_Ranking_filename <- paste(year,week_text, cfb_week, AAC_text, Ranking_text, sep = "")
+AAC_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  AAC_text,
+  Ranking_text,
+  sep = ""
+)
 ACC_Output_filename <- paste(
   year,
   week_text,
@@ -96,24 +154,78 @@ ACC_Output_filename <- paste(
   Rating_text,
   sep = ""
 )
-# fmt: skip
-ACC_Ranking_filename <- paste(year,week_text, cfb_week, ACC_text, Ranking_text, sep = "")
-# fmt: skip
-Big12_Output_filename <- paste(year,week_text, cfb_week, Big12_text, Rating_text, sep = "")
-# fmt: skip
-Big12_Ranking_filename <- paste(year,week_text, cfb_week, Big12_text, Ranking_text, sep = "")
-# fmt: skip
-Big10_Output_filename <- paste(year,week_text, cfb_week, Big10_text, Rating_text, sep = "")
-# fmt: skip
-Big10_Ranking_filename <- paste(year,week_text, cfb_week, Big10_text, Ranking_text, sep = "")
-# fmt: skip
-CUSA_Output_filename <- paste(year,week_text, cfb_week, CUSA_text, Rating_text, sep = "")
-# fmt: skip
-CUSA_Ranking_filename <- paste(year,week_text, cfb_week, CUSA_text, Ranking_text, sep = "")
-# fmt: skip
-Indy_Output_filename <- paste(year,week_text, cfb_week, Indy_text, Rating_text, sep = "")
-# fmt: skip
-Indy_Ranking_filename <- paste(year,week_text, cfb_week, Indy_text, Ranking_text, sep = "")
+ACC_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  ACC_text,
+  Ranking_text,
+  sep = ""
+)
+Big12_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Big12_text,
+  Rating_text,
+  sep = ""
+)
+Big12_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Big12_text,
+  Ranking_text,
+  sep = ""
+)
+Big10_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Big10_text,
+  Rating_text,
+  sep = ""
+)
+Big10_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Big10_text,
+  Ranking_text,
+  sep = ""
+)
+CUSA_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  CUSA_text,
+  Rating_text,
+  sep = ""
+)
+CUSA_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  CUSA_text,
+  Ranking_text,
+  sep = ""
+)
+Indy_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Indy_text,
+  Rating_text,
+  sep = ""
+)
+Indy_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Indy_text,
+  Ranking_text,
+  sep = ""
+)
 MAC_Output_filename <- paste(
   year,
   week_text,
@@ -122,8 +234,14 @@ MAC_Output_filename <- paste(
   Rating_text,
   sep = ""
 )
-# fmt: skip
-MAC_Ranking_filename <- paste(year,week_text, cfb_week, MAC_text, Ranking_text, sep = "")
+MAC_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  MAC_text,
+  Ranking_text,
+  sep = ""
+)
 MWC_Output_filename <- paste(
   year,
   week_text,
@@ -132,12 +250,30 @@ MWC_Output_filename <- paste(
   Rating_text,
   sep = ""
 )
-# fmt: skip
-MWC_Ranking_filename <- paste(year,week_text, cfb_week, MWC_text, Ranking_text, sep = "")
-# fmt: skip
-Pac2_Output_filename <- paste(year,week_text, cfb_week, Pac2_text, Rating_text, sep = "")
-# fmt: skip
-Pac2_Ranking_filename <- paste(year,week_text, cfb_week, Pac2_text, Ranking_text, sep = "")
+MWC_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  MWC_text,
+  Ranking_text,
+  sep = ""
+)
+Pac2_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Pac2_text,
+  Rating_text,
+  sep = ""
+)
+Pac2_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Pac2_text,
+  Ranking_text,
+  sep = ""
+)
 SEC_Output_filename <- paste(
   year,
   week_text,
@@ -154,38 +290,101 @@ SEC_Ranking_filename <- paste(
   Ranking_text,
   sep = ""
 )
-# fmt: skip
-SunBelt_Output_filename <- paste(year,week_text, cfb_week, SunBelt_text, Rating_text, sep = "")
-# fmt: skip
-SunBelt_Ranking_filename <- paste(year,week_text, cfb_week, SunBelt_text, Ranking_text, sep = "")
-# fmt: skip
-FBS_hist_filename <- paste(year, week_text, cfb_week, "_", FBS_text, Histogram_text, sep = "")
-# fmt: skip
-Power5_hist_filename <- paste(year, week_text, cfb_week, "_", Power_Five_text, Histogram_text, sep = "")
-# fmt: skip
-Group5_hist_filename <- paste(year, week_text, cfb_week, "_", Group_Five_text, Histogram_text, sep = "")
-# fmt: skip
-Output_Rating_Plot_filename <- paste(year, week_text, cfb_week, "_", Output_Rating_Plot_png, sep = "")
+SunBelt_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  SunBelt_text,
+  Rating_text,
+  sep = ""
+)
+SunBelt_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  SunBelt_text,
+  Ranking_text,
+  sep = ""
+)
+FBS_hist_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  "_",
+  FBS_text,
+  Histogram_text,
+  sep = ""
+)
+Power5_hist_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  "_",
+  Power_Five_text,
+  Histogram_text,
+  sep = ""
+)
+Group5_hist_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  "_",
+  Group_Five_text,
+  Histogram_text,
+  sep = ""
+)
+Output_Rating_Plot_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  "_",
+  Output_Rating_Plot_png,
+  sep = ""
+)
+OffDef_Rating_Plot_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  "_",
+  OffDef_Rating_Plot_png,
+  sep = ""
+)
+OffDef_EPA_Plot_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  "_",
+  OffDef_EPA_Plot_png,
+  sep = ""
+)
 ### setting gt title based on whether it's after a playoff week or not
-if (as.numeric(cfb_week) == 15) {
+if (as.integer(cfb_week) == 15) {
   gt_top25_title <- paste(year, "Conference Championship Week", VoA_Top25_text)
   gt_title <- paste(year, "Conference Championship Week", VoA_text)
-} else if (as.numeric(cfb_week) == 16) {
-  gt_top25_title <- paste(year, "Post Army-Navy Game", VoA_Top25_text)
-  gt_title <- paste(year, "Post Army-Navy Game", VoA_text)
-} else if (as.numeric(cfb_week) == 17) {
+} else if (as.integer(cfb_week) == 16) {
+  gt_top25_title <- paste(
+    year,
+    "Post Army-Navy Game (and Possibly a Bowl or 2)",
+    VoA_Top25_text
+  )
+  gt_title <- paste(
+    year,
+    "Post Army-Navy Game (and Possibly a Bowl or 2)",
+    VoA_text
+  )
+} else if (as.integer(cfb_week) == 17) {
   gt_top25_title <- paste(year, "CFP First Round", VoA_Top25_text)
   gt_title <- paste(year, "CFP First Round", VoA_text)
-} else if (as.numeric(cfb_week) == 18) {
+} else if (as.integer(cfb_week) == 18) {
   gt_top25_title <- paste(year, "CFP Quarterfinals", VoA_Top25_text)
   gt_title <- paste(year, "CFP Quarterfinals", VoA_text)
-} else if (as.numeric(cfb_week) == 19) {
+} else if (as.integer(cfb_week) == 19) {
   gt_top25_title <- paste(year, "CFP Semifinals", VoA_Top25_text)
   gt_title <- paste(year, "CFP Semifinals", VoA_text)
-} else if (as.numeric(cfb_week) == 20) {
+} else if (as.integer(cfb_week) == 20) {
   gt_top25_title <- paste(year, Postseason_text, VoA_Top25_text)
   gt_title <- paste(year, Postseason_text, VoA_text)
-} else if (as.numeric(cfb_week) == 0) {
+} else if (as.integer(cfb_week) == 0) {
   gt_top25_title <- paste(year, preseason_text, VoA_Top25_text)
   gt_title <- paste(year, preseason_text, VoA_text)
 } else {
@@ -195,9 +394,15 @@ if (as.numeric(cfb_week) == 15) {
 ### creating string for csv spreadsheet pathway
 file_pathway <- paste0(data_dir, "/", year, week_text, cfb_week, "_", VoAString)
 ### creating directories that don't exist
-# fmt: skip
-for (i in c(data_dir, output_dir, tracking_chart_dir, Projection_data_dir, PY_data_dir, accuracy_data_dir)){
-  if (dir.exists(i) == FALSE){
+for (i in c(
+  data_dir,
+  output_dir,
+  tracking_chart_dir,
+  Projection_data_dir,
+  PY_data_dir,
+  accuracy_data_dir
+)) {
+  if (dir.exists(i) == FALSE) {
     dir.create(i, recursive = TRUE)
   }
 }
@@ -206,33 +411,33 @@ options(mc.cores = parallel::detectCores() / 2)
 
 ##### Reading in Data #####
 ### pulling in data based on week of the season
-if (as.numeric(cfb_week) == 0) {
+if (as.integer(cfb_week) == 0) {
   ##### WEEK 0 Data Pull #####
   ### getting team info for last 4 years
   ## using 4 years to train the model is a pain in my ass from a time and RAM standpoint, so holding off on that for now
   ## filtering to make sure each dataframe only includes D1 teams
-  # D1Teams_PY4 <- cfbd_team_info(
-  #   only_fbs = FALSE,
-  #   year = as.numeric(year) - 4
-  # ) |>
-  #   filter(classification == "fbs" | classification == "fcs")
+  D1Teams <- cfbd_team_info(only_fbs = TRUE, year = as.integer(year)) |>
+    filter(classification == "fbs")
+  D1Teams_PY4 <- cfbd_team_info(
+    only_fbs = FALSE,
+    year = as.integer(year) - 4
+  ) |>
+    filter(school %in% D1Teams$school)
   D1Teams_PY3 <- cfbd_team_info(
     only_fbs = FALSE,
-    year = as.numeric(year) - 3
+    year = as.integer(year) - 3
   ) |>
-    filter(classification == "fbs" | classification == "fcs")
+    filter(school %in% D1Teams$school)
   D1Teams_PY2 <- cfbd_team_info(
     only_fbs = FALSE,
-    year = as.numeric(year) - 2
+    year = as.integer(year) - 2
   ) |>
-    filter(classification == "fbs" | classification == "fcs")
+    filter(school %in% D1Teams$school)
   D1Teams_PY1 <- cfbd_team_info(
     only_fbs = FALSE,
-    year = as.numeric(year) - 1
+    year = as.integer(year) - 1
   ) |>
-    filter(classification == "fbs" | classification == "fcs")
-  D1Teams <- cfbd_team_info(only_fbs = FALSE, year = as.numeric(year)) |>
-    filter(classification == "fbs" | classification == "fcs")
+    filter(school %in% D1Teams$school)
 
   # ### making sure the elevation column is numeric
   # VoAVariables$elevation <- as.numeric(VoAVariables$elevation)
@@ -243,47 +448,47 @@ if (as.numeric(cfb_week) == 0) {
   # PY1Teams <- c("Delaware", "Missouri State")
   ### reading in data for 3 previous years
   ### reading in FCS data first, made with FCSCleanup.R
-  # FCS_PY3 <- read_csv(here("Data", paste0("VoA", year), "FCSPrevYears", "FCS_PY3.csv"))
-  # FCS_PY2 <- read_csv(here("Data", paste0("VoA", year), "FCSPrevYears", "FCS_PY2.csv"))
-  # FCS_PY1 <- read_csv(here("Data", paste0("VoA", year), "FCSPrevYears", "FCS_PY1.csv"))
+  # FCS_PY3 <- read_parquet(here("Data", paste0("VoA", year), "FCSPrevYears", "FCS_PY3.parquet"))
+  # FCS_PY2 <- read_parquet(here("Data", paste0("VoA", year), "FCSPrevYears", "FCS_PY2.parquet"))
+  # FCS_PY1 <- read_parquet(here("Data", paste0("VoA", year), "FCSPrevYears", "FCS_PY1.parquet"))
 
   ### pulling in completed games as part of opponent-adjustment of stats later
   ### PY4 completed games
-  # CompletedGames_PY4 <- cfbd_game_info(as.numeric(year) - 4) |>
-  #   filter(completed == TRUE) |>
-  #   filter(
-  #     home_team %in% D1Teams_PY4$school & away_team %in% D1Teams_PY4$school
-  #   )
-  # CompletedNeutralGames_PY4 <- CompletedGames_PY4 |>
-  #   filter(neutral_site == TRUE)
-  ### PY3 completed games
-  CompletedGames_PY3 <- cfbd_game_info(as.numeric(year) - 3) |>
+  CompletedGames_PY4 <- cfbd_game_info(as.integer(year) - 4) |>
     filter(completed == TRUE) |>
     filter(
-      home_team %in% D1Teams_PY3$school & away_team %in% D1Teams_PY3$school
+      home_team %in% D1Teams_PY4$school | away_team %in% D1Teams_PY4$school
+    )
+  CompletedNeutralGames_PY4 <- CompletedGames_PY4 |>
+    filter(neutral_site == TRUE)
+  ### PY3 completed games
+  CompletedGames_PY3 <- cfbd_game_info(as.integer(year) - 3) |>
+    filter(completed == TRUE) |>
+    filter(
+      home_team %in% D1Teams_PY3$school | away_team %in% D1Teams_PY3$school
     )
   CompletedNeutralGames_PY3 <- CompletedGames_PY3 |>
     filter(neutral_site == TRUE)
   ### PY2 completed games
-  CompletedGames_PY2 <- cfbd_game_info(as.numeric(year) - 2) |>
+  CompletedGames_PY2 <- cfbd_game_info(as.integer(year) - 2) |>
     filter(completed == TRUE) |>
     filter(
-      home_team %in% D1Teams_PY2$school & away_team %in% D1Teams_PY2$school
+      home_team %in% D1Teams_PY2$school | away_team %in% D1Teams_PY2$school
     )
   CompletedNeutralGames_PY2 <- CompletedGames_PY2 |>
     filter(neutral_site == TRUE)
   ### PY1 completed games
-  CompletedGames_PY1 <- cfbd_game_info(as.numeric(year) - 1) |>
+  CompletedGames_PY1 <- cfbd_game_info(as.integer(year) - 1) |>
     filter(completed == TRUE) |>
     filter(
-      home_team %in% D1Teams_PY1$school & away_team %in% D1Teams_PY1$school
+      home_team %in% D1Teams_PY1$school | away_team %in% D1Teams_PY1$school
     )
   CompletedNeutralGames_PY1 <- CompletedGames_PY1 |>
     filter(neutral_site == TRUE)
 
   ### loading in play-by-play data, creating VoA Variables dfs
-  # PBP_PY4 <- load_cfb_pbp(seasons = as.numeric(year) - 4) |>
-  #   filter(home %in% D1Teams_PY4$school & away %in% D1Teams_PY4$school) #|>
+  PBP_PY4 <- load_cfb_pbp(seasons = as.integer(year) - 4) |>
+    filter(home %in% D1Teams_PY4$school | away %in% D1Teams_PY4$school) #|>
   # filter(
   #   home %in%
   #     CompletedGames_PY4$home_team &
@@ -291,12 +496,12 @@ if (as.numeric(cfb_week) == 0) {
   #     away %in% CompletedGames_PY4$home_team &
   #     away %in% CompletedGames_PY4$away_team
   # )
-  # PBP_PY4 <- fix_pbp_subdivision_nas(PBP_PY4, D1Teams_PY4) |>
-  #   mutate(epa_ppa_mean = rowMeans(select(PBP_PY4, c(EPA, ppa)), na.rm = TRUE))
-  # VoAVariablesTrain_PY4 <- create_voavarstrain_df(PY4, D1Teams_PY4, PBP_PY4)
+  PBP_PY4 <- fix_pbp_subdivision_nas(PBP_PY4, D1Teams_PY4) |>
+    mutate(epa_ppa_mean = rowMeans(select(PBP_PY4, c(EPA, ppa)), na.rm = TRUE))
+  VoATrain_PY4 <- create_voavarstrain_df(PY4, D1Teams_PY4, PBP_PY4)
 
-  PBP_PY3 <- load_cfb_pbp(seasons = as.numeric(year) - 3) |>
-    filter(home %in% D1Teams_PY3$school & away %in% D1Teams_PY3$school) #|>
+  PBP_PY3 <- load_cfb_pbp(seasons = as.integer(year) - 3) |>
+    filter(home %in% D1Teams_PY3$school | away %in% D1Teams_PY3$school) #|>
   # filter(
   #   home %in%
   #     CompletedGames_PY3$home_team &
@@ -306,10 +511,10 @@ if (as.numeric(cfb_week) == 0) {
   # )
   PBP_PY3 <- fix_pbp_subdivision_nas(PBP_PY3, D1Teams_PY3) |>
     mutate(epa_ppa_mean = rowMeans(select(PBP_PY3, c(EPA, ppa)), na.rm = TRUE))
-  VoAVariablesTrain_PY3 <- create_voavarstrain_df(PY3, D1Teams_PY3, PBP_PY3)
+  VoATrain_PY3 <- create_voavarstrain_df(PY3, D1Teams_PY3, PBP_PY3)
 
-  PBP_PY2 <- load_cfb_pbp(seasons = as.numeric(year) - 2) |>
-    filter(home %in% D1Teams_PY2$school & away %in% D1Teams_PY2$school) #|>
+  PBP_PY2 <- load_cfb_pbp(seasons = as.integer(year) - 2) |>
+    filter(home %in% D1Teams_PY2$school | away %in% D1Teams_PY2$school) #|>
   # filter(
   #   home %in%
   #     CompletedGames_PY2$home_team &
@@ -319,10 +524,10 @@ if (as.numeric(cfb_week) == 0) {
   # )
   PBP_PY2 <- fix_pbp_subdivision_nas(PBP_PY2, D1Teams_PY2) |>
     mutate(epa_ppa_mean = rowMeans(select(PBP_PY2, c(EPA, ppa)), na.rm = TRUE))
-  VoAVariablesTrain_PY2 <- create_voavarstrain_df(PY2, D1Teams_PY2, PBP_PY2)
+  VoATrain_PY2 <- create_voavarstrain_df(PY2, D1Teams_PY2, PBP_PY2)
 
-  PBP_PY1 <- load_cfb_pbp(seasons = as.numeric(year) - 1) |>
-    filter(home %in% D1Teams_PY1$school & away %in% D1Teams_PY1$school) #|>
+  PBP_PY1 <- load_cfb_pbp(seasons = as.integer(year) - 1) |>
+    filter(home %in% D1Teams_PY1$school | away %in% D1Teams_PY1$school) #|>
   # filter(
   #   home %in%
   #     CompletedGames_PY1$home_team &
@@ -332,188 +537,188 @@ if (as.numeric(cfb_week) == 0) {
   # )
   PBP_PY1 <- fix_pbp_subdivision_nas(PBP_PY1, D1Teams_PY1) |>
     mutate(epa_ppa_mean = rowMeans(select(PBP_PY1, c(EPA, ppa)), na.rm = TRUE))
-  VoAVariablesTrain_PY1 <- create_voavarstrain_df(PY1, D1Teams_PY1, PBP_PY1)
+  VoATrain_PY1 <- create_voavarstrain_df(PY1, D1Teams_PY1, PBP_PY1)
   ### VoAVariables df to be used for inference/generating current ratings
   VoAVariables <- create_voavars_df(as.integer(year), as.integer(cfb_week))
 
   ### pulling out relevant plays used to create/input variables later
   ## PY4
-  # PBP_PY4_Yards <- PBP_PY4 |>
+  PBP_PY4_Yards <- PBP_PY4 |>
+    filter(
+      play_type == "Pass Incompletion" |
+        play_type == "Rush" |
+        play_type == "Sack" |
+        play_type == "Fumble Recovery (Own)" |
+        play_type == "Two Point Pass" |
+        play_type == "Two Point Rush" |
+        play_type == "Safety" |
+        play_type == "Pass Reception" |
+        play_type == "Pass Completion" |
+        play_type == "Fumble Recovery (Opponent)" |
+        play_type == "Pass" |
+        play_type == "2pt Conversion" |
+        play_type == "Defensive 2pt Conversion" |
+        play_type == "Passing Touchdown" |
+        play_type == "Rushing Touchdown"
+    ) |>
+    mutate(
+      new_drive_pts = case_when(
+        new_drive_pts < 0 ~ 0,
+        drive_pts == 8 ~ 8,
+        TRUE ~ new_drive_pts
+      ),
+      home_neutral = case_when(
+        game_id %in% CompletedNeutralGames_PY4$game_id ~ "Neutral",
+        TRUE ~ "Home"
+      )
+    ) |>
+    mutate(
+      play_pts_scored = case_when(scoring_play == 1 ~ new_drive_pts, TRUE ~ 0)
+    )
+
+  PBP_PY4_ScoringPlays <- PBP_PY4_Yards |>
+    filter(scoring_play == 1 & play_pts_scored != 3)
+
+  PBP_PY4_Turnovers <- PBP_PY4_Yards |>
+    filter(turnover == 1)
+
+  PBP_PY4_success_plays <- PBP_PY4_Yards |>
+    filter(
+      (down == 1 & (yards_gained >= (distance / 2))) |
+        (down == 2 & (yards_gained >= (distance * 0.7))) |
+        (down > 2 & (yards_gained >= distance))
+    )
+
+  PBP_PY4_3rdDowns <- PBP_PY4_Yards |>
+    filter(down == 3)
+
+  PBP_PY4_4thDowns <- PBP_PY4_Yards |>
+    filter(down == 4)
+
+  PBP_PY4_passplays <- PBP_PY4_Yards |>
+    filter(
+      play_type == "Pass" |
+        play_type == "Pass Incompletion" |
+        play_type == "Pass Reception" |
+        play_type == "Pass Completion" |
+        play_type == "Two Point Pass"
+    )
+
+  PBP_PY4_rushplays <- PBP_PY4_Yards |>
+    filter(play_type == "Rush" | play_type == "Two Point Rush")
+
+  PBP_PY4_scoringopp_plays <- PBP_PY4 |>
+    filter(scoring_opp == 1)
+
+  PBP_PY4_TDs <- PBP_PY4_Yards |>
+    filter(play_type == "Passing Touchdown" | play_type == "Rushing Touchdown")
+
+  # PBP_PY4_2PtConvs <- PBP_PY4 |>
   #   filter(
-  #     play_type == "Pass Incompletion" |
-  #       play_type == "Rush" |
-  #       play_type == "Sack" |
-  #       play_type == "Fumble Recovery (Own)" |
+  #     play_type == "Two Point Rush" |
   #       play_type == "Two Point Pass" |
-  #       play_type == "Two Point Rush" |
-  #       play_type == "Safety" |
-  #       play_type == "Pass Reception" |
-  #       play_type == "Pass Completion" |
-  #       play_type == "Fumble Recovery (Opponent)" |
-  #       play_type == "Pass" |
-  #       play_type == "2pt Conversion" |
-  #       play_type == "Defensive 2pt Conversion" |
-  #       play_type == "Passing Touchdown" |
-  #       play_type == "Rushing Touchdown"
-  #   ) |>
-  #   mutate(
-  #     new_drive_pts = case_when(
-  #       new_drive_pts < 0 ~ 0,
-  #       drive_pts == 8 ~ 8,
-  #       TRUE ~ new_drive_pts
-  #     ),
-  #     home_neutral = case_when(
-  #       game_id %in% CompletedNeutralGames_PY4$game_id ~ "Neutral",
-  #       TRUE ~ "Home"
-  #     )
-  #   ) |>
-  #   mutate(
-  #     play_pts_scored = case_when(scoring_play == 1 ~ new_drive_pts, TRUE ~ 0)
+  #       play_type == "2pt Conversion"
   #   )
 
-  # PBP_PY4_ScoringPlays <- PBP_PY4_Yards |>
-  #   filter(scoring_play == 1 & play_pts_scored != 3)
+  # PBP_PY4_2ptPlays <- PBP_PY4_TDs |>
+  #   filter(pos_score_pts == 8)
 
-  # PBP_PY4_Turnovers <- PBP_PY4_Yards |>
-  #   filter(turnover == 1)
+  # PBP_PY4_2ptPlays <- rbind(PBP_PY4_2ptPlays, PBP_PY4_2PtConvs)
 
-  # PBP_PY4_success_plays <- PBP_PY4_Yards |>
-  #   filter(
-  #     (down == 1 & (yards_gained >= (distance / 2))) |
-  #       (down == 2 & (yards_gained >= (distance * 0.7))) |
-  #       (down > 2 & (yards_gained >= distance))
-  #   )
+  PBP_PY4_FGPlays <- PBP_PY4 |>
+    filter(play_type == "Field Goal Good" | play_type == "Field Goal Missed")
 
-  # PBP_PY4_3rdDowns <- PBP_PY4_Yards |>
-  #   filter(down == 3)
+  PBP_PY4_XPPlays <- PBP_PY4_TDs |>
+    filter(play_pts_scored == 7)
 
-  # PBP_PY4_4thDowns <- PBP_PY4_Yards |>
-  #   filter(down == 4)
+  ### on ReturnTD plays, pos_team does the scoring (at least based on an admittedly quick glance)
+  ## except on punt return TDs
+  # fmt: skip
+  PBP_PY4_ReturnTDs <- PBP_PY4 |>
+    filter(play_type == "Kickoff Return Touchdown" | play_type == "Punt Return Touchdown" | play_type == "Blocked Punt Touchdown" | play_type == "Blocked Field Goal Touchdown" | play_type == "Missed Field Goal Touchdown")
 
-  # PBP_PY4_passplays <- PBP_PY4_Yards |>
-  #   filter(
-  #     play_type == "Pass" |
-  #       play_type == "Pass Incompletion" |
-  #       play_type == "Pass Reception" |
-  #       play_type == "Pass Completion" |
-  #       play_type == "Two Point Pass"
-  #   )
+  PBP_PY4_PuntReturnTD <- PBP_PY4 |>
+    filter(play_type == "Punt Return Touchdown")
 
-  # PBP_PY4_rushplays <- PBP_PY4_Yards |>
-  #   filter(play_type == "Rush" | play_type == "Two Point Rush")
+  ### on KickReturnPlays, pos_team gains yards/does the returning
+  ## will use data from this subset to evaluate a predictor, kick/punt return yards allowed
+  PBP_PY4_KickReturn <- PBP_PY4 |>
+    filter(
+      play_type == "Kickoff Return Touchdown" |
+        play_type == "Kickoff Return (Offense)" |
+        play_type == "Kickoff"
+    )
 
-  # PBP_PY4_scoringopp_plays <- PBP_PY4 |>
-  #   filter(scoring_opp == 1)
+  ### on punt plays, pos_team does the punting, def_pos_team does the returning
+  PBP_PY4_Punts <- PBP_PY4 |>
+    filter(play_type == "Punt" | play_type == "Punt Return Touchdown")
 
-  # PBP_PY4_TDs <- PBP_PY4_Yards |>
-  #   filter(play_type == "Passing Touchdown" | play_type == "Rushing Touchdown")
+  ### Setting up PBP for adjusted special teams epa stats
+  PBP_STPlays_PY4 <- PBP_PY4 |>
+    filter(
+      play_type %in%
+        c(
+          "Punt",
+          "Punt Return Touchdown",
+          "Kickoff Return Touchdown",
+          "Kickoff Return (Offense)",
+          "Kickoff",
+          "Blocked Punt Touchdown",
+          "Blocked Field Goal Touchdown",
+          "Missed Field Goal Touchdown",
+          "Field Goal Good",
+          "Field Goal Missed"
+        ) |
+        (play_type %in%
+          c("Passing Touchdown", "Rushing Touchdown") &
+          new_drive_pts == 7)
+    ) |>
+    mutate(
+      new_drive_pts = case_when(
+        new_drive_pts < 0 ~ 0,
+        drive_pts == 8 ~ 8,
+        TRUE ~ new_drive_pts
+      )
+    ) |>
+    mutate(
+      play_pts_scored = case_when(
+        play_type %in% c("Passing Touchdown", "Rushing Touchdown") ~ 1,
+        scoring_play == 1 ~ new_drive_pts,
+        TRUE ~ 0
+      )
+    ) |>
+    mutate(
+      real_pos_team = case_when(
+        play_type %in%
+          c(
+            "Field Goal Good",
+            "Field Goal Missed",
+            "Kickoff Return Touchdown",
+            "Kickoff Return (Offense)",
+            "Kickoff"
+          ) |
+          play_pts_scored == 1 ~ pos_team,
+        TRUE ~ def_pos_team
+      ),
+      real_def_pos_team = case_when(
+        play_type %in%
+          c(
+            "Field Goal Good",
+            "Field Goal Missed",
+            "Kickoff Return Touchdown",
+            "Kickoff Return (Offense)",
+            "Kickoff"
+          ) ~ def_pos_team,
+        TRUE ~ pos_team
+      ),
+      home_neutral = case_when(
+        game_id %in% CompletedNeutralGames_PY4$game_id ~ "Neutral",
+        TRUE ~ "Home"
+      )
+    )
 
-  # # PBP_PY4_2PtConvs <- PBP_PY4 |>
-  # #   filter(
-  # #     play_type == "Two Point Rush" |
-  # #       play_type == "Two Point Pass" |
-  # #       play_type == "2pt Conversion"
-  # #   )
-
-  # # PBP_PY4_2ptPlays <- PBP_PY4_TDs |>
-  # #   filter(pos_score_pts == 8)
-
-  # # PBP_PY4_2ptPlays <- rbind(PBP_PY4_2ptPlays, PBP_PY4_2PtConvs)
-
-  # PBP_PY4_FGPlays <- PBP_PY4 |>
-  #   filter(play_type == "Field Goal Good" | play_type == "Field Goal Missed")
-
-  # PBP_PY4_XPPlays <- PBP_PY4_TDs |>
-  #   filter(play_pts_scored == 7)
-
-  # ### on ReturnTD plays, pos_team does the scoring (at least based on an admittedly quick glance)
-  # ## except on punt return TDs
-  # # fmt: skip
-  # PBP_PY4_ReturnTDs <- PBP_PY4 |>
-  #   filter(play_type == "Kickoff Return Touchdown" | play_type == "Punt Return Touchdown" | play_type == "Blocked Punt Touchdown" | play_type == "Blocked Field Goal Touchdown" | play_type == "Missed Field Goal Touchdown")
-
-  # PBP_PY4_PuntReturnTD <- PBP_PY4 |>
-  #   filter(play_type == "Punt Return Touchdown")
-
-  # ### on KickReturnPlays, pos_team gains yards/does the returning
-  # ## will use data from this subset to evaluate a predictor, kick/punt return yards allowed
-  # PBP_PY4_KickReturn <- PBP_PY4 |>
-  #   filter(
-  #     play_type == "Kickoff Return Touchdown" |
-  #       play_type == "Kickoff Return (Offense)" |
-  #       play_type == "Kickoff"
-  #   )
-
-  # ### on punt plays, pos_team does the punting, def_pos_team does the returning
-  # PBP_PY4_Punts <- PBP_PY4 |>
-  #   filter(play_type == "Punt" | play_type == "Punt Return Touchdown")
-
-  # ### Setting up PBP for adjusted special teams ppa stats
-  # PBP_STPlays_PY4 <- PBP_PY4 |>
-  #   filter(
-  #     play_type %in%
-  #       c(
-  #         "Punt",
-  #         "Punt Return Touchdown",
-  #         "Kickoff Return Touchdown",
-  #         "Kickoff Return (Offense)",
-  #         "Kickoff",
-  #         "Blocked Punt Touchdown",
-  #         "Blocked Field Goal Touchdown",
-  #         "Missed Field Goal Touchdown",
-  #         "Field Goal Good",
-  #         "Field Goal Missed"
-  #       ) |
-  #       (play_type %in%
-  #         c("Passing Touchdown", "Rushing Touchdown") &
-  #         new_drive_pts == 7)
-  #   ) |>
-  #   mutate(
-  #     new_drive_pts = case_when(
-  #       new_drive_pts < 0 ~ 0,
-  #       drive_pts == 8 ~ 8,
-  #       TRUE ~ new_drive_pts
-  #     )
-  #   ) |>
-  #   mutate(
-  #     play_pts_scored = case_when(
-  #       play_type %in% c("Passing Touchdown", "Rushing Touchdown") ~ 1,
-  #       scoring_play == 1 ~ new_drive_pts,
-  #       TRUE ~ 0
-  #     )
-  #   ) |>
-  #   mutate(
-  #     real_pos_team = case_when(
-  #       play_type %in%
-  #         c(
-  #           "Field Goal Good",
-  #           "Field Goal Missed",
-  #           "Kickoff Return Touchdown",
-  #           "Kickoff Return (Offense)",
-  #           "Kickoff"
-  #         ) |
-  #         play_pts_scored == 1 ~ pos_team,
-  #       TRUE ~ def_pos_team
-  #     ),
-  #     real_def_pos_team = case_when(
-  #       play_type %in%
-  #         c(
-  #           "Field Goal Good",
-  #           "Field Goal Missed",
-  #           "Kickoff Return Touchdown",
-  #           "Kickoff Return (Offense)",
-  #           "Kickoff"
-  #         ) ~ def_pos_team,
-  #       TRUE ~ pos_team
-  #     ),
-  #     home_neutral = case_when(
-  #       game_id %in% CompletedNeutralGames_PY4$game_id ~ "Neutral",
-  #       TRUE ~ "Home"
-  #     )
-  #   )
-
-  # PBP_PY4_STScoringPlays <- PBP_STPlays_PY4 |>
-  #   filter(scoring_play == 1)
+  PBP_PY4_STScoringPlays <- PBP_STPlays_PY4 |>
+    filter(scoring_play == 1)
 
   ### PY3
   PBP_PY3_Yards <- PBP_PY3 |>
@@ -626,7 +831,7 @@ if (as.numeric(cfb_week) == 0) {
   # PBP_PY3_Punts <- PBP_PY3 |>
   #   filter(play_type == "Punt" | play_type == "Punt Return Touchdown")
 
-  ### Setting up PBP for adjusted special teams ppa stats
+  ### Setting up PBP for adjusted special teams epa stats
   PBP_STPlays_PY3 <- PBP_PY3 |>
     filter(
       play_type %in%
@@ -804,7 +1009,7 @@ if (as.numeric(cfb_week) == 0) {
   # PBP_PY2_Punts <- PBP_PY2 |>
   #   filter(play_type == "Punt" | play_type == "Punt Return Touchdown")
 
-  ### Setting up PBP for adjusted special teams ppa stats
+  ### Setting up PBP for adjusted special teams epa stats
   PBP_STPlays_PY2 <- PBP_PY2 |>
     filter(
       play_type %in%
@@ -982,7 +1187,7 @@ if (as.numeric(cfb_week) == 0) {
   # PBP_PY1_Punts <- PBP_PY1 |>
   #   filter(play_type == "Punt" | play_type == "Punt Return Touchdown")
 
-  ### Setting up PBP for adjusted special teams ppa stats
+  ### Setting up PBP for adjusted special teams epa stats
   PBP_STPlays_PY1 <- PBP_PY1 |>
     filter(
       play_type %in%
@@ -1048,56 +1253,111 @@ if (as.numeric(cfb_week) == 0) {
 
   PBP_PY1_STScoringPlays <- PBP_STPlays_PY1 |>
     filter(scoring_play == 1)
-} else if (as.integer(cfb_week) == 1) {
-  ##### WEEK 1 Data Pull #####
-  ### reading in data for 3 previous years
-  ### no need to remove season and conference columns from PY3_df because they are removed before I write the csv in week 0
-  # PY3_df <- read_csv(here("Data", paste0("VoA", year), "PYData", "PY3.csv"))
-  # PY2_df <- read_csv(here("Data", paste0("VoA", year), "PYData", "PY2.csv"))
-  # PY1_df <- read_csv(here("Data", paste0("VoA", year), "PYData", "PY1.csv"))
+} else if (as.integer(cfb_week) <= 5) {
+  ##### WEEKS 1-5 Data Pull #####
+  ### reading in preseason VoA in case there are teams that didn't play in Week 0 or Week 1
+  PreseasonVoA <- read_parquet(paste0(
+    data_dir,
+    "/",
+    year,
+    week_text,
+    0,
+    "_",
+    VoAString
+  ))
+
+  ### reading in PY data (before rank columns are applied) so I can join appropriate PY data to VoAVariables before weighted variables are calculated
+  PYData <- read_parquet(here(
+    "Data",
+    paste0("VoA", year),
+    "PYData",
+    paste0("PYData", year, ".parquet")
+  )) |>
+    select(school, ends_with("_PY2"), ends_with("_PY1"))
 
   ### TEMPORARY 2024 WEEK 1 FIX SINCE BALL STATE DID NOT PLAY A GAME IN WEEK 0 OR 1 and also CMU and ULM are having data issues
   # BallStCMUULM <- PY1_df |>
   #   filter(team == "Ball State" | team == "Central Michigan" | team == "Louisiana Monroe") |>
-  #   mutate(season = as.numeric(year), .before = 1) |>
+  #   mutate(season = as.integer(year), .before = 1) |>
   #   mutate(conference = case_when(team == "Ball State" | team == "Central Michigan" ~ "Mid-American",
   #                                 TRUE ~ "Sun Belt"), .before = 3)
-  # colnames(BallStCMUULM) <- c("season", "team", "conference", "games", "completion_pct", "off_pass_ypa", "off_pass_ypr", "int_pct", "off_rush_ypa", "off_turnovers_pg", "third_conv_rate", "fourth_conv_rate", "penalty_yds_pg", "yards_per_penalty", "kick_return_avg", "punt_return_avg", "off_ypg", "off_pass_ypg", "off_rush_ypg", "first_downs_pg", "off_ypp", "def_interceptions_pg", "off_plays_pg", "off_ppg", "def_ppg", "def_yds_pg", "def_plays_pg", "def_third_conv_rate", "def_fourth_conv_rate", "def_ypp", "fg_rate", "fg_rate_allowed", "fg_made_pg", "fg_made_pg_allowed", "xpts_pg", "xpts_allowed_pg", "kick_return_yds_avg_allowed", "punt_return_yds_avg_allowed", "st_ppg", "st_ppg_allowed", "oppdef_ppa", "oppoff_ppa", "off_ppa", "off_success_rate", "off_explosiveness", "off_power_success", "off_stuff_rt", "off_line_yds", "off_second_lvl_yds", "off_open_field_yds", "off_pts_per_opp", "off_field_pos_avg_predicted_points", "off_havoc_total", "off_havoc_front_seven", "off_havoc_db", "off_standard_downs_ppa", "off_standard_downs_success_rate", "off_standard_downs_explosiveness", "off_passing_downs_ppa", "off_passing_downs_success_rate", "off_passing_downs_explosiveness", "off_rushing_plays_ppa", "off_rushing_plays_success_rate", "off_rushing_plays_explosiveness", "off_passing_plays_ppa", "off_passing_plays_success_rate", "off_passing_plays_explosiveness", "def_ppa", "def_success_rate", "def_explosiveness", "def_power_success", "def_stuff_rt", "def_line_yds", "def_second_lvl_yds", "def_open_field_yds", "def_pts_per_opp", "def_field_pos_avg_predicted_points", "def_havoc_total", "def_havoc_front_seven", "def_havoc_db", "def_standard_downs_ppa", "def_standard_downs_success_rate", "def_standard_downs_explosiveness", "def_passing_downs_ppa", "def_passing_downs_success_rate", "def_passing_downs_explosiveness", "def_rushing_plays_ppa", "def_rush_success_rate", "def_rush_explosiveness", "def_passing_plays_ppa", "def_pass_success_rate", "def_pass_explosiveness", "recruit_pts", "talent")
   # BallStCMUULM <- BallStCMUULM |>
-  #   select(season, team, conference, games, completion_pct, off_pass_ypa, off_pass_ypr, int_pct, off_rush_ypa, off_turnovers_pg, third_conv_rate, fourth_conv_rate, penalty_yds_pg, yards_per_penalty, kick_return_avg, punt_return_avg, off_ypg, off_pass_ypg, off_rush_ypg, first_downs_pg, off_ypp, def_interceptions_pg, off_plays_pg, off_ppg, def_ppg, def_yds_pg, def_plays_pg, def_third_conv_rate, def_fourth_conv_rate, def_ypp, fg_rate, fg_rate_allowed, fg_made_pg, fg_made_pg_allowed, xpts_pg, xpts_allowed_pg, kick_return_yds_avg_allowed, punt_return_yds_avg_allowed, st_ppg, st_ppg_allowed, oppdef_ppa, oppoff_ppa, off_ppa, off_success_rate, off_explosiveness, off_power_success, off_stuff_rt, off_line_yds, off_second_lvl_yds, off_open_field_yds, off_pts_per_opp, off_field_pos_avg_predicted_points, off_havoc_total, off_havoc_front_seven, off_havoc_db, off_standard_downs_ppa, off_standard_downs_success_rate, off_standard_downs_explosiveness, off_passing_downs_ppa, off_passing_downs_success_rate, off_passing_downs_explosiveness, off_rushing_plays_ppa, off_rushing_plays_success_rate, off_rushing_plays_explosiveness, off_passing_plays_ppa, off_passing_plays_success_rate, off_passing_plays_explosiveness, def_ppa, def_success_rate, def_explosiveness, def_power_success, def_stuff_rt, def_line_yds, def_second_lvl_yds, def_open_field_yds, def_pts_per_opp, def_field_pos_avg_predicted_points, def_havoc_total, def_havoc_front_seven, def_havoc_db, def_standard_downs_ppa, def_standard_downs_success_rate, def_standard_downs_explosiveness, def_passing_downs_ppa, def_passing_downs_success_rate, def_passing_downs_explosiveness, def_rushing_plays_ppa, def_rush_success_rate, def_rush_explosiveness, def_passing_plays_ppa, def_pass_success_rate, def_pass_explosiveness, recruit_pts)
+  #   select(season, team, conference, games, completion_pct, off_pass_ypa, off_pass_ypr, int_pct, off_rush_ypa, off_turnovers_pg, third_conv_rate, fourth_conv_rate, penalty_yds_pg, yards_per_penalty, kick_return_avg, punt_return_avg, off_ypg, off_pass_ypg, off_rush_ypg, first_downs_pg, off_ypp, def_interceptions_pg, off_plays_pg, off_ppg, def_ppg, def_yds_pg, def_plays_pg, def_third_conv_rate, def_fourth_conv_rate, def_ypp, fg_rate, fg_rate_allowed, fg_made_pg, fg_made_pg_allowed, xpts_pg, xpts_allowed_pg, kick_return_yds_avg_allowed, punt_return_yds_avg_allowed, st_ppg, st_ppg_allowed, oppdef_ppa, oppoff_ppa, off_ppa, off_success_rate, off_explosiveness, off_power_success, off_stuff_rate, off_line_yds, off_second_lvl_yds, off_open_field_yds, off_pts_per_opp, off_field_pos_avg_predicted_points, off_havoc_total, off_havoc_front_seven, off_havoc_db, off_standard_downs_ppa, off_standard_downs_success_rate, off_standard_downs_explosiveness, off_passing_downs_ppa, off_passing_downs_success_rate, off_passing_downs_explosiveness, off_rushing_plays_ppa, off_rushing_plays_success_rate, off_rushing_plays_explosiveness, off_passing_plays_ppa, off_passing_plays_success_rate, off_passing_plays_explosiveness, def_ppa, def_success_rate, def_explosiveness, def_power_success, def_stuff_rate, def_line_yds, def_second_lvl_yds, def_open_field_yds, def_pts_per_opp, def_field_pos_avg_predicted_points, def_havoc_total, def_havoc_front_seven, def_havoc_db, def_standard_downs_ppa, def_standard_downs_success_rate, def_standard_downs_explosiveness, def_passing_downs_ppa, def_passing_downs_success_rate, def_passing_downs_explosiveness, def_rushing_plays_ppa, def_rush_success_rate, def_rush_explosiveness, def_passing_plays_ppa, def_pass_success_rate, def_pass_explosiveness, recruit_pts)
 
-  ### reading in previous year's FCS data so it can be referenced when making ppg adjustments
-  # FCS_PY2 <- read_csv(here(
-  #   "Data",
-  #   paste0("VoA", year),
-  #   "FCSPrevYears",
-  #   "FCS_PY2.csv"
-  # ))
-  # FCS_PY1 <- read_csv(here(
-  #   "Data",
-  #   paste0("VoA", year),
-  #   "FCSPrevYears",
-  #   "FCS_PY1.csv"
-  # ))
+  ### grabbing team info which will be turned into VoAVariables
+  ## filtering to make sure each dataframe only includes D1 teams
+  D1Teams <- cfbd_team_info(only_fbs = FALSE, year = as.integer(year)) |>
+    filter(classification == "fbs")
+
+  # ### making sure the elevation column is numeric
+  # VoAVariables$elevation <- as.numeric(VoAVariables$elevation)
 
   ### pulling in completed games as part of opponent-adjustment of stats later
-  CompletedGames <- cfbd_game_info(as.numeric(year)) |>
+  ### completed games
+  CompletedGames <- cfbd_game_info(as.integer(year) - 1) |>
     filter(completed == TRUE) |>
     filter(
-      home_division %in% c("fbs", "fcs") & away_division %in% c("fbs", "fcs")
+      home_team %in% D1Teams$school & away_team %in% D1Teams$school
     )
   CompletedNeutralGames <- CompletedGames |>
     filter(neutral_site == TRUE)
 
-  ### Current season Play by play data
-  PBP <- load_cfb_pbp(seasons = as.numeric(year))
+  ### loading current PBP
+  PBP <- load_cfb_pbp(seasons = as.integer(year)) |>
+    filter(home %in% D1Teams$school & away %in% D1Teams$school) #|>
+  # filter(
+  #   home %in%
+  #     CompletedGames$home_team &
+  #     home %in% CompletedGames$away_team &
+  #     away %in% CompletedGames$home_team &
+  #     away %in% CompletedGames$away_team
+  # )
+  PBP <- fix_pbp_subdivision_nas(PBP, D1Teams) |>
+    mutate(epa_ppa_mean = rowMeans(select(PBP, c(EPA, ppa)), na.rm = TRUE))
+  ### VoAVariables df to be used for inference/generating current ratings
+  VoAVariables <- create_voavars_df(as.integer(year), as.integer(cfb_week)) |>
+    filter(school %in% PreseasonVoA$school)
 
   ### pulling out relevant plays used to create/input variables later
-  # fmt: skip
+  ## PY1
   PBP_Yards <- PBP |>
-    filter(play_type == "Pass Incompletion" | play_type == "Pass Reception" | play_type == "Pass Completion" | play_type == "Rush" | play_type == "Sack" | play_type == "Fumble Recovery (Own)" | play_type == "Two Point Pass" | play_type == "Two Point Rush" | play_type == "Safety" | play_type == "Fumble Recovery (Opponent)" | play_type == "Pass" | play_type == "2pt Conversion" | play_type == "Defensive 2pt Conversion" | play_type == "Passing Touchdown" | play_type == "Rushing Touchdown") |>
-    mutate(home_neutral = case_when(game_id %in% CompletedNeutralGames$game_id ~ "Neutral",
-                                    TRUE ~ "Home"))
+    filter(
+      play_type == "Pass Incompletion" |
+        play_type == "Rush" |
+        play_type == "Sack" |
+        play_type == "Fumble Recovery (Own)" |
+        play_type == "Two Point Pass" |
+        play_type == "Two Point Rush" |
+        play_type == "Safety" |
+        play_type == "Pass Reception" |
+        play_type == "Pass Completion" |
+        play_type == "Fumble Recovery (Opponent)" |
+        play_type == "Pass" |
+        play_type == "2pt Conversion" |
+        play_type == "Defensive 2pt Conversion" |
+        play_type == "Passing Touchdown" |
+        play_type == "Rushing Touchdown"
+    ) |>
+    mutate(
+      new_drive_pts = case_when(
+        new_drive_pts < 0 ~ 0,
+        drive_pts == 8 ~ 8,
+        TRUE ~ new_drive_pts
+      ),
+      home_neutral = case_when(
+        game_id %in% CompletedNeutralGames$game_id ~ "Neutral",
+        TRUE ~ "Home"
+      )
+    ) |>
+    mutate(
+      play_pts_scored = case_when(scoring_play == 1 ~ new_drive_pts, TRUE ~ 0)
+    )
+
+  PBP_ScoringPlays <- PBP_Yards |>
+    filter(scoring_play == 1 & play_pts_scored != 3)
+
+  PBP_Turnovers <- PBP_Yards |>
+    filter(turnover == 1)
 
   PBP_success_plays <- PBP_Yards |>
     filter(
@@ -1105,9 +1365,6 @@ if (as.numeric(cfb_week) == 0) {
         (down == 2 & (yards_gained >= (distance * 0.7))) |
         (down > 2 & (yards_gained >= distance))
     )
-
-  PBP_Turnovers <- PBP_Yards |>
-    filter(turnover == 1)
 
   PBP_3rdDowns <- PBP_Yards |>
     filter(down == 3)
@@ -1128,10 +1385,9 @@ if (as.numeric(cfb_week) == 0) {
     filter(play_type == "Rush" | play_type == "Two Point Rush")
 
   PBP_scoringopp_plays <- PBP |>
-    filter(scoring_opp == 1) |>
-    drop_na(drive_pts)
+    filter(scoring_opp == 1)
 
-  PBP_TDs <- PBP |>
+  PBP_TDs <- PBP_Yards |>
     filter(play_type == "Passing Touchdown" | play_type == "Rushing Touchdown")
 
   # PBP_2PtConvs <- PBP |>
@@ -1149,248 +1405,14 @@ if (as.numeric(cfb_week) == 0) {
   PBP_FGPlays <- PBP |>
     filter(play_type == "Field Goal Good" | play_type == "Field Goal Missed")
 
-  PBP_XPPlays <- PBP_TDs |>
-    filter(pos_score_pts == 7)
+  # PBP_XPPlays <- PBP_TDs |>
+  #   filter(play_pts_scored == 7)
 
   ### on ReturnTD plays, pos_team does the scoring (at least based on an admittedly too-quick glance)
   ## except on punt return TDs
+  # fmt: skip
   PBP_ReturnTDs <- PBP |>
-    filter(
-      play_type == "Kickoff Return Touchdown" |
-        play_type == "Punt Return Touchdown" |
-        play_type == "Blocked Punt Touchdown" |
-        play_type == "Blocked Field Goal Touchdown" |
-        play_type == "Missed Field Goal Touchdown"
-    )
-
-  PBP_PuntReturnTD <- PBP_ReturnTDs |>
-    filter(play_type == "Punt Return Touchdown")
-
-  ### on KickReturnPlays, pos_team gains yards/does the returning
-  ## will use data from this subset to evaluate a predictor, kick/punt return yards allowed
-  PBP_KickReturn <- PBP |>
-    filter(
-      play_type == "Kickoff Return Touchdown" |
-        play_type == "Kickoff Return (Offense)" |
-        play_type == "Kickoff"
-    )
-
-  ### on punt plays, pos_team does the punting, def_pos_team does the returning
-  PBP_Punts <- PBP |>
-    filter(play_type == "Punt" | play_type == "Punt Return Touchdown")
-
-  ### filtering out columns not used to make opponent-adjusted PPA (EPA) stat
-  # fmt: skip
-  PBP_EPA_Adjustment <- PBP_Yards[,c("game_id", "home", "pos_team", "def_pos_team", "ppa", "offense_conference", "defense_conference", "home_neutral")] |>
-    mutate(hfa = as.factor(case_when(home_neutral == "Neutral" ~ 0,
-                                     ### home team on offense
-                                     pos_team == home ~ 1,
-                                     ### home team on defense
-                                     TRUE ~ -1))) |>
-    drop_na()
-
-  ### Extracting just successful plays for opponent-adjusted Explosiveness metric
-  PBP_ExpAdjustment <- PBP_Yards[, c(
-    "game_id",
-    "home",
-    "pos_team",
-    "def_pos_team",
-    "success",
-    "ppa",
-    "offense_conference",
-    "defense_conference",
-    "home_neutral"
-  )] |>
-    filter(success == 1) |>
-    mutate(
-      hfa = as.factor(case_when(
-        home_neutral == "Neutral" ~ 0,
-        ### home team on offense
-        pos_team == home ~ 1,
-        ### home team on defense
-        TRUE ~ -1
-      ))
-    ) |>
-    drop_na()
-
-  ### extracting specific columns for opponent-adjusted yards per play stat
-  PBP_YPP_Adjustment <- PBP_Yards[, c(
-    "game_id",
-    "home",
-    "pos_team",
-    "def_pos_team",
-    "yards_gained",
-    "offense_conference",
-    "defense_conference",
-    "home_neutral"
-  )] |>
-    mutate(
-      hfa = as.factor(case_when(
-        home_neutral == "Neutral" ~ 0,
-        ### home team on offense
-        pos_team == home ~ 1,
-        ### home team on defense
-        TRUE ~ -1
-      ))
-    ) |>
-    drop_na()
-
-  ### Extracting PBP for scoring plays
-  PBP_PPG_Adjustment <- PBP_Yards[, c(
-    "game_id",
-    "home",
-    "pos_team",
-    "def_pos_team",
-    "offense_score_play",
-    "rush_td",
-    "pass_td",
-    "offense_conference",
-    "defense_conference",
-    "home_neutral",
-    "play_pts_scored"
-  )] |>
-    mutate(
-      hfa = as.factor(case_when(
-        home_neutral == "Neutral" ~ 0,
-        ### home team on offense
-        pos_team == home ~ 1,
-        ### home team on defense
-        TRUE ~ -1
-      ))
-    ) |>
-    drop_na()
-
-  ### Setting up PBP for adjusted special teams ppa stats
-  # fmt: skip
-  PBP_STPlays <- rbind(PBP_FGPlays, PBP_XPPlays, PBP_KickReturn, PBP_Punts) |>
-    mutate(real_pos_team = case_when(play_type %in% c("Field Goal Good", "Field Goal Missed", "Kickoff Return Touchdown", "Kickoff Return (Offense)", "Kickoff") | pos_score_pts == 7 ~ pos_team,
-                                     TRUE ~ def_pos_team),
-           real_def_pos_team = case_when(play_type %in% c("Field Goal Good", "Field Goal Missed", "Kickoff Return Touchdown", "Kickoff Return (Offense)", "Kickoff") | pos_score_pts == 7 ~ def_pos_team,
-                                         TRUE ~ pos_team),
-           home_neutral = case_when(game_id %in% CompletedNeutralGames$game_id ~ "Neutral",
-                                    TRUE ~ "Home"))
-
-  PBP_STEPA_Adjustment <- PBP_STPlays |>
-    select(
-      game_id,
-      home,
-      real_pos_team,
-      real_def_pos_team,
-      ppa,
-      home_neutral
-    ) |>
-    mutate(
-      hfa = as.factor(case_when(
-        home_neutral == "Neutral" ~ 0,
-        ### home team on offense
-        real_pos_team == home ~ 1,
-        ### home team on defense
-        TRUE ~ -1
-      ))
-    ) |>
-    drop_na()
-} else if (as.integer(cfb_week) <= 5) {
-  ##### WEEKS 2-5 DATA PULL #####
-  ### reading in Previous year's data as csvs so I don't have to read it in again
-  # PY2_df <- read_csv(here("Data", paste0("VoA", year), "PYData", "PY2.csv"))
-  # PY1_df <- read_csv(here("Data", paste0("VoA", year), "PYData", "PY1.csv"))
-
-  ### reading in previous year's FCS data so it can be referenced when making ppg adjustments
-  # FCS_PY2 <- read_csv(here(
-  #   "Data",
-  #   paste0("VoA", year),
-  #   "FCSPrevYears",
-  #   "FCS_PY2.csv"
-  # ))
-  # FCS_PY1 <- read_csv(here(
-  #   "Data",
-  #   paste0("VoA", year),
-  #   "FCSPrevYears",
-  #   "FCS_PY1.csv"
-  # ))
-
-  ### pulling in completed games as part of opponent-adjustment of stats later
-  CompletedGames <- cfbd_game_info(as.numeric(year)) |>
-    filter(completed == TRUE) |>
-    filter(
-      home_division %in% c("fbs", "fcs") & away_division %in% c("fbs", "fcs")
-    )
-  CompletedNeutralGames <- CompletedGames |>
-    filter(neutral_site == TRUE)
-
-  ### Current season Play by play data
-  PBP <- load_cfb_pbp(seasons = as.numeric(year))
-
-  ### pulling out relevant plays used to create/input variables later
-  # fmt: skip
-  PBP_Yards <- PBP |>
-    filter(play_type == "Pass Incompletion" | play_type == "Pass Reception" | play_type == "Pass Completion" | play_type == "Rush" | play_type == "Sack" | play_type == "Fumble Recovery (Own)" | play_type == "Two Point Pass" | play_type == "Two Point Rush" | play_type == "Safety" | play_type == "Fumble Recovery (Opponent)" | play_type == "Pass" | play_type == "2pt Conversion" | play_type == "Defensive 2pt Conversion" | play_type == "Passing Touchdown" | play_type == "Rushing Touchdown") |>
-    mutate(home_neutral = case_when(game_id %in% CompletedNeutralGames$game_id ~ "Neutral",
-                                    TRUE ~ "Home"))
-
-  PBP_success_plays <- PBP_Yards |>
-    filter(
-      (down == 1 & (yards_gained >= (distance / 2))) |
-        (down == 2 & (yards_gained >= (distance * 0.7))) |
-        (down > 2 & (yards_gained >= distance))
-    )
-
-  PBP_Turnovers <- PBP_Yards |>
-    filter(turnover == 1)
-
-  PBP_3rdDowns <- PBP_Yards |>
-    filter(down == 3)
-
-  PBP_4thDowns <- PBP_Yards |>
-    filter(down == 4)
-
-  PBP_passplays <- PBP_Yards |>
-    filter(
-      play_type == "Pass" |
-        play_type == "Pass Incompletion" |
-        play_type == "Pass Reception" |
-        play_type == "Pass Completion" |
-        play_type == "Two Point Pass"
-    )
-
-  PBP_rushplays <- PBP_Yards |>
-    filter(play_type == "Rush" | play_type == "Two Point Rush")
-
-  PBP_scoringopp_plays <- PBP |>
-    filter(scoring_opp == 1) |>
-    drop_na(drive_pts)
-
-  PBP_TDs <- PBP |>
-    filter(play_type == "Passing Touchdown" | play_type == "Rushing Touchdown")
-
-  # PBP_2PtConvs <- PBP |>
-  #   filter(
-  #     play_type == "Two Point Rush" |
-  #       play_type == "Two Point Pass" |
-  #       play_type == "2pt Conversion"
-  #   )
-
-  # PBP_2ptPlays <- PBP_TDs |>
-  #   filter(pos_score_pts == 8)
-
-  # PBP_2ptPlays <- rbind(PBP_2ptPlays, PBP_2PtConvs)
-
-  PBP_FGPlays <- PBP |>
-    filter(play_type == "Field Goal Good" | play_type == "Field Goal Missed")
-
-  PBP_XPPlays <- PBP_TDs |>
-    filter(pos_score_pts == 7)
-
-  ### on ReturnTD plays, pos_team does the scoring (at least based on an admittedly too-quick glance)
-  ## except on punt return TDs
-  PBP_ReturnTDs <- PBP |>
-    filter(
-      play_type == "Kickoff Return Touchdown" |
-        play_type == "Punt Return Touchdown" |
-        play_type == "Blocked Punt Touchdown" |
-        play_type == "Blocked Field Goal Touchdown" |
-        play_type == "Missed Field Goal Touchdown"
-    )
+    filter(play_type == "Kickoff Return Touchdown" | play_type == "Punt Return Touchdown" | play_type == "Blocked Punt Touchdown" | play_type == "Blocked Field Goal Touchdown" | play_type == "Missed Field Goal Touchdown")
 
   PBP_PuntReturnTD <- PBP |>
     filter(play_type == "Punt Return Touchdown")
@@ -1405,64 +1427,43 @@ if (as.numeric(cfb_week) == 0) {
     )
 
   ### on punt plays, pos_team does the punting, def_pos_team does the returning
-  PBP_Punts <- PBP |>
-    filter(play_type == "Punt" | play_type == "Punt Return Touchdown")
+  # PBP_Punts <- PBP |>
+  #   filter(play_type == "Punt" | play_type == "Punt Return Touchdown")
 
-  ### filtering out columns not used to make opponent-adjusted PPA (EPA) stat
-  # fmt: skip
-  PBP_EPA_Adjustment <- PBP_Yards[,c("game_id", "home", "pos_team", "def_pos_team", "ppa", "offense_conference", "defense_conference", "home_neutral")] |>
-    mutate(hfa = as.factor(case_when(home_neutral == "Neutral" ~ 0,
-                                     ### home team on offense
-                                     pos_team == home ~ 1,
-                                     ### home team on defense
-                                     TRUE ~ -1))) |>
-    drop_na()
-
-  ### Extracting just successful plays for opponent-adjusted Explosiveness metric
-  # fmt: skip
-  PBP_ExpAdjustment <- PBP_Yards[,c("game_id", "home", "pos_team", "def_pos_team", "success", "ppa", "offense_conference", "defense_conference", "home_neutral")] |>
-    filter(success == 1) |>
-    mutate(hfa = as.factor(case_when(home_neutral == "Neutral" ~ 0,
-                                     ### home team on offense
-                                     pos_team == home ~ 1,
-                                     ### home team on defense
-                                     TRUE ~ -1))) |>
-    drop_na()
-
-  ### extracting specific columns for opponent-adjusted yards per play stat
-  PBP_YPP_Adjustment <- PBP_Yards[, c(
-    "game_id",
-    "home",
-    "pos_team",
-    "def_pos_team",
-    "yards_gained",
-    "offense_conference",
-    "defense_conference",
-    "home_neutral"
-  )] |>
-    mutate(
-      hfa = as.factor(case_when(
-        home_neutral == "Neutral" ~ 0,
-        ### home team on offense
-        pos_team == home ~ 1,
-        ### home team on defense
-        TRUE ~ -1
-      ))
+  ### Setting up PBP for adjusted special teams epa stats
+  PBP_STPlays <- PBP |>
+    filter(
+      play_type %in%
+        c(
+          "Punt",
+          "Punt Return Touchdown",
+          "Kickoff Return Touchdown",
+          "Kickoff Return (Offense)",
+          "Kickoff",
+          "Blocked Punt Touchdown",
+          "Blocked Field Goal Touchdown",
+          "Missed Field Goal Touchdown",
+          "Field Goal Good",
+          "Field Goal Missed"
+        ) |
+        (play_type %in%
+          c("Passing Touchdown", "Rushing Touchdown") &
+          new_drive_pts == 7)
     ) |>
-    drop_na()
-
-  ### Extracting PBP for scoring plays
-  # fmt: skip
-  PBP_PPG_Adjustment <- PBP_Yards[,c("game_id", "home", "pos_team", "def_pos_team", "offense_score_play", "rush_td", "pass_td", "offense_conference", "defense_conference", "home_neutral", "play_pts_scored")] |>
-    mutate(hfa = as.factor(case_when(home_neutral == "Neutral" ~ 0,
-                                     ### home team on offense
-                                     pos_team == home ~ 1,
-                                     ### home team on defense
-                                     TRUE ~ -1))) |>
-    drop_na()
-
-  ### Setting up PBP for adjusted special teams ppa stats
-  PBP_STPlays <- rbind(PBP_FGPlays, PBP_XPPlays, PBP_KickReturn, PBP_Punts) |>
+    mutate(
+      new_drive_pts = case_when(
+        new_drive_pts < 0 ~ 0,
+        drive_pts == 8 ~ 8,
+        TRUE ~ new_drive_pts
+      )
+    ) |>
+    mutate(
+      play_pts_scored = case_when(
+        play_type %in% c("Passing Touchdown", "Rushing Touchdown") ~ 1,
+        scoring_play == 1 ~ new_drive_pts,
+        TRUE ~ 0
+      )
+    ) |>
     mutate(
       real_pos_team = case_when(
         play_type %in%
@@ -1473,7 +1474,7 @@ if (as.numeric(cfb_week) == 0) {
             "Kickoff Return (Offense)",
             "Kickoff"
           ) |
-          pos_score_pts == 7 ~ pos_team,
+          play_pts_scored == 1 ~ pos_team,
         TRUE ~ def_pos_team
       ),
       real_def_pos_team = case_when(
@@ -1484,8 +1485,7 @@ if (as.numeric(cfb_week) == 0) {
             "Kickoff Return Touchdown",
             "Kickoff Return (Offense)",
             "Kickoff"
-          ) |
-          pos_score_pts == 7 ~ def_pos_team,
+          ) ~ def_pos_team,
         TRUE ~ pos_team
       ),
       home_neutral = case_when(
@@ -1494,60 +1494,94 @@ if (as.numeric(cfb_week) == 0) {
       )
     )
 
-  PBP_STEPA_Adjustment <- PBP_STPlays |>
-    select(
-      game_id,
-      home,
-      real_pos_team,
-      real_def_pos_team,
-      ppa,
-      home_neutral
-    ) |>
-    mutate(
-      hfa = as.factor(case_when(
-        home_neutral == "Neutral" ~ 0,
-        ### home team on offense
-        real_pos_team == home ~ 1,
-        ### home team on defense
-        TRUE ~ -1
-      ))
-    ) |>
-    drop_na()
-} else if (as.integer(cfb_week) <= 8) {
-  ##### WEEKS 6-8 Data Pull #####
-  ### reading in Previous year's data as csvs so I don't have to read it in again
-  # PY1_df <- read_csv(here("Data", paste0("VoA", year), "PYData", "PY1.csv"))
+  PBP_STScoringPlays <- PBP_STPlays |>
+    filter(scoring_play == 1)
+} else if (as.integer(cfb_week) <= 9) {
+  ##### WEEKS 6-9 Data Pull #####
+  ### assuming that everyone will have played a game that's in the PBP dataset by now so not reading in the preseason VoA, just the PY stats so I don't have to recalculate those in the extracting stats section of the script
+  ### reading in PY data (before rank columns are applied) so I can join appropriate PY data to VoAVariables before weighted variables are calculated
+  PYData <- read_parquet(here(
+    "Data",
+    paste0("VoA", year),
+    "PYData",
+    paste0("PYData", year, ".parquet")
+  )) |>
+    select(school, ends_with("_PY1"))
 
-  # ### reading in previous year's FCS data so it can be referenced when making ppg adjustments
-  # FCS_PY2 <- read_csv(here(
-  #   "Data",
-  #   paste0("VoA", year),
-  #   "FCSPrevYears",
-  #   "FCS_PY2.csv"
-  # ))
-  # FCS_PY1 <- read_csv(here(
-  #   "Data",
-  #   paste0("VoA", year),
-  #   "FCSPrevYears",
-  #   "FCS_PY1.csv"
-  # ))
+  ### grabbing team info which will be turned into VoAVariables
+  ## filtering to make sure each dataframe only includes D1 teams
+  D1Teams <- cfbd_team_info(only_fbs = FALSE, year = as.integer(year)) |>
+    filter(classification == "fbs")
+
+  # ### making sure the elevation column is numeric
+  # VoAVariables$elevation <- as.numeric(VoAVariables$elevation)
 
   ### pulling in completed games as part of opponent-adjustment of stats later
-  CompletedGames <- cfbd_game_info(as.numeric(year)) |>
+  ### completed games
+  CompletedGames <- cfbd_game_info(as.integer(year) - 1) |>
     filter(completed == TRUE) |>
-    filter(home_division == "fbs" | away_division == "fbs")
+    filter(
+      home_team %in% D1Teams$school & away_team %in% D1Teams$school
+    )
   CompletedNeutralGames <- CompletedGames |>
     filter(neutral_site == TRUE)
 
-  ### Current season Play by play data
-  PBP <- load_cfb_pbp(seasons = as.numeric(year))
+  ### loading current PBP
+  PBP <- load_cfb_pbp(seasons = as.integer(year)) |>
+    filter(home %in% D1Teams$school & away %in% D1Teams$school) #|>
+  # filter(
+  #   home %in%
+  #     CompletedGames$home_team &
+  #     home %in% CompletedGames$away_team &
+  #     away %in% CompletedGames$home_team &
+  #     away %in% CompletedGames$away_team
+  # )
+  PBP <- fix_pbp_subdivision_nas(PBP, D1Teams) |>
+    mutate(epa_ppa_mean = rowMeans(select(PBP, c(EPA, ppa)), na.rm = TRUE))
+  ### VoAVariables df to be used for inference/generating current ratings
+  VoAVariables <- create_voavars_df(as.integer(year), as.integer(cfb_week)) |>
+    filter(school %in% PreseasonVoA$school)
 
   ### pulling out relevant plays used to create/input variables later
-  # fmt: skip
+  ## PY1
   PBP_Yards <- PBP |>
-    filter(play_type == "Pass Incompletion" | play_type == "Pass Reception" | play_type == "Pass Completion" | play_type == "Rush" | play_type == "Sack" | play_type == "Fumble Recovery (Own)" | play_type == "Two Point Pass" | play_type == "Two Point Rush" | play_type == "Safety" | play_type == "Fumble Recovery (Opponent)" | play_type == "Pass" | play_type == "2pt Conversion" | play_type == "Defensive 2pt Conversion" | play_type == "Passing Touchdown" | play_type == "Rushing Touchdown") |>
-    mutate(home_neutral = case_when(game_id %in% CompletedNeutralGames$game_id ~ "Neutral",
-                                    TRUE ~ "Home"))
+    filter(
+      play_type == "Pass Incompletion" |
+        play_type == "Rush" |
+        play_type == "Sack" |
+        play_type == "Fumble Recovery (Own)" |
+        play_type == "Two Point Pass" |
+        play_type == "Two Point Rush" |
+        play_type == "Safety" |
+        play_type == "Pass Reception" |
+        play_type == "Pass Completion" |
+        play_type == "Fumble Recovery (Opponent)" |
+        play_type == "Pass" |
+        play_type == "2pt Conversion" |
+        play_type == "Defensive 2pt Conversion" |
+        play_type == "Passing Touchdown" |
+        play_type == "Rushing Touchdown"
+    ) |>
+    mutate(
+      new_drive_pts = case_when(
+        new_drive_pts < 0 ~ 0,
+        drive_pts == 8 ~ 8,
+        TRUE ~ new_drive_pts
+      ),
+      home_neutral = case_when(
+        game_id %in% CompletedNeutralGames$game_id ~ "Neutral",
+        TRUE ~ "Home"
+      )
+    ) |>
+    mutate(
+      play_pts_scored = case_when(scoring_play == 1 ~ new_drive_pts, TRUE ~ 0)
+    )
+
+  PBP_ScoringPlays <- PBP_Yards |>
+    filter(scoring_play == 1 & play_pts_scored != 3)
+
+  PBP_Turnovers <- PBP_Yards |>
+    filter(turnover == 1)
 
   PBP_success_plays <- PBP_Yards |>
     filter(
@@ -1555,9 +1589,6 @@ if (as.numeric(cfb_week) == 0) {
         (down == 2 & (yards_gained >= (distance * 0.7))) |
         (down > 2 & (yards_gained >= distance))
     )
-
-  PBP_Turnovers <- PBP_Yards |>
-    filter(turnover == 1)
 
   PBP_3rdDowns <- PBP_Yards |>
     filter(down == 3)
@@ -1578,10 +1609,9 @@ if (as.numeric(cfb_week) == 0) {
     filter(play_type == "Rush" | play_type == "Two Point Rush")
 
   PBP_scoringopp_plays <- PBP |>
-    filter(scoring_opp == 1) |>
-    drop_na(drive_pts)
+    filter(scoring_opp == 1)
 
-  PBP_TDs <- PBP |>
+  PBP_TDs <- PBP_Yards |>
     filter(play_type == "Passing Touchdown" | play_type == "Rushing Touchdown")
 
   # PBP_2PtConvs <- PBP |>
@@ -1599,8 +1629,8 @@ if (as.numeric(cfb_week) == 0) {
   PBP_FGPlays <- PBP |>
     filter(play_type == "Field Goal Good" | play_type == "Field Goal Missed")
 
-  PBP_XPPlays <- PBP_TDs |>
-    filter(pos_score_pts == 7)
+  # PBP_XPPlays <- PBP_TDs |>
+  #   filter(play_pts_scored == 7)
 
   ### on ReturnTD plays, pos_team does the scoring (at least based on an admittedly too-quick glance)
   ## except on punt return TDs
@@ -1621,121 +1651,151 @@ if (as.numeric(cfb_week) == 0) {
     )
 
   ### on punt plays, pos_team does the punting, def_pos_team does the returning
-  PBP_Punts <- PBP |>
-    filter(play_type == "Punt" | play_type == "Punt Return Touchdown")
+  # PBP_Punts <- PBP |>
+  #   filter(play_type == "Punt" | play_type == "Punt Return Touchdown")
 
-  ### filtering out columns not used to make opponent-adjusted PPA (EPA) stat
-  # fmt: skip
-  PBP_EPA_Adjustment <- PBP_Yards[,c("game_id", "home", "pos_team", "def_pos_team", "ppa", "offense_conference", "defense_conference", "home_neutral")] |>
-    mutate(hfa = as.factor(case_when(home_neutral == "Neutral" ~ 0,
-                                     ### home team on offense
-                                     pos_team == home ~ 1,
-                                     ### home team on defense
-                                     TRUE ~ -1))) |>
-    drop_na()
-
-  ### Extracting just successful plays for opponent-adjusted Explosiveness metric
-  # fmt: skip
-  PBP_ExpAdjustment <- PBP_Yards[,c("game_id", "home", "pos_team", "def_pos_team", "success", "ppa", "offense_conference", "defense_conference", "home_neutral")] |>
-    filter(success == 1) |>
-    mutate(hfa = as.factor(case_when(home_neutral == "Neutral" ~ 0,
-                                     ### home team on offense
-                                     pos_team == home ~ 1,
-                                     ### home team on defense
-                                     TRUE ~ -1))) |>
-    drop_na()
-
-  ### extracting specific columns for opponent-adjusted yards per play stat
-  PBP_YPP_Adjustment <- PBP_Yards[, c(
-    "game_id",
-    "home",
-    "pos_team",
-    "def_pos_team",
-    "yards_gained",
-    "offense_conference",
-    "defense_conference",
-    "home_neutral"
-  )] |>
-    mutate(
-      hfa = as.factor(case_when(
-        home_neutral == "Neutral" ~ 0,
-        ### home team on offense
-        pos_team == home ~ 1,
-        ### home team on defense
-        TRUE ~ -1
-      ))
-    ) |>
-    drop_na()
-
-  ### Extracting PBP for scoring plays
-  # fmt: skip
-  PBP_PPG_Adjustment <- PBP_Yards[,c("game_id", "home", "pos_team", "def_pos_team", "offense_score_play", "rush_td", "pass_td", "offense_conference", "defense_conference", "home_neutral", "play_pts_scored")] |>
-    mutate(hfa = as.factor(case_when(home_neutral == "Neutral" ~ 0,
-                                     ### home team on offense
-                                     pos_team == home ~ 1,
-                                     ### home team on defense
-                                     TRUE ~ -1))) |>
-    drop_na()
-
-  ### Setting up PBP for adjusted special teams ppa stats
-  # fmt: skip
-  PBP_STPlays <- rbind(PBP_FGPlays, PBP_XPPlays, PBP_KickReturn, PBP_Punts) |>
-    mutate(real_pos_team = case_when(play_type %in% c("Field Goal Good", "Field Goal Missed", "Kickoff Return Touchdown", "Kickoff Return (Offense)", "Kickoff") | pos_score_pts == 7 ~ pos_team,
-                                     TRUE ~ def_pos_team),
-           real_def_pos_team = case_when(play_type %in% c("Field Goal Good", "Field Goal Missed", "Kickoff Return Touchdown", "Kickoff Return (Offense)", "Kickoff") | pos_score_pts == 7 ~ def_pos_team,
-                                         TRUE ~ pos_team),
-           home_neutral = case_when(game_id %in% CompletedNeutralGames$game_id ~ "Neutral",
-                                    TRUE ~ "Home"))
-
-  PBP_STEPA_Adjustment <- PBP_STPlays |>
-    select(
-      game_id,
-      home,
-      real_pos_team,
-      real_def_pos_team,
-      ppa,
-      home_neutral
+  ### Setting up PBP for adjusted special teams epa stats
+  PBP_STPlays <- PBP |>
+    filter(
+      play_type %in%
+        c(
+          "Punt",
+          "Punt Return Touchdown",
+          "Kickoff Return Touchdown",
+          "Kickoff Return (Offense)",
+          "Kickoff",
+          "Blocked Punt Touchdown",
+          "Blocked Field Goal Touchdown",
+          "Missed Field Goal Touchdown",
+          "Field Goal Good",
+          "Field Goal Missed"
+        ) |
+        (play_type %in%
+          c("Passing Touchdown", "Rushing Touchdown") &
+          new_drive_pts == 7)
     ) |>
     mutate(
-      hfa = as.factor(case_when(
-        home_neutral == "Neutral" ~ 0,
-        ### home team on offense
-        real_pos_team == home ~ 1,
-        ### home team on defense
-        TRUE ~ -1
-      ))
+      new_drive_pts = case_when(
+        new_drive_pts < 0 ~ 0,
+        drive_pts == 8 ~ 8,
+        TRUE ~ new_drive_pts
+      )
     ) |>
-    drop_na()
+    mutate(
+      play_pts_scored = case_when(
+        play_type %in% c("Passing Touchdown", "Rushing Touchdown") ~ 1,
+        scoring_play == 1 ~ new_drive_pts,
+        TRUE ~ 0
+      )
+    ) |>
+    mutate(
+      real_pos_team = case_when(
+        play_type %in%
+          c(
+            "Field Goal Good",
+            "Field Goal Missed",
+            "Kickoff Return Touchdown",
+            "Kickoff Return (Offense)",
+            "Kickoff"
+          ) |
+          play_pts_scored == 1 ~ pos_team,
+        TRUE ~ def_pos_team
+      ),
+      real_def_pos_team = case_when(
+        play_type %in%
+          c(
+            "Field Goal Good",
+            "Field Goal Missed",
+            "Kickoff Return Touchdown",
+            "Kickoff Return (Offense)",
+            "Kickoff"
+          ) ~ def_pos_team,
+        TRUE ~ pos_team
+      ),
+      home_neutral = case_when(
+        game_id %in% CompletedNeutralGames$game_id ~ "Neutral",
+        TRUE ~ "Home"
+      )
+    )
+
+  PBP_STScoringPlays <- PBP_STPlays |>
+    filter(scoring_play == 1)
 } else {
   ##### CURRENT SEASON STATS ONLY Data Pull #####
-  ### reading in previous year's FCS data so it can be referenced when making ppg adjustments
-  # FCS_PY2 <- read_csv(here(
-  #   "Data",
-  #   paste0("VoA", year),
-  #   "FCSPrevYears",
-  #   "FCS_PY2.csv"
-  # ))
-  # FCS_PY1 <- read_csv(here(
-  #   "Data",
-  #   paste0("VoA", year),
-  #   "FCSPrevYears",
-  #   "FCS_PY1.csv"
-  # ))
+  ### grabbing team info which will be turned into VoAVariables
+  ## filtering to make sure each dataframe only includes D1 teams
+  D1Teams <- cfbd_team_info(only_fbs = FALSE, year = as.integer(year)) |>
+    filter(classification == "fbs")
+
+  # ### making sure the elevation column is numeric
+  # VoAVariables$elevation <- as.numeric(VoAVariables$elevation)
+
   ### pulling in completed games as part of opponent-adjustment of stats later
-  CompletedGames <- cfbd_game_info(as.numeric(year)) |>
+  ### completed games
+  CompletedGames <- cfbd_game_info(as.integer(year) - 1) |>
     filter(completed == TRUE) |>
-    filter(home_division == "fbs" | away_division == "fbs")
+    filter(
+      home_team %in% D1Teams$school & away_team %in% D1Teams$school
+    )
   CompletedNeutralGames <- CompletedGames |>
     filter(neutral_site == TRUE)
-  ### Current season Play by play data
-  PBP <- load_cfb_pbp(seasons = as.numeric(year))
+
+  ### loading current PBP
+  PBP <- load_cfb_pbp(seasons = as.integer(year)) |>
+    filter(home %in% D1Teams$school & away %in% D1Teams$school) #|>
+  # filter(
+  #   home %in%
+  #     CompletedGames$home_team &
+  #     home %in% CompletedGames$away_team &
+  #     away %in% CompletedGames$home_team &
+  #     away %in% CompletedGames$away_team
+  # )
+  PBP <- fix_pbp_subdivision_nas(PBP, D1Teams) |>
+    mutate(epa_ppa_mean = rowMeans(select(PBP, c(EPA, ppa)), na.rm = TRUE))
+  ### VoAVariables df to be used for inference/generating current ratings
+  VoAVariables <- create_voavars_df(as.integer(year), as.integer(cfb_week)) |>
+    filter(school %in% PreseasonVoA$school)
 
   ### pulling out relevant plays used to create/input variables later
-  # fmt: skip
+  ## PY1
   PBP_Yards <- PBP |>
-    filter(play_type == "Pass Incompletion" | play_type == "Pass Reception" | play_type == "Pass Completion" | play_type == "Rush" | play_type == "Sack" | play_type == "Fumble Recovery (Own)" | play_type == "Two Point Pass" | play_type == "Two Point Rush" | play_type == "Safety" | play_type == "Fumble Recovery (Opponent)" | play_type == "Pass" | play_type == "2pt Conversion" | play_type == "Defensive 2pt Conversion" | play_type == "Passing Touchdown" | play_type == "Rushing Touchdown") |>
-    mutate(home_neutral = case_when(game_id %in% CompletedNeutralGames$game_id ~ "Neutral",
-                                    TRUE ~ "Home"))
+    filter(
+      play_type == "Pass Incompletion" |
+        play_type == "Rush" |
+        play_type == "Sack" |
+        play_type == "Fumble Recovery (Own)" |
+        play_type == "Two Point Pass" |
+        play_type == "Two Point Rush" |
+        play_type == "Safety" |
+        play_type == "Pass Reception" |
+        play_type == "Pass Completion" |
+        play_type == "Fumble Recovery (Opponent)" |
+        play_type == "Pass" |
+        play_type == "2pt Conversion" |
+        play_type == "Defensive 2pt Conversion" |
+        play_type == "Passing Touchdown" |
+        play_type == "Rushing Touchdown"
+    ) |>
+    mutate(
+      new_drive_pts = case_when(
+        new_drive_pts < 0 ~ 0,
+        drive_pts == 8 ~ 8,
+        TRUE ~ new_drive_pts
+      ),
+      home_neutral = case_when(
+        game_id %in% CompletedNeutralGames$game_id ~ "Neutral",
+        TRUE ~ "Home"
+      )
+    ) |>
+    mutate(
+      play_pts_scored = case_when(scoring_play == 1 ~ new_drive_pts, TRUE ~ 0)
+    )
+
+  PBP_ScoringPlays <- PBP_Yards |>
+    filter(scoring_play == 1 & play_pts_scored != 3)
+
+  PBP_Turnovers <- PBP_Yards |>
+    filter(turnover == 1)
 
   PBP_success_plays <- PBP_Yards |>
     filter(
@@ -1743,9 +1803,6 @@ if (as.numeric(cfb_week) == 0) {
         (down == 2 & (yards_gained >= (distance * 0.7))) |
         (down > 2 & (yards_gained >= distance))
     )
-
-  PBP_Turnovers <- PBP_Yards |>
-    filter(turnover == 1)
 
   PBP_3rdDowns <- PBP_Yards |>
     filter(down == 3)
@@ -1766,14 +1823,17 @@ if (as.numeric(cfb_week) == 0) {
     filter(play_type == "Rush" | play_type == "Two Point Rush")
 
   PBP_scoringopp_plays <- PBP |>
-    filter(scoring_opp == 1) |>
-    drop_na(drive_pts)
+    filter(scoring_opp == 1)
 
-  PBP_TDs <- PBP |>
+  PBP_TDs <- PBP_Yards |>
     filter(play_type == "Passing Touchdown" | play_type == "Rushing Touchdown")
 
   # PBP_2PtConvs <- PBP |>
-  #   filter(play_type == "Two Point Rush" | play_type == "Two Point Pass" | play_type == "2pt Conversion")
+  #   filter(
+  #     play_type == "Two Point Rush" |
+  #       play_type == "Two Point Pass" |
+  #       play_type == "2pt Conversion"
+  #   )
 
   # PBP_2ptPlays <- PBP_TDs |>
   #   filter(pos_score_pts == 8)
@@ -1783,8 +1843,8 @@ if (as.numeric(cfb_week) == 0) {
   PBP_FGPlays <- PBP |>
     filter(play_type == "Field Goal Good" | play_type == "Field Goal Missed")
 
-  PBP_XPPlays <- PBP_TDs |>
-    filter(pos_score_pts == 7)
+  # PBP_XPPlays <- PBP_TDs |>
+  #   filter(play_pts_scored == 7)
 
   ### on ReturnTD plays, pos_team does the scoring (at least based on an admittedly too-quick glance)
   ## except on punt return TDs
@@ -1805,87 +1865,83 @@ if (as.numeric(cfb_week) == 0) {
     )
 
   ### on punt plays, pos_team does the punting, def_pos_team does the returning
-  PBP_Punts <- PBP |>
-    filter(play_type == "Punt" | play_type == "Punt Return Touchdown")
+  # PBP_Punts <- PBP |>
+  #   filter(play_type == "Punt" | play_type == "Punt Return Touchdown")
 
-  ### filtering out columns not used to make opponent-adjusted PPA (EPA) stat
-  # fmt: skip
-  PBP_EPA_Adjustment <- PBP_Yards[,c("game_id", "home", "pos_team", "def_pos_team", "ppa", "offense_conference", "defense_conference", "home_neutral")] |>
-    mutate(hfa = as.factor(case_when(home_neutral == "Neutral" ~ 0,
-                                     ### home team on offense
-                                     pos_team == home ~ 1,
-                                     ### home team on defense
-                                     TRUE ~ -1))) |>
-    drop_na()
-
-  ### Extracting just successful plays for opponent-adjusted Explosiveness metric
-  # fmt: skip
-  PBP_ExpAdjustment <- PBP_Yards[,c("game_id", "home", "pos_team", "def_pos_team", "success", "ppa", "offense_conference", "defense_conference", "home_neutral")] |>
-    filter(success == 1) |>
-    mutate(hfa = as.factor(case_when(home_neutral == "Neutral" ~ 0,
-                                     ### home team on offense
-                                     pos_team == home ~ 1,
-                                     ### home team on defense
-                                     TRUE ~ -1))) |>
-    drop_na()
-
-  ### extracting specific columns for opponent-adjusted yards per play stat
-  # fmt: skip
-  PBP_YPP_Adjustment <- PBP_Yards[,c("game_id", "home", "pos_team", "def_pos_team", "yards_gained", "offense_conference", "defense_conference", "home_neutral")] |>
-    mutate(hfa = as.factor(case_when(home_neutral == "Neutral" ~ 0,
-                                     ### home team on offense
-                                     pos_team == home ~ 1,
-                                     ### home team on defense
-                                     TRUE ~ -1))) |>
-    drop_na()
-
-  ### Extracting PBP for scoring plays
-  # fmt: skip
-  PBP_PPG_Adjustment <- PBP_Yards[,c("game_id", "home", "pos_team", "def_pos_team", "offense_score_play", "rush_td", "pass_td", "offense_conference", "defense_conference", "home_neutral", "play_pts_scored")] |>
-    mutate(hfa = as.factor(case_when(home_neutral == "Neutral" ~ 0,
-                                     ### home team on offense
-                                     pos_team == home ~ 1,
-                                     ### home team on defense
-                                     TRUE ~ -1))) |>
-    drop_na()
-
-  ### Setting up PBP for adjusted special teams ppa stats
-  # fmt: skip
-  PBP_STPlays <- rbind(PBP_FGPlays, PBP_XPPlays, PBP_KickReturn, PBP_Punts) |>
-    mutate(real_pos_team = case_when(play_type %in% c("Field Goal Good", "Field Goal Missed", "Kickoff Return Touchdown", "Kickoff Return (Offense)", "Kickoff") | pos_score_pts == 7 ~ pos_team,
-                                     TRUE ~ def_pos_team),
-           real_def_pos_team = case_when(play_type %in% c("Field Goal Good", "Field Goal Missed", "Kickoff Return Touchdown", "Kickoff Return (Offense)", "Kickoff") | pos_score_pts == 7 ~ def_pos_team,
-                                         TRUE ~ pos_team),
-           home_neutral = case_when(game_id %in% CompletedNeutralGames$game_id ~ "Neutral",
-                                    TRUE ~ "Home"))
-
-  PBP_STEPA_Adjustment <- PBP_STPlays |>
-    select(
-      game_id,
-      home,
-      real_pos_team,
-      real_def_pos_team,
-      ppa,
-      home_neutral
+  ### Setting up PBP for adjusted special teams epa stats
+  PBP_STPlays <- PBP |>
+    filter(
+      play_type %in%
+        c(
+          "Punt",
+          "Punt Return Touchdown",
+          "Kickoff Return Touchdown",
+          "Kickoff Return (Offense)",
+          "Kickoff",
+          "Blocked Punt Touchdown",
+          "Blocked Field Goal Touchdown",
+          "Missed Field Goal Touchdown",
+          "Field Goal Good",
+          "Field Goal Missed"
+        ) |
+        (play_type %in%
+          c("Passing Touchdown", "Rushing Touchdown") &
+          new_drive_pts == 7)
     ) |>
     mutate(
-      hfa = as.factor(case_when(
-        home_neutral == "Neutral" ~ 0,
-        ### home team on offense
-        real_pos_team == home ~ 1,
-        ### home team on defense
-        TRUE ~ -1
-      ))
+      new_drive_pts = case_when(
+        new_drive_pts < 0 ~ 0,
+        drive_pts == 8 ~ 8,
+        TRUE ~ new_drive_pts
+      )
     ) |>
-    drop_na()
+    mutate(
+      play_pts_scored = case_when(
+        play_type %in% c("Passing Touchdown", "Rushing Touchdown") ~ 1,
+        scoring_play == 1 ~ new_drive_pts,
+        TRUE ~ 0
+      )
+    ) |>
+    mutate(
+      real_pos_team = case_when(
+        play_type %in%
+          c(
+            "Field Goal Good",
+            "Field Goal Missed",
+            "Kickoff Return Touchdown",
+            "Kickoff Return (Offense)",
+            "Kickoff"
+          ) |
+          play_pts_scored == 1 ~ pos_team,
+        TRUE ~ def_pos_team
+      ),
+      real_def_pos_team = case_when(
+        play_type %in%
+          c(
+            "Field Goal Good",
+            "Field Goal Missed",
+            "Kickoff Return Touchdown",
+            "Kickoff Return (Offense)",
+            "Kickoff"
+          ) ~ def_pos_team,
+        TRUE ~ pos_team
+      ),
+      home_neutral = case_when(
+        game_id %in% CompletedNeutralGames$game_id ~ "Neutral",
+        TRUE ~ "Home"
+      )
+    )
+
+  PBP_STScoringPlays <- PBP_STPlays |>
+    filter(scoring_play == 1)
 }
 
 
 ##### Extracting Stats from PBP Data #####
 if (as.integer(cfb_week) == 0) {
-  ##### WEEK 0 DF Merge #####
-  VoAVariablesTrain_PY1 <- extract_pbp_stats(
-    VoA_df = VoAVariablesTrain_PY1,
+  ##### WEEK 0 Stat Collection #####
+  VoATrain_PY1 <- extract_pbp_stats(
+    VoA_df = VoATrain_PY1,
     rushpass_plays = PBP_PY1_Yards,
     success_plays = PBP_PY1_success_plays,
     ThirdDowns = PBP_PY1_3rdDowns,
@@ -1902,8 +1958,8 @@ if (as.integer(cfb_week) == 0) {
     STPlays = PBP_STPlays_PY1
   )
   ### PY2
-  VoAVariablesTrain_PY2 <- extract_pbp_stats(
-    VoA_df = VoAVariablesTrain_PY2,
+  VoATrain_PY2 <- extract_pbp_stats(
+    VoA_df = VoATrain_PY2,
     rushpass_plays = PBP_PY2_Yards,
     success_plays = PBP_PY2_success_plays,
     ThirdDowns = PBP_PY2_3rdDowns,
@@ -1920,8 +1976,8 @@ if (as.integer(cfb_week) == 0) {
     STPlays = PBP_STPlays_PY2
   )
   ### PY3
-  VoAVariablesTrain_PY3 <- extract_pbp_stats(
-    VoA_df = VoAVariablesTrain_PY3,
+  VoATrain_PY3 <- extract_pbp_stats(
+    VoA_df = VoATrain_PY3,
     rushpass_plays = PBP_PY3_Yards,
     success_plays = PBP_PY3_success_plays,
     ThirdDowns = PBP_PY3_3rdDowns,
@@ -1938,23 +1994,23 @@ if (as.integer(cfb_week) == 0) {
     STPlays = PBP_STPlays_PY3
   )
   ### PY4
-  # VoAVariablesTrain_PY4 <- extract_pbp_stats(
-  #   VoA_df = VoAVariablesTrain_PY4,
-  #   rushpass_plays = PBP_PY4_Yards,
-  #   success_plays = PBP_PY4_success_plays,
-  #   ThirdDowns = PBP_PY4_3rdDowns,
-  #   FourthDowns = PBP_PY4_4thDowns,
-  #   passplays = PBP_PY4_passplays,
-  #   rushplays = PBP_PY4_rushplays,
-  #   scoringopp_plays = PBP_PY4_scoringopp_plays,
-  #   turnovers = PBP_PY4_Turnovers,
-  #   scoringplays = PBP_PY4_ScoringPlays,
-  #   FGs = PBP_PY4_FGPlays,
-  #   Punts = PBP_PY4_Punts,
-  #   Kickoffs = PBP_PY4_KickReturn,
-  #   XPts = PBP_PY4_XPPlays,
-  #   STPlays = PBP_STPlays_PY4
-  # )
+  VoATrain_PY4 <- extract_pbp_stats(
+    VoA_df = VoATrain_PY4,
+    rushpass_plays = PBP_PY4_Yards,
+    success_plays = PBP_PY4_success_plays,
+    ThirdDowns = PBP_PY4_3rdDowns,
+    FourthDowns = PBP_PY4_4thDowns,
+    passplays = PBP_PY4_passplays,
+    rushplays = PBP_PY4_rushplays,
+    scoringopp_plays = PBP_PY4_scoringopp_plays,
+    turnovers = PBP_PY4_Turnovers,
+    scoringplays = PBP_PY4_ScoringPlays,
+    FGs = PBP_PY4_FGPlays,
+    # Punts = PBP_PY4_Punts,
+    # Kickoffs = PBP_PY4_KickReturn,
+    # XPts = PBP_PY4_XPPlays,
+    STPlays = PBP_STPlays_PY4
+  )
 
   ### Extracting PBP data and opponent-adjusted data for df to be used for inference/current season's ratings
   VoAVariables <- extract_preseason_pbp_stats(
@@ -2005,38 +2061,11 @@ if (as.integer(cfb_week) == 0) {
     STPlays_PY3 = PBP_STPlays_PY3
   )
 
-  ### merging all data frames in order of PY3, PY2, PY1
-  # all_PY_df_list <- list(PY3_df, PY2_df, PY1_df, recruit)
-  # VoAVariables <- all_PY_df_list |>
-  #   reduce(full_join, by = "team")
-
   ### Making values numeric
   # VoAVariables[, 4:ncol(VoAVariables)] <- VoAVariables[,
   #   4:ncol(VoAVariables)
   # ] |>
   #   mutate_if(is.character, as.numeric)
-  ### adding difference columns
-  VoAVariables <- VoAVariables |>
-    mutate(
-      EPA_diff_PY3 = adj_off_epa_PY3 - adj_def_epa_PY3,
-      EPA_diff_PY2 = adj_off_epa_PY2 - adj_def_epa_PY2,
-      EPA_diff_PY1 = adj_off_epa_PY1 - adj_def_epa_PY1,
-      SuccessRt_diff_PY3 = off_success_rt_PY3 - def_success_rt_PY3,
-      SuccessRt_diff_PY2 = off_success_rt_PY2 - def_success_rt_PY2,
-      SuccessRt_diff_PY1 = off_success_rt_PY1 - def_success_rt_PY1,
-      HavocRt_diff_PY3 = def_havoc_total_PY3 - off_havoc_total_PY3,
-      HavocRt_diff_PY2 = def_havoc_total_PY2 - off_havoc_total_PY2,
-      HavocRt_diff_PY1 = def_havoc_total_PY1 - off_havoc_total_PY1,
-      Explosiveness_diff_PY3 = adj_off_explosiveness_PY3 -
-        adj_def_explosiveness_PY3,
-      Explosiveness_diff_PY2 = adj_off_explosiveness_PY2 -
-        adj_def_explosiveness_PY2,
-      Explosiveness_diff_PY1 = adj_off_explosiveness_PY1 -
-        adj_def_explosiveness_PY1,
-      net_adj_st_epa_PY3 = adj_off_st_epa_PY3 - adj_def_st_epa_PY3,
-      net_adj_st_epa_PY2 = adj_off_st_epa_PY2 - adj_def_st_epa_PY2,
-      net_adj_st_epa_PY1 = adj_off_st_epa_PY1 - adj_def_st_epa_PY1
-    )
 
   ### writing csv of PY3_df so that I don't have to run the same code to produce it in Weeks when PY3 data is still being used
   if (dir.exists(here("Data", paste0("VoA", year), "PYData")) == FALSE) {
@@ -2053,204 +2082,78 @@ if (as.integer(cfb_week) == 0) {
       paste0("PYData", year, ".parquet")
     )
   )
-  # write_csv(PY3_df_NoSeasonConf, here("Data", paste0("VoA", year), "PYData", "PY3.csv"))
-  # write_csv(PY2_df, here("Data", paste0("VoA", year), "PYData", "PY2.csv"))
-  # write_csv(PY1_df, here("Data", paste0("VoA", year), "PYData", "PY1.csv"))
-} else if (as.integer(cfb_week) == 1) {
-  ##### WEEK 1 DF Merge #####
-  ### merging data frames together, arranging columns
-  ## need to merge stats and advanced stats together first so I can change column names to avoid duplicate column names later on
-  ### Previous years data have been saved as csvs to prevent having to pull in data from cfbfastR for rest of season
-  ## then I will merge years together by team
-
-  ### removing temp variables from the environment in the hope it will stop my R session from crashing
-  rm(
-    temp_PBP_yards,
-    temp_PBP_Defyards,
-    temp_PBP_3rd,
-    temp_PBP_4th,
-    temp_PBP_OffTDs,
-    temp_PBP_DefTDs,
-    temp_PBP_2Pts,
-    temp_PBP_Def2Pts,
-    temp_PBP_FGs,
-    temp_PBP_GoodFGs,
-    temp_PBP_DefFGs,
-    temp_PBP_DefGoodFGs,
-    temp_PBP_XPts,
-    temp_PBP_DefXPts,
-    temp_PBP_KickReturn,
-    temp_PBP_PuntReturn,
-    temp_PBP_ReturnTDs,
-    temp_PBP_OffReturnTDs,
-    temp_PBP_PuntTDs
-  )
-
-  ## merging all data frames in order of PY3, PY2, PY1
-  all_PY_df_list <- list(Current_df, PY3_df, PY2_df, PY1_df)
-  VoAVariables <- all_PY_df_list |>
-    reduce(full_join, by = "team") |>
-    mutate(
-      EPA_diff_PY3 = off_epa_PY3 - def_epa_PY3,
-      EPA_diff_PY2 = off_epa_PY2 - def_epa_PY2,
-      EPA_diff_PY1 = off_epa_PY1 - def_epa_PY1,
-      SuccessRt_diff_PY3 = off_success_rate_PY3 - def_success_rate_PY3,
-      SuccessRt_diff_PY2 = off_success_rate_PY2 - def_success_rate_PY2,
-      SuccessRt_diff_PY1 = off_success_rate_PY1 - def_success_rate_PY1,
-      HavocRt_diff_PY3 = def_havoc_total_PY3 - off_havoc_total_PY3,
-      HavocRt_diff_PY2 = def_havoc_total_PY2 - off_havoc_total_PY2,
-      HavocRt_diff_PY1 = def_havoc_total_PY1 - off_havoc_total_PY1,
-      Explosiveness_diff_PY3 = off_explosiveness_PY3 - def_explosiveness_PY3,
-      Explosiveness_diff_PY2 = off_explosiveness_PY2 - def_explosiveness_PY2,
-      Explosiveness_diff_PY1 = off_explosiveness_PY1 - def_explosiveness_PY1,
-      EPA_diff = off_epa - def_epa,
-      SuccessRt_diff = off_success_rate - def_success_rate,
-      HavocRt_diff = def_havoc_total - off_havoc_total,
-      Explosiveness_diff = off_explosiveness - def_explosiveness,
-      net_st_ppg_PY3 = st_ppg_PY3 - st_ppg_allowed_PY3,
-      net_st_ppg_PY2 = st_ppg_PY2 - st_ppg_allowed_PY2,
-      net_st_ppg_PY1 = st_ppg_PY1 - st_ppg_allowed_PY1,
-      net_st_ppg = st_ppg - st_ppg_allowed
-    )
 } else if (as.integer(cfb_week) <= 5) {
-  ##### WEEKS 2-5 DF Merge #####
-  ### merging data frames together, arranging columns
-  ### removing temp variables from the environment in the hope it will stop my R session from crashing
-  rm(
-    temp_PBP_yards,
-    temp_PBP_Defyards,
-    temp_PBP_3rd,
-    temp_PBP_4th,
-    temp_PBP_OffTDs,
-    temp_PBP_DefTDs,
-    temp_PBP_2Pts,
-    temp_PBP_Def2Pts,
-    temp_PBP_FGs,
-    temp_PBP_GoodFGs,
-    temp_PBP_DefFGs,
-    temp_PBP_DefGoodFGs,
-    temp_PBP_XPts,
-    temp_PBP_DefXPts,
-    temp_PBP_KickReturn,
-    temp_PBP_PuntReturn,
-    temp_PBP_ReturnTDs,
-    temp_PBP_OffReturnTDs,
-    temp_PBP_PuntTDs,
-    temp_PBP_Defplays,
-    temp_PBP_Offplays,
-    temp_PBP_OppDefPPA,
-    temp_PBP_OppOffPPA
+  ##### WEEKS 1-5 STAT CALCULATION #####
+  ### Extracting PBP data and opponent-adjusted data for df to be used for inference/current season's ratings
+  VoAVariables <- extract_pbp_stats(
+    VoA_df = VoAVariables,
+    rushpass_plays = PBP_Yards,
+    success_plays = PBP_success_plays,
+    ThirdDowns = PBP_3rdDowns,
+    FourthDowns = PBP_4thDowns,
+    passplays = PBP_passplays,
+    rushplays = PBP_rushplays,
+    scoringopp_plays = PBP_scoringopp_plays,
+    turnovers = PBP_Turnovers,
+    scoringplays = PBP_ScoringPlays,
+    FGs = PBP_FGPlays,
+    # Punts = PBP_Punts,
+    # Kickoffs = PBP_KickReturn,
+    # XPts = PBP_XPPlays,
+    STPlays = PBP_STPlays
   )
 
-  ### combining all dfs
-  all_df_list <- list(Current_df, PY2_df, PY1_df)
-  VoAVariables <- all_df_list |>
-    reduce(full_join, by = "team") |>
-    mutate(
-      EPA_diff_PY2 = off_epa_PY2 - def_epa_PY2,
-      EPA_diff_PY1 = off_epa_PY1 - def_epa_PY1,
-      SuccessRt_diff_PY2 = off_success_rate_PY2 - def_success_rate_PY2,
-      SuccessRt_diff_PY1 = off_success_rate_PY1 - def_success_rate_PY1,
-      HavocRt_diff_PY2 = def_havoc_total_PY2 - off_havoc_total_PY2,
-      HavocRt_diff_PY1 = def_havoc_total_PY1 - off_havoc_total_PY1,
-      Explosiveness_diff_PY2 = off_explosiveness_PY2 - def_explosiveness_PY2,
-      Explosiveness_diff_PY1 = off_explosiveness_PY1 - def_explosiveness_PY1,
-      EPA_diff = off_epa - def_epa,
-      SuccessRt_diff = off_success_rate - def_success_rate,
-      HavocRt_diff = def_havoc_total - off_havoc_total,
-      Explosiveness_diff = off_explosiveness - def_explosiveness,
-      net_st_ppg = st_ppg - st_ppg_allowed,
-      net_st_ppg_PY2 = st_ppg_PY2 - st_ppg_allowed_PY2,
-      net_st_ppg_PY1 = st_ppg_PY1 - st_ppg_allowed_PY1
-    )
-} else if (as.integer(cfb_week) <= 8) {
-  ##### WEEKS 6-8 DF Merge #####
-  ## merging data frames together, arranging columns
-
-  ### removing temp variables from the environment in the hope it will stop my R session from crashing
-  rm(
-    temp_PBP_yards,
-    temp_PBP_Defyards,
-    temp_PBP_3rd,
-    temp_PBP_4th,
-    temp_PBP_OffTDs,
-    temp_PBP_DefTDs,
-    temp_PBP_2Pts,
-    temp_PBP_Def2Pts,
-    temp_PBP_FGs,
-    temp_PBP_GoodFGs,
-    temp_PBP_DefFGs,
-    temp_PBP_DefGoodFGs,
-    temp_PBP_XPts,
-    temp_PBP_DefXPts,
-    temp_PBP_KickReturn,
-    temp_PBP_PuntReturn,
-    temp_PBP_ReturnTDs,
-    temp_PBP_OffReturnTDs,
-    temp_PBP_PuntTDs
+  ### joining relevant PY data to current season data
+  VoAVariables <- VoAVariables |>
+    left_join(PYData, by = "school")
+} else if (as.integer(cfb_week) <= 9) {
+  ##### WEEKS 6-9 DF Merge #####
+  ### Extracting PBP data and opponent-adjusted data for df to be used for inference/current season's ratings
+  VoAVariables <- extract_pbp_stats(
+    VoA_df = VoAVariables,
+    rushpass_plays = PBP_Yards,
+    success_plays = PBP_success_plays,
+    ThirdDowns = PBP_3rdDowns,
+    FourthDowns = PBP_4thDowns,
+    passplays = PBP_passplays,
+    rushplays = PBP_rushplays,
+    scoringopp_plays = PBP_scoringopp_plays,
+    turnovers = PBP_Turnovers,
+    scoringplays = PBP_ScoringPlays,
+    FGs = PBP_FGPlays,
+    # Punts = PBP_Punts,
+    # Kickoffs = PBP_KickReturn,
+    # XPts = PBP_XPPlays,
+    STPlays = PBP_STPlays
   )
 
-  ### now that variables derived from pbp data have been filled in, creating final VoAVariables df
-  VoAVariables <- Current_df |>
-    mutate(
-      EPA_diff_PY1 = off_epa_PY1 - def_epa_PY1,
-      SuccessRt_diff_PY1 = off_success_rate_PY1 - def_success_rate_PY1,
-      HavocRt_diff_PY1 = def_havoc_total_PY1 - off_havoc_total_PY1,
-      Explosiveness_diff_PY1 = off_explosiveness_PY1 - def_explosiveness_PY1,
-      EPA_diff = off_epa - def_epa,
-      SuccessRt_diff = off_success_rate - def_success_rate,
-      HavocRt_diff = def_havoc_total - off_havoc_total,
-      Explosiveness_diff = off_explosiveness - def_explosiveness,
-      net_st_ppg_PY1 = st_ppg_PY1 - st_ppg_allowed_PY1,
-      net_st_ppg = st_ppg - st_ppg_allowed
-    )
+  ### joining relevant PY data to current season data
+  VoAVariables <- VoAVariables |>
+    left_join(PYData, by = "school")
 } else {
-  ##### Week 9-End of Season CURRENT SEASON ONLY DF Merge #####
-  ### removing temp variables from the environment in the hope it will stop my R session from crashing
-  rm(
-    temp_PBP_yards,
-    temp_PBP_Defyards,
-    temp_PBP_3rd,
-    temp_PBP_4th,
-    temp_PBP_OffTDs,
-    temp_PBP_DefTDs,
-    temp_PBP_2Pts,
-    temp_PBP_Def2Pts,
-    temp_PBP_FGs,
-    temp_PBP_GoodFGs,
-    temp_PBP_DefFGs,
-    temp_PBP_DefGoodFGs,
-    temp_PBP_XPts,
-    temp_PBP_DefXPts,
-    temp_PBP_KickReturn,
-    temp_PBP_PuntReturn,
-    temp_PBP_ReturnTDs,
-    temp_PBP_OffReturnTDs,
-    temp_PBP_PuntTDs
+  ##### Week 10-End of Season CURRENT SEASON ONLY DF Merge #####
+  ### Extracting PBP data and opponent-adjusted data for df to be used for inference/current season's ratings
+  VoAVariables <- extract_pbp_stats(
+    VoA_df = VoAVariables,
+    rushpass_plays = PBP_Yards,
+    success_plays = PBP_success_plays,
+    ThirdDowns = PBP_3rdDowns,
+    FourthDowns = PBP_4thDowns,
+    passplays = PBP_passplays,
+    rushplays = PBP_rushplays,
+    scoringopp_plays = PBP_scoringopp_plays,
+    turnovers = PBP_Turnovers,
+    scoringplays = PBP_ScoringPlays,
+    FGs = PBP_FGPlays,
+    # Punts = PBP_Punts,
+    # Kickoffs = PBP_KickReturn,
+    # XPts = PBP_XPPlays,
+    STPlays = PBP_STPlays
   )
-
-  VoAVariables <- Current_df |>
-    mutate(
-      EPA_diff = off_epa - def_epa,
-      SuccessRt_diff = off_success_rate - def_success_rate,
-      HavocRt_diff = def_havoc_total - off_havoc_total,
-      Explosiveness_diff = off_explosiveness - def_explosiveness,
-      off_ppg_aboveavg = off_ppg - mean(off_ppg),
-      def_ppg_aboveavg = def_ppg - mean(def_ppg),
-      net_st_kick_return_yds = st_kick_return_yds - st_kick_return_yds_allowed,
-      net_punt_return_yds = st_punt_return_yds - st_punt_return_yds_allowed,
-      net_st_epa = st_epa - st_epa_allowed,
-      net_fg_rate = fg_rate - fg_rate_allowed,
-      net_fg_made_pg = fg_made_pg - fg_made_pg_allowed,
-      # net_xpts_pg = xpts_pg - xpts_allowed_pg,
-      net_st_ppg = adj_off_st_ppg - adj_def_st_ppg,
-      off_ppg_aboveavg = off_ppg - mean(off_ppg),
-      def_ppg_aboveavg = def_ppg - mean(def_ppg)
-    )
 
   ### Making values numeric
   # fmt: skip
-  VoAVariables[,4:ncol(VoAVariables)] <- VoAVariables[,4:ncol(VoAVariables)] |> mutate_if(is.character,as.numeric)
+  # VoAVariables[,4:ncol(VoAVariables)] <- VoAVariables[,4:ncol(VoAVariables)] |> mutate_if(is.character,as.numeric)
 }
 ### end of if statement
 
@@ -2301,12 +2204,12 @@ if (as.integer(cfb_week) == 0) {
   VoAVariables <- VoAVariables |>
     mutate(weighted_off_ppg_mean = (adj_off_ppg_PY1 * py1weight) + (adj_off_ppg_PY2 * py2weight) + (adj_off_ppg_PY3 * py3weight),
            weighted_def_ppg_mean = (adj_def_ppg_PY1 * py1weight) + (adj_def_ppg_PY2 * py2weight) + (adj_def_ppg_PY3 * py3weight),
-           weighted_net_st_ppg_mean = (adj_net_st_ppg_PY1 * py1weight) + (adj_net_st_ppg_PY2 * py2weight) + (adj_net_st_ppg_PY3 * py3weight),
+           weighted_net_st_ppg_mean = (net_adj_st_ppg_PY1 * py1weight) + (net_adj_st_ppg_PY2 * py2weight) + (net_adj_st_ppg_PY3 * py3weight),
            off_ppg_aboveavg = weighted_off_ppg_mean - mean(weighted_off_ppg_mean),
            def_ppg_aboveavg = weighted_def_ppg_mean - mean(weighted_def_ppg_mean),
            weighted_off_epa = (adj_off_epa_PY3 * py3weight) + (adj_off_epa_PY2 * py2weight) + (adj_off_epa_PY1 * py1weight),
            weighted_off_ypp = (adj_off_ypp_PY3 * py3weight) + (adj_off_ypp_PY2 * py2weight) + (adj_off_ypp_PY1 * py1weight),
-           weighted_off_success_rt = (off_success_rt_PY3 * py3weight) + (off_success_rt_PY2 * py2weight) + (off_success_rt_PY1 * py1weight),
+           weighted_off_success_rate = (off_success_rate_PY3 * py3weight) + (off_success_rate_PY2 * py2weight) + (off_success_rate_PY1 * py1weight),
            weighted_off_explosiveness = (adj_off_explosiveness_PY3 * py3weight) + (adj_off_explosiveness_PY2 * py2weight) + (adj_off_explosiveness_PY1 * py1weight),
            weighted_off_third_conv_rate = (off_third_conv_rate_PY3 * py3weight) + (off_third_conv_rate_PY2 * py2weight) + (off_third_conv_rate_PY1 * py1weight),
            weighted_off_pts_per_opp = (off_pts_per_opp_PY3 * py3weight) + (off_pts_per_opp_PY2 * py2weight) + (off_pts_per_opp_PY1 * py1weight),
@@ -2314,14 +2217,14 @@ if (as.integer(cfb_week) == 0) {
            weighted_def_plays_pg = (adj_def_plays_pg_PY3 * py3weight) + (adj_def_plays_pg_PY2 * py2weight) + (adj_def_plays_pg_PY1 * py1weight),
            weighted_def_epa = (adj_def_epa_PY3 * py3weight) + (adj_def_epa_PY2 * py2weight) + (adj_def_epa_PY1 * py1weight),
            weighted_def_ypp = (adj_def_ypp_PY3 * py3weight) + (adj_def_ypp_PY2 * py2weight) + (adj_def_ypp_PY1 * py1weight),
-           weighted_def_success_rt = (def_success_rt_PY3 * py3weight) + (def_success_rt_PY2 * py2weight) + (def_success_rt_PY1 * py1weight),
+           weighted_def_success_rate = (def_success_rate_PY3 * py3weight) + (def_success_rate_PY2 * py2weight) + (def_success_rate_PY1 * py1weight),
            weighted_def_explosiveness = (adj_def_explosiveness_PY3 * py3weight) + (adj_def_explosiveness_PY2 * py2weight) + (adj_def_explosiveness_PY1 * py1weight),
            weighted_def_third_conv_rate = (def_third_conv_rate_PY3 * py3weight) + (def_third_conv_rate_PY2 * py2weight) + (def_third_conv_rate_PY1 * py1weight),
            weighted_def_pts_per_opp = (def_pts_per_opp_PY3 * py3weight) + (def_pts_per_opp_PY2 * py2weight) + (def_pts_per_opp_PY1 * py1weight),
            weighted_def_havoc_total = (def_havoc_total_PY3 * py3weight) + (def_havoc_total_PY2 * py2weight) + (def_havoc_total_PY1 * py1weight),
-           weighted_net_st_kick_return_yds = ((st_kick_return_yds_PY3 - st_kick_return_yds_allowed_PY3) * py3weight) + ((st_kick_return_yds_PY2 - st_kick_return_yds_allowed_PY2) * py2weight) + ((st_kick_return_yds_PY1 - st_kick_return_yds_allowed_PY1) * py1weight),
-           weighted_net_punt_return_yds = ((st_punt_return_yds_PY3 - st_punt_return_yds_allowed_PY3) * py3weight) + ((st_punt_return_yds_PY2 - st_punt_return_yds_allowed_PY2) * py2weight) + ((st_punt_return_yds_PY1 - st_punt_return_yds_allowed_PY1) * py1weight),
-           weighted_net_fg_rt = ((fg_rate_PY3 - fg_rate_allowed_PY3) * py3weight) + ((fg_rate_PY2 - fg_rate_allowed_PY2) * py2weight) + ((fg_rate_PY1 - fg_rate_allowed_PY1) * py1weight),
+           weighted_net_kick_return_yds = ((kick_return_yds_PY3 - kick_return_yds_allowed_PY3) * py3weight) + ((kick_return_yds_PY2 - kick_return_yds_allowed_PY2) * py2weight) + ((kick_return_yds_PY1 - kick_return_yds_allowed_PY1) * py1weight),
+           weighted_net_punt_return_yds = ((punt_return_yds_PY3 - punt_return_yds_allowed_PY3) * py3weight) + ((punt_return_yds_PY2 - punt_return_yds_allowed_PY2) * py2weight) + ((punt_return_yds_PY1 - punt_return_yds_allowed_PY1) * py1weight),
+           weighted_net_fg_rate = ((fg_rate_PY3 - fg_rate_allowed_PY3) * py3weight) + ((fg_rate_PY2 - fg_rate_allowed_PY2) * py2weight) + ((fg_rate_PY1 - fg_rate_allowed_PY1) * py1weight),
            weighted_net_fg_made_pg = ((fg_made_pg_PY3 - fg_made_pg_allowed_PY3) * py3weight) + ((fg_made_pg_PY2 - fg_made_pg_allowed_PY2) * py2weight) + ((fg_made_pg_PY1 - fg_made_pg_allowed_PY1) * py1weight),
           #  weighted_net_xpts_pg = ((xpts_pg_PY3 - xpts_allowed_pg_PY3) * py3weight) + ((xpts_pg_PY2 - xpts_allowed_pg_PY2) * py2weight) + ((xpts_pg_PY1 - xpts_allowed_pg_PY1) * py1weight),
            weighted_net_adj_st_epa = (net_adj_st_epa_PY3 * py3weight) + (net_adj_st_epa_PY2 * py2weight) + (net_adj_st_epa_PY1 * py1weight)) #,
@@ -2334,32 +2237,32 @@ if (as.integer(cfb_week) == 0) {
   VoAVariables <- VoAVariables |>
     mutate(weighted_off_ppg_mean = (adj_off_ppg * cyweight) + (adj_off_ppg_PY1 * py1weight) + (adj_off_ppg_PY2 * py2weight),
            weighted_def_ppg_mean = (adj_def_ppg * cyweight) + (adj_def_ppg_PY1 * py1weight) + (adj_def_ppg_PY2 * py2weight),
-           weighted_net_st_ppg_mean = (adj_net_st_ppg * cyweight) + (adj_net_st_ppg_PY1 * py1weight) + (adj_net_st_ppg_PY2 * py2weight),
+           weighted_net_st_ppg_mean = (net_adj_st_ppg * cyweight) + (net_adj_st_ppg_PY1 * py1weight) + (net_adj_st_ppg_PY2 * py2weight),
            off_ppg_aboveavg = weighted_off_ppg_mean - mean(weighted_off_ppg_mean),
            def_ppg_aboveavg = weighted_def_ppg_mean - mean(weighted_def_ppg_mean),
            weighted_off_epa = (adj_off_epa_PY2 * py2weight) + (adj_off_epa_PY1 * py1weight) + (adj_off_epa * cyweight),
            weighted_off_ypp = (adj_off_ypp_PY2 * py2weight) + (adj_off_ypp_PY1 * py1weight) + (adj_off_ypp * cyweight),
-           weighted_off_success_rt = (off_success_rt_PY2 * py2weight) + (off_success_rt_PY1 * py1weight) + (off_success_rt * cyweight),
+           weighted_off_success_rate = (off_success_rate_PY2 * py2weight) + (off_success_rate_PY1 * py1weight) + (off_success_rate * cyweight),
            weighted_off_explosiveness = (adj_off_explosiveness_PY2 * py2weight) + (adj_off_explosiveness_PY1 * py1weight) + (adj_off_explosiveness * cyweight),
            weighted_off_third_conv_rate = (off_third_conv_rate_PY2 * py2weight) + (off_third_conv_rate_PY1 * py1weight) + (off_third_conv_rate * cyweight),
-           weighted_off_pts_per_opp = (off_pts_per_opp_PY3 * 0.05) + (off_pts_per_opp_PY2 * py2weight) + (off_pts_per_opp_PY1 * py1weight) + (off_pts_per_opp * cyweight),
+           weighted_off_pts_per_opp = (off_pts_per_opp_PY3 * py3weight) + (off_pts_per_opp_PY2 * py2weight) + (off_pts_per_opp_PY1 * py1weight) + (off_pts_per_opp * cyweight),
            weighted_off_plays_pg = (off_plays_pg_PY2 * py2weight) + (off_plays_pg_PY1 * py1weight) + (off_plays_pg * cyweight),
-           weighted_def_plays_pg = (def_plays_pg_PY3 * 0.05) + (def_plays_pg_PY2 * py2weight) + (def_plays_pg_PY1 * py1weight) + (def_plays_pg * cyweight),
-           weighted_def_epa = (adj_def_epa_PY3 * 0.05) + (adj_def_epa_PY2 * py2weight) + (adj_def_epa_PY1 * py1weight) + (adj_def_epa * cyweight),
-           weighted_def_ypp = (adj_def_ypp_PY3 * 0.05) + (adj_def_ypp_PY2 * py2weight) + (adj_def_ypp_PY1 * py1weight) + (adj_def_ypp * cyweight),
-           weighted_def_success_rt = (def_success_rt_PY3 * 0.05) + (def_success_rt_PY2 * py2weight) + (def_success_rt_PY1 * py1weight) + (def_success_rt * cyweight),
-           weighted_def_explosiveness = (adj_def_explosiveness_PY3 * 0.05) + (adj_def_explosiveness_PY2 * py2weight) + (adj_def_explosiveness_PY1 * py1weight) + (adj_def_explosiveness * cyweight),
-           weighted_def_third_conv_rate = (def_third_conv_rate_PY3 * 0.05) + (def_third_conv_rate_PY2 * py2weight) + (def_third_conv_rate_PY1 * py1weight) + (def_third_conv_rate * cyweight),
-           weighted_def_pts_per_opp = (def_pts_per_opp_PY3 * 0.05) + (def_pts_per_opp_PY2 * py2weight) + (def_pts_per_opp_PY1 * py1weight) + (def_pts_per_opp * cyweight),
-           weighted_def_havoc_total = (def_havoc_total_PY3 * 0.05) + (def_havoc_total_PY2 * py2weight) + (def_havoc_total_PY1 * py1weight) + (def_havoc_total * cyweight),
-           weighted_net_st_kick_return_yds = ((st_kick_return_yds_PY3 - st_kick_return_yds_allowed_PY3) * 0.05) + ((st_kick_return_yds_PY2 - st_kick_return_yds_allowed_PY2) * py2weight) + ((st_kick_return_yds_PY1 - st_kick_return_yds_allowed_PY1) * py1weight) + ((st_kick_return_yds - st_kick_return_yds_allowed) * cyweight),
-           weighted_net_punt_return_yds = ((st_punt_return_yds_PY3 - st_punt_return_yds_allowed_PY3) * 0.05) + ((st_punt_return_yds_PY2 - st_punt_return_yds_allowed_PY2) * py2weight) + ((st_punt_return_yds_PY1 - st_punt_return_yds_allowed_PY1) * py1weight) + ((st_punt_return_yds - st_punt_return_yds_allowed) * cyweight),
-           weighted_net_fg_rate = ((fg_rate_PY3 - fg_rate_allowed_PY3) * 0.05) + ((fg_rate_PY2 - fg_rate_allowed_PY2) * py2weight) + ((fg_rate_PY1 - fg_rate_allowed_PY1) * py1weight) + ((fg_rate - fg_rate_allowed) * cyweight),
-           weighted_net_fg_made_pg = ((fg_made_pg_PY3 - fg_made_pg_allowed_PY3) * 0.05) + ((fg_made_pg_PY2 - fg_made_pg_allowed_PY2) * py2weight) + ((fg_made_pg_PY1 - fg_made_pg_allowed_PY1) * py1weight) + ((fg_made_pg - fg_made_pg_allowed) * cyweight),
-          #  weighted_net_xpts_pg = ((xpts_pg_PY3 - xpts_allowed_pg_PY3) * 0.05) + ((xpts_pg_PY2 - xpts_allowed_pg_PY2) * py2weight) + ((xpts_pg_PY1 - xpts_allowed_pg_PY1) * py1weight) + ((xpts_pg - xpts_allowed_pg) * cyweight),
-           weighted_net_adj_st_epa = (net_adj_st_epa_PY3 * 0.05) + (net_adj_st_epa_PY2 * py2weight) + (net_adj_st_epa_PY1 * py1weight) + (net_adj_st_epa * cyweight)) #,
-  #  weighted_mean_oppdef_epa = (oppdef_epa_PY3 * 0.05) + (oppdef_epa_PY2 * py2weight) + (oppdef_epa_PY1 * py1weight) + (oppdef_epa * cyweight),
-  #  weighted_mean_oppoff_epa = (oppoff_epa_PY3 * 0.05) + (oppoff_epa_PY2 * py2weight) + (oppoff_epa_PY1 * py1weight) + (oppoff_epa * cyweight))
+           weighted_def_plays_pg = (def_plays_pg_PY3 * py3weight) + (def_plays_pg_PY2 * py2weight) + (def_plays_pg_PY1 * py1weight) + (def_plays_pg * cyweight),
+           weighted_def_epa = (adj_def_epa_PY3 * py3weight) + (adj_def_epa_PY2 * py2weight) + (adj_def_epa_PY1 * py1weight) + (adj_def_epa * cyweight),
+           weighted_def_ypp = (adj_def_ypp_PY3 * py3weight) + (adj_def_ypp_PY2 * py2weight) + (adj_def_ypp_PY1 * py1weight) + (adj_def_ypp * cyweight),
+           weighted_def_success_rate = (def_success_rate_PY3 * py3weight) + (def_success_rate_PY2 * py2weight) + (def_success_rate_PY1 * py1weight) + (def_success_rate * cyweight),
+           weighted_def_explosiveness = (adj_def_explosiveness_PY3 * py3weight) + (adj_def_explosiveness_PY2 * py2weight) + (adj_def_explosiveness_PY1 * py1weight) + (adj_def_explosiveness * cyweight),
+           weighted_def_third_conv_rate = (def_third_conv_rate_PY3 * py3weight) + (def_third_conv_rate_PY2 * py2weight) + (def_third_conv_rate_PY1 * py1weight) + (def_third_conv_rate * cyweight),
+           weighted_def_pts_per_opp = (def_pts_per_opp_PY3 * py3weight) + (def_pts_per_opp_PY2 * py2weight) + (def_pts_per_opp_PY1 * py1weight) + (def_pts_per_opp * cyweight),
+           weighted_def_havoc_total = (def_havoc_total_PY3 * py3weight) + (def_havoc_total_PY2 * py2weight) + (def_havoc_total_PY1 * py1weight) + (def_havoc_total * cyweight),
+           weighted_net_kick_return_yds = ((kick_return_yds_PY3 - kick_return_yds_allowed_PY3) * py3weight) + ((kick_return_yds_PY2 - kick_return_yds_allowed_PY2) * py2weight) + ((kick_return_yds_PY1 - kick_return_yds_allowed_PY1) * py1weight) + ((kick_return_yds - kick_return_yds_allowed) * cyweight),
+           weighted_net_punt_return_yds = ((punt_return_yds_PY3 - punt_return_yds_allowed_PY3) * py3weight) + ((punt_return_yds_PY2 - punt_return_yds_allowed_PY2) * py2weight) + ((punt_return_yds_PY1 - punt_return_yds_allowed_PY1) * py1weight) + ((punt_return_yds - punt_return_yds_allowed) * cyweight),
+           weighted_net_fg_rate = ((fg_rate_PY3 - fg_rate_allowed_PY3) * py3weight) + ((fg_rate_PY2 - fg_rate_allowed_PY2) * py2weight) + ((fg_rate_PY1 - fg_rate_allowed_PY1) * py1weight) + ((fg_rate - fg_rate_allowed) * cyweight),
+           weighted_net_fg_made_pg = ((fg_made_pg_PY3 - fg_made_pg_allowed_PY3) * py3weight) + ((fg_made_pg_PY2 - fg_made_pg_allowed_PY2) * py2weight) + ((fg_made_pg_PY1 - fg_made_pg_allowed_PY1) * py1weight) + ((fg_made_pg - fg_made_pg_allowed) * cyweight),
+          #  weighted_net_xpts_pg = ((xpts_pg_PY3 - xpts_allowed_pg_PY3) * py3weight) + ((xpts_pg_PY2 - xpts_allowed_pg_PY2) * py2weight) + ((xpts_pg_PY1 - xpts_allowed_pg_PY1) * py1weight) + ((xpts_pg - xpts_allowed_pg) * cyweight),
+           weighted_net_adj_st_epa = (net_adj_st_epa_PY3 * py3weight) + (net_adj_st_epa_PY2 * py2weight) + (net_adj_st_epa_PY1 * py1weight) + (net_adj_st_epa * cyweight)) #,
+  #  weighted_mean_oppdef_epa = (oppdef_epa_PY3 * py3weight) + (oppdef_epa_PY2 * py2weight) + (oppdef_epa_PY1 * py1weight) + (oppdef_epa * cyweight),
+  #  weighted_mean_oppoff_epa = (oppoff_epa_PY3 * py3weight) + (oppoff_epa_PY2 * py2weight) + (oppoff_epa_PY1 * py1weight) + (oppoff_epa * cyweight))
 } else if (as.integer(cfb_week) <= 9) {
   ##### Week 6-9 Weighted Variables #####
   ### only PY1 and current data
@@ -2373,7 +2276,7 @@ if (as.integer(cfb_week) == 0) {
            def_ppg_aboveavg = weighted_def_ppg_mean - mean(weighted_def_ppg_mean),
            weighted_off_epa = (adj_off_epa_PY1 * py1weight) + (adj_off_epa * cyweight),
            weighted_off_ypp = (adj_off_ypp_PY1 * py1weight) + (adj_off_ypp * cyweight),
-           weighted_off_success_rt = (off_success_rt_PY1 * py1weight) + (off_success_rt * cyweight),
+           weighted_off_success_rate = (off_success_rate_PY1 * py1weight) + (off_success_rate * cyweight),
            weighted_off_explosiveness = (adj_off_explosiveness_PY1 * py1weight) + (adj_off_explosiveness * cyweight),
            weighted_off_third_conv_rate = (off_third_conv_rate_PY1 * py1weight) + (off_third_conv_rate * cyweight),
            weighted_off_pts_per_opp = (off_pts_per_opp_PY1 * py1weight) + (off_pts_per_opp * cyweight),
@@ -2381,13 +2284,13 @@ if (as.integer(cfb_week) == 0) {
            weighted_def_plays_pg = (def_plays_pg_PY1 * py1weight) + (def_plays_pg * cyweight),
            weighted_def_epa = (adj_def_epa_PY1 * py1weight) + (adj_def_epa * cyweight),
            weighted_def_ypp = (adj_def_ypp_PY1 * py1weight) + (adj_def_ypp * cyweight),
-           weighted_def_success_rt = (def_success_rt_PY1 * py1weight) + (def_success_rt * cyweight),
+           weighted_def_success_rate = (def_success_rate_PY1 * py1weight) + (def_success_rate * cyweight),
            weighted_def_explosiveness = (adj_def_explosiveness_PY1 * py1weight) + (adj_def_explosiveness * cyweight),
            weighted_def_third_conv_rate = (def_third_conv_rate_PY1 * py1weight) + (def_third_conv_rate * cyweight),
            weighted_def_pts_per_opp = (def_pts_per_opp_PY1 * py1weight) + (def_pts_per_opp * cyweight),
            weighted_def_havoc_total = (def_havoc_total_PY1 * py1weight) + (def_havoc_total * cyweight),
-           weighted_net_st_kick_return_yds = ((st_kick_return_yds_PY1 - st_kick_return_yds_allowed_PY1) * py1weight) + ((st_kick_return_yds - st_kick_return_yds_allowed) * cyweight),
-           weighted_net_punt_return_yds = ((st_punt_return_yds_PY1 - st_punt_return_yds_allowed_PY1) * py1weight) + ((st_punt_return_yds - st_punt_return_yds_allowed) * cyweight),
+           weighted_net_kick_return_yds = ((kick_return_yds_PY1 - kick_return_yds_allowed_PY1) * py1weight) + ((kick_return_yds - kick_return_yds_allowed) * cyweight),
+           weighted_net_punt_return_yds = ((punt_return_yds_PY1 - punt_return_yds_allowed_PY1) * py1weight) + ((punt_return_yds - punt_return_yds_allowed) * cyweight),
            weighted_net_fg_rate = ((fg_rate_PY1 - fg_rate_allowed_PY1) * py1weight) + ((fg_rate - fg_rate_allowed) * cyweight),
            weighted_net_fg_made_pg = ((fg_made_pg_PY1 - fg_made_pg_allowed_PY1) * py1weight) + ((fg_made_pg - fg_made_pg_allowed) * cyweight),
           #  weighted_net_xpts_pg = ((xpts_pg_PY1 - xpts_allowed_pg_PY1) * py1weight) + ((xpts_pg - xpts_allowed_pg) * cyweight),
@@ -2432,7 +2335,7 @@ VoAVariables <- VoAVariables |>
 ##### checking which column to start ranking at #####
 if (as.integer(cfb_week) == 0) {
   VoA_Ncols <- ncol(VoAVariables) + 1
-  VoATrain_Ncols <- ncol(VoAVariablesTrain_PY1) + 1
+  VoATrain_Ncols <- ncol(VoATrain_PY1) + 1
 } else {
   VoA_Ncols <- ncol(VoAVariables) + 1
 }
@@ -2458,7 +2361,7 @@ if (as.integer(cfb_week) == 0) {
 # current will be only data source used, everything weighted "1x" (aside from special variables)
 
 ### different stats weighted differently as described below
-### EPA/PPA stats, explosiveness stats, success rates, havoc rates, Yards/Play, pts/scoring opp weighted 2x in PYs, 3x for current season,
+### EPA stats, explosiveness stats, success rates, havoc rates, Yards/Play, pts/scoring opp weighted 2x in PYs, 3x for current season,
 ## all #x above refer to weighting being done on top of weighting being done based on which year the data is from
 ## recruiting 3x in PY3 and PY2, 2x in PY1, 1x for current year
 # recruiting phased out after only current season stats are being used (currently week 7)
@@ -2466,10 +2369,10 @@ if (as.integer(cfb_week) == 0) {
 if (as.integer(cfb_week) == 0) {
   ##### Week 0 Variable Ranks #####
   ### applying end of season rank process to dfs which will be used to train Stan model first
-  VoAVariablesTrain_PY1 <- rank_voa_cols(VoAVariablesTrain_PY1)
-  VoAVariablesTrain_PY2 <- rank_voa_cols(VoAVariablesTrain_PY2)
-  VoAVariablesTrain_PY3 <- rank_voa_cols(VoAVariablesTrain_PY3)
-  # VoAVariablesTrain_PY4 <- rank_voa_cols(VoAVariablesTrain_PY4)
+  VoATrain_PY1 <- rank_voa_cols(VoATrain_PY1)
+  VoATrain_PY2 <- rank_voa_cols(VoATrain_PY2)
+  VoATrain_PY3 <- rank_voa_cols(VoATrain_PY3)
+  VoATrain_PY4 <- rank_voa_cols(VoATrain_PY4)
   ### PY3 ranks added first
   # fmt: skip
   VoAVariables <- VoAVariables |>
@@ -2478,13 +2381,12 @@ if (as.integer(cfb_week) == 0) {
            Rank_off_pass_ypr_PY3 = dense_rank(desc(off_pass_ypr_PY3)),
           #  Rank_int_Pct_PY3 = dense_rank(int_pct_PY3),
            Rank_off_rush_ypa_PY3 = dense_rank(desc(off_rush_ypa_PY3)),
-           Rank_off_turnovers_pg_PY3 = dense_rank(off_turnovers_pg_PY3),
            Rank_third_conv_rate_PY3 = dense_rank(desc(off_third_conv_rate_PY3)),
            Rank_off_fourth_conv_rate_PY3 = dense_rank(desc(off_fourth_conv_rate_PY3)),
           #  Rank_penalty_Yds_pg_PY3 = dense_rank(penalty_yds_pg_PY3),
           #  Rank_yds_per_penalty_PY3 = dense_rank(yards_per_penalty_PY3),
-           Rank_st_kick_return_yds_PY3 = dense_rank(desc(st_kick_return_yds_PY3)),
-           Rank_punt_return_yds_PY3 = dense_rank(desc(st_punt_return_yds_PY3)),
+           Rank_kick_return_yds_PY3 = dense_rank(desc(kick_return_yds_PY3)),
+           Rank_punt_return_yds_PY3 = dense_rank(desc(punt_return_yds_PY3)),
            Rank_off_ypg_PY3 = dense_rank(desc(off_ypg_PY3)),
            Rank_off_pass_ypg_PY3 = dense_rank(desc(off_pass_ypg_PY3)),
            Rank_off_rush_ypg_PY3 = dense_rank(desc(off_rush_ypg_PY3)),
@@ -2492,48 +2394,32 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_YPP_PY3 = dense_rank(desc(adj_off_ypp_PY3)),
           #  Rank_def_ints_pg_PY3 = dense_rank(desc(def_interceptions_pg_PY3)),
            Rank_Off_EPA_PY3 = dense_rank(desc(adj_off_epa_PY3)),
-           Rank_Off_Success_Rt_PY3 = dense_rank(desc(off_success_rt_PY3)),
+           Rank_Off_Success_Rt_PY3 = dense_rank(desc(off_success_rate_PY3)),
            Rank_Off_Explosiveness_PY3 = dense_rank(desc(adj_off_explosiveness_PY3)),
            Rank_Off_Pwr_Success_PY3 = dense_rank(desc(off_power_success_PY3)),
-           Rank_Off_Stuff_Rt_PY3 = dense_rank(off_stuff_rt_PY3),
+           Rank_Off_Stuff_Rt_PY3 = dense_rank(off_stuff_rate_PY3),
            Rank_Off_Line_Yds_PY3 = dense_rank(desc(off_line_yds_PY3)),
            Rank_Off_Pts_Per_Opp_PY3 = dense_rank(desc(off_pts_per_opp_PY3)),
            Rank_Off_Havoc_Total_PY3 = dense_rank(off_havoc_total_PY3),
-           Rank_Off_Standard_Down_EPA_PY3 = dense_rank(desc(off_standard_downs_epa_PY3)),
-           Rank_Off_Standard_Down_Success_Rt_PY3 = dense_rank(desc(off_standard_downs_success_rt_PY3)),
-           Rank_Off_Standard_Down_Explosiveness_PY3 = dense_rank(desc(off_standard_downs_explosiveness_PY3)),
-           Rank_Off_Pass_Down_EPA_PY3 = dense_rank(desc(off_passing_downs_epa_PY3)),
-           Rank_Off_Pass_Down_Success_Rt_PY3 = dense_rank(desc(off_passing_downs_success_rt_PY3)),
-           Rank_Off_Pass_Down_Explosiveness_PY3 = dense_rank(desc(off_passing_downs_explosiveness_PY3)),
            Rank_Off_Rush_Play_EPA_PY3 = dense_rank(desc(off_rush_epa_PY3)),
-           Rank_Off_Rush_Play_Success_Rt_PY3 = dense_rank(desc(off_rush_success_rt_PY3)),
+           Rank_Off_Rush_Play_Success_Rt_PY3 = dense_rank(desc(off_rush_success_rate_PY3)),
            Rank_Off_Rush_Play_Explosiveness_PY3 = dense_rank(desc(off_rush_explosiveness_PY3)),
            Rank_Off_Pass_Play_EPA_PY3 = dense_rank(desc(off_pass_epa_PY3)),
-           Rank_Off_Pass_Play_Success_Rt_PY3 = dense_rank(desc(off_pass_success_rt_PY3)),
+           Rank_Off_Pass_Play_Success_Rt_PY3 = dense_rank(desc(off_pass_success_rate_PY3)),
            Rank_Off_Pass_Play_Explosiveness_PY3 = dense_rank(desc(off_pass_explosiveness_PY3)),
            Rank_Def_EPA_PY3 = dense_rank(adj_def_epa_PY3),
-           Rank_Def_Success_Rt_PY3 = dense_rank(def_success_rt_PY3),
+           Rank_Def_Success_Rt_PY3 = dense_rank(def_success_rate_PY3),
            Rank_Def_Explosiveness_PY3 = dense_rank(adj_def_explosiveness_PY3),
            Rank_Def_Pwr_Success_PY3 = dense_rank(def_power_success_PY3),
-           Rank_Def_Stuff_Rt_PY3 = dense_rank(desc(def_stuff_rt_PY3)),
+           Rank_Def_Stuff_Rt_PY3 = dense_rank(desc(def_stuff_rate_PY3)),
            Rank_Def_Line_Yds_PY3 = dense_rank(def_line_yds_PY3),
-           # Rank_def_second_Lvl_Yds_PY3 = dense_rank(def_second_lvl_yds_PY3),
-           # Rank_def_open_Field_Yds_PY3 = dense_rank(def_open_field_yds_PY3),
            Rank_Def_Pts_Per_Opp_PY3 = dense_rank(def_pts_per_opp_PY3),
            Rank_Def_Havoc_Total_PY3 = dense_rank(desc(def_havoc_total_PY3)),
-           # Rank_def_havoc_front_Seven_PY3 = dense_rank(desc(def_havoc_front_seven_PY3)),
-           # Rank_def_havoc_db_PY3 = dense_rank(desc(def_havoc_db_PY3)),
-           Rank_Def_Standard_Down_EPA_PY3 = dense_rank(def_standard_downs_epa_PY3),
-           Rank_Def_Standard_Down_Success_Rt_PY3 = dense_rank(def_standard_downs_success_rt_PY3),
-           Rank_Def_Standard_Down_Explosiveness_PY3 = dense_rank(def_standard_downs_explosiveness_PY3),
-           Rank_Def_Pass_Down_EPA_PY3 = dense_rank(def_passing_downs_epa_PY3),
-           Rank_Def_Pass_Down_Success_Rt_PY3 = dense_rank(def_passing_downs_success_rt_PY3),
-           Rank_Def_Pass_Down_Explosiveness_PY3 = dense_rank(def_passing_downs_explosiveness_PY3),
            Rank_Def_Rush_Play_EPA_PY3 = dense_rank(def_rush_epa_PY3),
-           Rank_Def_Rush_Play_Success_Rt_PY3 = dense_rank(def_rush_success_rt_PY3),
+           Rank_Def_Rush_Play_Success_Rt_PY3 = dense_rank(def_rush_success_rate_PY3),
            Rank_Def_Rush_Play_Explosiveness_PY3 = dense_rank(def_rush_explosiveness_PY3),
            Rank_Def_Pass_Play_EPA_PY3 = dense_rank(def_pass_epa_PY3),
-           Rank_Def_Pass_Play_Success_Rt_PY3 = dense_rank(def_pass_success_rt_PY3),
+           Rank_Def_Pass_Play_Success_Rt_PY3 = dense_rank(def_pass_success_rate_PY3),
            Rank_Def_Pass_Play_Explosiveness_PY3 = dense_rank(def_pass_explosiveness_PY3),
            # Rank_recruit_Pts_PY3 = dense_rank(desc(recruit_pts_PY3)),
            Rank_EPA_diff_PY3 = dense_rank(desc(EPA_diff_PY3)),
@@ -2551,8 +2437,8 @@ if (as.integer(cfb_week) == 0) {
            Rank_off_fourth_conv_rate_PY2 = dense_rank(desc(off_fourth_conv_rate_PY2)),
            # Rank_penalty_Yds_pg_PY2 = dense_rank(penalty_yds_pg_PY2),
            # Rank_yds_per_penalty_PY2 = dense_rank(yards_per_penalty_PY2),
-           Rank_st_kick_return_yds_PY2 = dense_rank(desc(st_kick_return_yds_PY2)),
-           Rank_punt_return_yds_PY2 = dense_rank(desc(st_punt_return_yds_PY2)),
+           Rank_kick_return_yds_PY2 = dense_rank(desc(kick_return_yds_PY2)),
+           Rank_punt_return_yds_PY2 = dense_rank(desc(punt_return_yds_PY2)),
            Rank_off_ypg_PY2 = dense_rank(desc(off_ypg_PY2)),
            Rank_off_pass_ypg_PY2 = dense_rank(desc(off_pass_ypg_PY2)),
            Rank_off_rush_ypg_PY2 = dense_rank(desc(off_rush_ypg_PY2)),
@@ -2560,10 +2446,10 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_YPP_PY2 = dense_rank(desc(adj_off_ypp_PY2)),
            # Rank_def_ints_pg_PY2 = dense_rank(desc(def_interceptions_pg_PY2)),
            Rank_Off_EPA_PY2 = dense_rank(desc(adj_off_epa_PY2)),
-           Rank_Off_Success_Rt_PY2 = dense_rank(desc(off_success_rt_PY2)),
+           Rank_Off_Success_Rt_PY2 = dense_rank(desc(off_success_rate_PY2)),
            Rank_Off_Explosiveness_PY2 = dense_rank(desc(adj_off_explosiveness_PY2)),
            Rank_Off_Pwr_Success_PY2 = dense_rank(desc(off_power_success_PY2)),
-           Rank_Off_Stuff_Rt_PY2 = dense_rank(off_stuff_rt_PY2),
+           Rank_Off_Stuff_Rt_PY2 = dense_rank(off_stuff_rate_PY2),
            Rank_Off_Line_Yds_PY2 = dense_rank(desc(off_line_yds_PY2)),
           #  Rank_Off_Second_Lvl_Yds_PY2 = dense_rank(desc(off_second_lvl_yds_PY2)),
           #  Rank_Off_Open_Field_Yds_PY2 = dense_rank(desc(off_open_field_yds_PY2)),
@@ -2572,22 +2458,22 @@ if (as.integer(cfb_week) == 0) {
           #  Rank_Off_Havoc_Front_PY2 = dense_rank(off_havoc_front_seven_PY2),
           #  Rank_Off_Havoc_DB_PY2 = dense_rank(off_havoc_db_PY2),
            Rank_Off_Standard_Down_EPA_PY2 = dense_rank(desc(off_standard_downs_epa_PY2)),
-           Rank_Off_Standard_Down_Success_Rt_PY2 = dense_rank(desc(off_standard_downs_success_rt_PY2)),
+           Rank_Off_Standard_Down_Success_Rt_PY2 = dense_rank(desc(off_standard_downs_success_rate_PY2)),
            Rank_Off_Standard_Down_Explosiveness_PY2 = dense_rank(desc(off_standard_downs_explosiveness_PY2)),
            Rank_Off_Pass_Down_EPA_PY2 = dense_rank(desc(off_passing_downs_epa_PY2)),
-           Rank_Off_Pass_Down_Success_Rt_PY2 = dense_rank(desc(off_passing_downs_success_rt_PY2)),
+           Rank_Off_Pass_Down_Success_Rt_PY2 = dense_rank(desc(off_passing_downs_success_rate_PY2)),
            Rank_Off_Pass_Down_Explosiveness_PY2 = dense_rank(desc(off_passing_downs_explosiveness_PY2)),
            Rank_Off_Rush_Play_EPA_PY2 = dense_rank(desc(off_rush_epa_PY2)),
-           Rank_Off_Rush_Play_Success_Rt_PY2 = dense_rank(desc(off_rush_success_rt_PY2)),
+           Rank_Off_Rush_Play_Success_Rt_PY2 = dense_rank(desc(off_rush_success_rate_PY2)),
            Rank_Off_Rush_Play_Explosiveness_PY2 = dense_rank(desc(off_rush_explosiveness_PY2)),
            Rank_Off_Pass_Play_EPA_PY2 = dense_rank(desc(off_pass_epa_PY2)),
-           Rank_Off_Pass_Play_Success_Rt_PY2 = dense_rank(desc(off_pass_success_rt_PY2)),
+           Rank_Off_Pass_Play_Success_Rt_PY2 = dense_rank(desc(off_pass_success_rate_PY2)),
            Rank_Off_Pass_Play_Explosiveness_PY2 = dense_rank(desc(off_pass_explosiveness_PY2)),
            Rank_Def_EPA_PY2 = dense_rank(adj_def_epa_PY2),
-           Rank_Def_Success_Rt_PY2 = dense_rank(def_success_rt_PY2),
+           Rank_Def_Success_Rt_PY2 = dense_rank(def_success_rate_PY2),
            Rank_Def_Explosiveness_PY2 = dense_rank(adj_def_explosiveness_PY2),
            Rank_Def_Pwr_Success_PY2 = dense_rank(def_power_success_PY2),
-           Rank_Def_Stuff_Rt_PY2 = dense_rank(desc(def_stuff_rt_PY2)),
+           Rank_Def_Stuff_Rt_PY2 = dense_rank(desc(def_stuff_rate_PY2)),
            Rank_Def_Line_Yds_PY2 = dense_rank(def_line_yds_PY2),
            # Rank_def_second_Lvl_Yds_PY2 = dense_rank(def_second_lvl_yds_PY2),
            # Rank_def_open_Field_Yds_PY2 = dense_rank(def_open_field_yds_PY2),
@@ -2596,16 +2482,16 @@ if (as.integer(cfb_week) == 0) {
            # Rank_def_havoc_front_Seven_PY2 = dense_rank(desc(def_havoc_front_seven_PY2)),
            # Rank_def_havoc_db_PY2 = dense_rank(desc(def_havoc_db_PY2)),
            Rank_Def_Standard_Down_EPA_PY2 = dense_rank(def_standard_downs_epa_PY2),
-           Rank_Def_Standard_Down_Success_Rt_PY2 = dense_rank(def_standard_downs_success_rt_PY2),
+           Rank_Def_Standard_Down_Success_Rt_PY2 = dense_rank(def_standard_downs_success_rate_PY2),
            Rank_Def_Standard_Down_Explosiveness_PY2 = dense_rank(def_standard_downs_explosiveness_PY2),
            Rank_Def_Pass_Down_EPA_PY2 = dense_rank(def_passing_downs_epa_PY2),
-           Rank_Def_Pass_Down_Success_Rt_PY2 = dense_rank(def_passing_downs_success_rt_PY2),
+           Rank_Def_Pass_Down_Success_Rt_PY2 = dense_rank(def_passing_downs_success_rate_PY2),
            Rank_Def_Pass_Down_Explosiveness_PY2 = dense_rank(def_passing_downs_explosiveness_PY2),
            Rank_Def_Rush_Play_EPA_PY2 = dense_rank(def_rush_epa_PY2),
-           Rank_Def_Rush_Play_Success_Rt_PY2 = dense_rank(def_rush_success_rt_PY2),
+           Rank_Def_Rush_Play_Success_Rt_PY2 = dense_rank(def_rush_success_rate_PY2),
            Rank_Def_Rush_Play_Explosiveness_PY2 = dense_rank(def_rush_explosiveness_PY2),
            Rank_Def_Pass_Play_EPA_PY2 = dense_rank(def_pass_epa_PY2),
-           Rank_Def_Pass_Play_Success_Rt_PY2 = dense_rank(def_pass_success_rt_PY2),
+           Rank_Def_Pass_Play_Success_Rt_PY2 = dense_rank(def_pass_success_rate_PY2),
            Rank_Def_Pass_Play_Explosiveness_PY2 = dense_rank(def_pass_explosiveness_PY2),
            # Rank_recruit_Pts_PY2 = dense_rank(desc(recruit_pts_PY2)),
            Rank_EPA_diff_PY2 = dense_rank(desc(EPA_diff_PY2)),
@@ -2625,8 +2511,8 @@ if (as.integer(cfb_week) == 0) {
            Rank_off_fourth_conv_rate_PY1 = dense_rank(desc(off_fourth_conv_rate_PY1)),
            # Rank_penalty_Yds_pg_PY1 = dense_rank(penalty_yds_pg_PY1),
            # Rank_yds_per_penalty_PY1 = dense_rank(yards_per_penalty_PY1),
-           Rank_st_kick_return_yds_PY1 = dense_rank(desc(st_kick_return_yds_PY1)),
-           Rank_punt_return_yds_PY1 = dense_rank(desc(st_punt_return_yds_PY1)),
+           Rank_kick_return_yds_PY1 = dense_rank(desc(kick_return_yds_PY1)),
+           Rank_punt_return_yds_PY1 = dense_rank(desc(punt_return_yds_PY1)),
            Rank_off_ypg_PY1 = dense_rank(desc(off_ypg_PY1)),
            Rank_off_pass_ypg_PY1 = dense_rank(desc(off_pass_ypg_PY1)),
            Rank_off_rush_ypg_PY1 = dense_rank(desc(off_rush_ypg_PY1)),
@@ -2634,10 +2520,10 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_YPP_PY1 = dense_rank(desc(adj_off_ypp_PY1)),
            # Rank_def_ints_pg_PY1 = dense_rank(desc(def_interceptions_pg_PY1)),
            Rank_Off_EPA_PY1 = dense_rank(desc(adj_off_epa_PY1)),
-           Rank_Off_Success_Rt_PY1 = dense_rank(desc(off_success_rt_PY1)),
+           Rank_Off_Success_Rt_PY1 = dense_rank(desc(off_success_rate_PY1)),
            Rank_Off_Explosiveness_PY1 = dense_rank(desc(adj_off_explosiveness_PY1)),
            Rank_Off_Pwr_Success_PY1 = dense_rank(desc(off_power_success_PY1)),
-           Rank_Off_Stuff_Rt_PY1 = dense_rank(off_stuff_rt_PY1),
+           Rank_Off_Stuff_Rt_PY1 = dense_rank(off_stuff_rate_PY1),
            Rank_Off_Line_Yds_PY1 = dense_rank(desc(off_line_yds_PY1)),
           #  Rank_Off_Second_Lvl_Yds_PY1 = dense_rank(desc(off_second_lvl_yds_PY1)),
           #  Rank_Off_Open_Field_Yds_PY1 = dense_rank(desc(off_open_field_yds_PY1)),
@@ -2646,22 +2532,22 @@ if (as.integer(cfb_week) == 0) {
           #  Rank_Off_Havoc_Front_PY1 = dense_rank(off_havoc_front_seven_PY1),
           #  Rank_Off_Havoc_DB_PY1 = dense_rank(off_havoc_db_PY1),
            Rank_Off_Standard_Down_EPA_PY1 = dense_rank(desc(off_standard_downs_epa_PY1)),
-           Rank_Off_Standard_Down_Success_Rt_PY1 = dense_rank(desc(off_standard_downs_success_rt_PY1)),
+           Rank_Off_Standard_Down_Success_Rt_PY1 = dense_rank(desc(off_standard_downs_success_rate_PY1)),
            Rank_Off_Standard_Down_Explosiveness_PY1 = dense_rank(desc(off_standard_downs_explosiveness_PY1)),
            Rank_Off_Pass_Down_EPA_PY1 = dense_rank(desc(off_passing_downs_epa_PY1)),
-           Rank_Off_Pass_Down_Success_Rt_PY1 = dense_rank(desc(off_passing_downs_success_rt_PY1)),
+           Rank_Off_Pass_Down_Success_Rt_PY1 = dense_rank(desc(off_passing_downs_success_rate_PY1)),
            Rank_Off_Pass_Down_Explosiveness_PY1 = dense_rank(desc(off_passing_downs_explosiveness_PY1)),
            Rank_Off_Rush_Play_EPA_PY1 = dense_rank(desc(off_rush_epa_PY1)),
-           Rank_Off_Rush_Play_Success_Rt_PY1 = dense_rank(desc(off_rush_success_rt_PY1)),
+           Rank_Off_Rush_Play_Success_Rt_PY1 = dense_rank(desc(off_rush_success_rate_PY1)),
            Rank_Off_Rush_Play_Explosiveness_PY1 = dense_rank(desc(off_rush_explosiveness_PY1)),
            Rank_Off_Pass_Play_EPA_PY1 = dense_rank(desc(off_pass_epa_PY1)),
-           Rank_Off_Pass_Play_Success_Rt_PY1 = dense_rank(desc(off_pass_success_rt_PY1)),
+           Rank_Off_Pass_Play_Success_Rt_PY1 = dense_rank(desc(off_pass_success_rate_PY1)),
            Rank_Off_Pass_Play_Explosiveness_PY1 = dense_rank(desc(off_pass_explosiveness_PY1)),
            Rank_Def_EPA_PY1 = dense_rank(adj_def_epa_PY1),
-           Rank_Def_Success_Rt_PY1 = dense_rank(def_success_rt_PY1),
+           Rank_Def_Success_Rt_PY1 = dense_rank(def_success_rate_PY1),
            Rank_Def_Explosiveness_PY1 = dense_rank(adj_def_explosiveness_PY1),
            Rank_Def_Pwr_Success_PY1 = dense_rank(def_power_success_PY1),
-           Rank_Def_Stuff_Rt_PY1 = dense_rank(desc(def_stuff_rt_PY1)),
+           Rank_Def_Stuff_Rt_PY1 = dense_rank(desc(def_stuff_rate_PY1)),
            Rank_Def_Line_Yds_PY1 = dense_rank(def_line_yds_PY1),
            # Rank_def_second_Lvl_Yds_PY1 = dense_rank(def_second_lvl_yds_PY1),
            # Rank_def_open_Field_Yds_PY1 = dense_rank(def_open_field_yds_PY1),
@@ -2670,16 +2556,16 @@ if (as.integer(cfb_week) == 0) {
            # Rank_def_havoc_front_Seven_PY1 = dense_rank(desc(def_havoc_front_seven_PY1)),
            # Rank_def_havoc_db_PY1 = dense_rank(desc(def_havoc_db_PY1)),
            Rank_Def_Standard_Down_EPA_PY1 = dense_rank(def_standard_downs_epa_PY1),
-           Rank_Def_Standard_Down_Success_Rt_PY1 = dense_rank(def_standard_downs_success_rt_PY1),
+           Rank_Def_Standard_Down_Success_Rt_PY1 = dense_rank(def_standard_downs_success_rate_PY1),
            Rank_Def_Standard_Down_Explosiveness_PY1 = dense_rank(def_standard_downs_explosiveness_PY1),
            Rank_Def_Pass_Down_EPA_PY1 = dense_rank(def_passing_downs_epa_PY1),
-           Rank_Def_Pass_Down_Success_Rt_PY1 = dense_rank(def_passing_downs_success_rt_PY1),
+           Rank_Def_Pass_Down_Success_Rt_PY1 = dense_rank(def_passing_downs_success_rate_PY1),
            Rank_Def_Pass_Down_Explosiveness_PY1 = dense_rank(def_passing_downs_explosiveness_PY1),
            Rank_Def_Rush_Play_EPA_PY1 = dense_rank(def_rush_epa_PY1),
-           Rank_Def_Rush_Play_Success_Rt_PY1 = dense_rank(def_rush_success_rt_PY1),
+           Rank_Def_Rush_Play_Success_Rt_PY1 = dense_rank(def_rush_success_rate_PY1),
            Rank_Def_Rush_Play_Explosiveness_PY1 = dense_rank(def_rush_explosiveness_PY1),
            Rank_Def_Pass_Play_EPA_PY1 = dense_rank(def_pass_epa_PY1),
-           Rank_Def_Pass_Play_Success_Rt_PY1 = dense_rank(def_pass_success_rt_PY1),
+           Rank_Def_Pass_Play_Success_Rt_PY1 = dense_rank(def_pass_success_rate_PY1),
            Rank_Def_Pass_Play_Explosiveness_PY1 = dense_rank(def_pass_explosiveness_PY1),
            Rank_EPA_diff_PY1 = dense_rank(desc(EPA_diff_PY1)),
            Rank_SuccessRt_diff_PY1 = dense_rank(desc(SuccessRt_diff_PY1)),
@@ -2704,30 +2590,30 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_YPP_PY1_col2 = dense_rank(desc(adj_off_ypp_PY1)),
            # Rank_def_ints_pg_PY1_col2 = dense_rank(desc(def_interceptions_pg_PY1)),
            Rank_Off_EPA_PY1_col2 = dense_rank(desc(adj_off_epa_PY1)),
-           Rank_Off_Success_Rt_PY1_col2 = dense_rank(desc(off_success_rt_PY1)),
+           Rank_Off_Success_Rt_PY1_col2 = dense_rank(desc(off_success_rate_PY1)),
            Rank_Off_Explosiveness_PY1_col2 = dense_rank(desc(adj_off_explosiveness_PY1)),
            Rank_Off_Pwr_Success_PY1_col2 = dense_rank(desc(off_power_success_PY1)),
-           Rank_Off_Stuff_Rt_PY1_col2 = dense_rank(off_stuff_rt_PY1),
+           Rank_Off_Stuff_Rt_PY1_col2 = dense_rank(off_stuff_rate_PY1),
            Rank_Off_Line_Yds_PY1_col2 = dense_rank(desc(off_line_yds_PY1)),
            Rank_Off_Pts_Per_Opp_PY1_col2 = dense_rank(desc(off_pts_per_opp_PY1)),
            Rank_Off_Havoc_Total_PY1_col2 = dense_rank(off_havoc_total_PY1),
            Rank_Off_Standard_Down_EPA_PY1_col2 = dense_rank(desc(off_standard_downs_epa_PY1)),
-           Rank_Off_Standard_Down_Success_Rt_PY1_col2 = dense_rank(desc(off_standard_downs_success_rt_PY1)),
+           Rank_Off_Standard_Down_Success_Rt_PY1_col2 = dense_rank(desc(off_standard_downs_success_rate_PY1)),
            Rank_Off_Standard_Down_Explosiveness_PY1_col2 = dense_rank(desc(off_standard_downs_explosiveness_PY1)),
            Rank_Off_Pass_Down_EPA_PY1_col2 = dense_rank(desc(off_passing_downs_epa_PY1)),
-           Rank_Off_Pass_Down_Success_Rt_PY1_col2 = dense_rank(desc(off_passing_downs_success_rt_PY1)),
+           Rank_Off_Pass_Down_Success_Rt_PY1_col2 = dense_rank(desc(off_passing_downs_success_rate_PY1)),
            Rank_Off_Pass_Down_Explosiveness_PY1_col2 = dense_rank(desc(off_passing_downs_explosiveness_PY1)),
            Rank_Off_Rush_Play_EPA_PY1_col2 = dense_rank(desc(off_rush_epa_PY1)),
-           Rank_Off_Rush_Play_Success_Rt_PY1_col2 = dense_rank(desc(off_rush_success_rt_PY1)),
+           Rank_Off_Rush_Play_Success_Rt_PY1_col2 = dense_rank(desc(off_rush_success_rate_PY1)),
            Rank_Off_Rush_Play_Explosiveness_PY1_col2 = dense_rank(desc(off_rush_explosiveness_PY1)),
            Rank_Off_Pass_Play_EPA_PY1_col2 = dense_rank(desc(off_pass_epa_PY1)),
-           Rank_Off_Pass_Play_Success_Rt_PY1_col2 = dense_rank(desc(off_pass_success_rt_PY1)),
+           Rank_Off_Pass_Play_Success_Rt_PY1_col2 = dense_rank(desc(off_pass_success_rate_PY1)),
            Rank_Off_Pass_Play_Explosiveness_PY1_col2 = dense_rank(desc(off_pass_explosiveness_PY1)),
            Rank_Def_EPA_PY1_col2 = dense_rank(adj_def_epa_PY1),
-           Rank_Def_Success_Rt_PY1_col2 = dense_rank(def_success_rt_PY1),
+           Rank_Def_Success_Rt_PY1_col2 = dense_rank(def_success_rate_PY1),
            Rank_Def_Explosiveness_PY1_col2 = dense_rank(adj_def_explosiveness_PY1),
            Rank_Def_Pwr_Success_PY1_col2 = dense_rank(def_power_success_PY1),
-           Rank_Def_Stuff_Rt_PY1_col2 = dense_rank(desc(def_stuff_rt_PY1)),
+           Rank_Def_Stuff_Rt_PY1_col2 = dense_rank(desc(def_stuff_rate_PY1)),
            Rank_Def_Line_Yds_PY1_col2 = dense_rank(def_line_yds_PY1),
            # Rank_def_second_Lvl_Yds_PY1_col2 = dense_rank(def_second_lvl_yds_PY1),
            # Rank_def_open_Field_Yds_PY1_col2 = dense_rank(def_open_field_yds_PY1),
@@ -2736,16 +2622,16 @@ if (as.integer(cfb_week) == 0) {
            # Rank_def_havoc_front_Seven_PY1_col2 = dense_rank(desc(def_havoc_front_seven_PY1)),
            # Rank_def_havoc_db_PY1_col2 = dense_rank(desc(def_havoc_db_PY1)),
            Rank_Def_Standard_Down_EPA_PY1_col2 = dense_rank(def_standard_downs_epa_PY1),
-           Rank_Def_Standard_Down_Success_Rt_PY1_col2 = dense_rank(def_standard_downs_success_rt_PY1),
+           Rank_Def_Standard_Down_Success_Rt_PY1_col2 = dense_rank(def_standard_downs_success_rate_PY1),
            Rank_Def_Standard_Down_Explosiveness_PY1_col2 = dense_rank(def_standard_downs_explosiveness_PY1),
            Rank_Def_Pass_Down_EPA_PY1_col2 = dense_rank(def_passing_downs_epa_PY1),
-           Rank_Def_Pass_Down_Success_Rt_PY1_col2 = dense_rank(def_passing_downs_success_rt_PY1),
+           Rank_Def_Pass_Down_Success_Rt_PY1_col2 = dense_rank(def_passing_downs_success_rate_PY1),
            Rank_Def_Pass_Down_Explosiveness_PY1_col2 = dense_rank(def_passing_downs_explosiveness_PY1),
            Rank_Def_Rush_Play_EPA_PY1_col2 = dense_rank(def_rush_epa_PY1),
-           Rank_Def_Rush_Play_Success_Rt_PY1_col2 = dense_rank(def_rush_success_rt_PY1),
+           Rank_Def_Rush_Play_Success_Rt_PY1_col2 = dense_rank(def_rush_success_rate_PY1),
            Rank_Def_Rush_Play_Explosiveness_PY1_col2 = dense_rank(def_rush_explosiveness_PY1),
            Rank_Def_Pass_Play_EPA_PY1_col2 = dense_rank(def_pass_epa_PY1),
-           Rank_Def_Pass_Play_Success_Rt_PY1_col2 = dense_rank(def_pass_success_rt_PY1),
+           Rank_Def_Pass_Play_Success_Rt_PY1_col2 = dense_rank(def_pass_success_rate_PY1),
            Rank_Def_Pass_Play_Explosiveness_PY1_col2 = dense_rank(def_pass_explosiveness_PY1),
            Rank_EPA_diff_PY1_col2 = dense_rank(desc(EPA_diff_PY1)),
            Rank_SuccessRt_diff_PY1_col2 = dense_rank(desc(SuccessRt_diff_PY1)),
@@ -2769,8 +2655,8 @@ if (as.integer(cfb_week) == 0) {
            Rank_off_fourth_conv_rate_PY2 = dense_rank(desc(off_fourth_conv_rate_PY2)),
            # Rank_penalty_Yds_pg_PY2 = dense_rank(penalty_yds_pg_PY2),
            # Rank_yds_per_penalty_PY2 = dense_rank(yards_per_penalty_PY2),
-           Rank_kick_return_yds_PY2 = dense_rank(desc(st_kick_return_yds_PY2)),
-           Rank_punt_return_yds_PY2 = dense_rank(desc(st_punt_return_yds_PY2)),
+           Rank_kick_return_yds_PY2 = dense_rank(desc(kick_return_yds_PY2)),
+           Rank_punt_return_yds_PY2 = dense_rank(desc(punt_return_yds_PY2)),
            Rank_off_ypg_PY2 = dense_rank(desc(off_ypg_PY2)),
            Rank_off_pass_ypg_PY2 = dense_rank(desc(off_pass_ypg_PY2)),
            Rank_off_rush_ypg_PY2 = dense_rank(desc(off_rush_ypg_PY2)),
@@ -2778,10 +2664,10 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_YPP_PY2 = dense_rank(desc(adj_off_ypp_PY2)),
           #  # Rank_def_ints_pg_PY2 = dense_rank(desc(def_interceptions_pg_PY2)),
            Rank_Off_EPA_PY2 = dense_rank(desc(adj_off_epa_PY2)),
-           Rank_Off_Success_Rt_PY2 = dense_rank(desc(off_success_rt_PY2)),
+           Rank_Off_Success_Rt_PY2 = dense_rank(desc(off_success_rate_PY2)),
            Rank_Off_Explosiveness_PY2 = dense_rank(desc(adj_off_explosiveness_PY2)),
            Rank_Off_Pwr_Success_PY2 = dense_rank(desc(off_power_success_PY2)),
-           Rank_Off_Stuff_Rt_PY2 = dense_rank(off_stuff_rt_PY2),
+           Rank_Off_Stuff_Rt_PY2 = dense_rank(off_stuff_rate_PY2),
            Rank_Off_Line_Yds_PY2 = dense_rank(desc(off_line_yds_PY2)),
           #  Rank_Off_Second_Lvl_Yds_PY2 = dense_rank(desc(off_second_lvl_yds_PY2)),
           #  Rank_Off_Open_Field_Yds_PY2 = dense_rank(desc(off_open_field_yds_PY2)),
@@ -2790,22 +2676,22 @@ if (as.integer(cfb_week) == 0) {
           #  Rank_Off_Havoc_Front_PY2 = dense_rank(off_havoc_front_seven_PY2),
           #  Rank_Off_Havoc_DB_PY2 = dense_rank(off_havoc_db_PY2),
            Rank_Off_Standard_Down_EPA_PY2 = dense_rank(desc(off_standard_downs_epa_PY2)),
-           Rank_Off_Standard_Down_Success_Rt_PY2 = dense_rank(desc(off_standard_downs_success_rt_PY2)),
+           Rank_Off_Standard_Down_Success_Rt_PY2 = dense_rank(desc(off_standard_downs_success_rate_PY2)),
            Rank_Off_Standard_Down_Explosiveness_PY2 = dense_rank(desc(off_standard_downs_explosiveness_PY2)),
            Rank_Off_Pass_Down_EPA_PY2 = dense_rank(desc(off_passing_downs_epa_PY2)),
-           Rank_Off_Pass_Down_Success_Rt_PY2 = dense_rank(desc(off_passing_downs_success_rt_PY2)),
+           Rank_Off_Pass_Down_Success_Rt_PY2 = dense_rank(desc(off_passing_downs_success_rate_PY2)),
            Rank_Off_Pass_Down_Explosiveness_PY2 = dense_rank(desc(off_passing_downs_explosiveness_PY2)),
            Rank_Off_Rush_Play_EPA_PY2 = dense_rank(desc(off_rush_epa_PY2)),
-           Rank_Off_Rush_Play_Success_Rt_PY2 = dense_rank(desc(off_rush_success_rt_PY2)),
+           Rank_Off_Rush_Play_Success_Rt_PY2 = dense_rank(desc(off_rush_success_rate_PY2)),
            Rank_Off_Rush_Play_Explosiveness_PY2 = dense_rank(desc(off_rush_explosiveness_PY2)),
            Rank_Off_Pass_Play_EPA_PY2 = dense_rank(desc(off_pass_epa_PY2)),
-           Rank_Off_Pass_Play_Success_Rt_PY2 = dense_rank(desc(off_pass_success_rt_PY2)),
+           Rank_Off_Pass_Play_Success_Rt_PY2 = dense_rank(desc(off_pass_success_rate_PY2)),
            Rank_Off_Pass_Play_Explosiveness_PY2 = dense_rank(desc(off_pass_explosiveness_PY2)),
            Rank_Def_EPA_PY2 = dense_rank(adj_def_epa_PY2),
-           Rank_Def_Success_Rt_PY2 = dense_rank(def_success_rt_PY2),
+           Rank_Def_Success_Rt_PY2 = dense_rank(def_success_rate_PY2),
            Rank_Def_Explosiveness_PY2 = dense_rank(adj_def_explosiveness_PY2),
            Rank_Def_Pwr_Success_PY2 = dense_rank(def_power_success_PY2),
-           Rank_Def_Stuff_Rt_PY2 = dense_rank(desc(def_stuff_rt_PY2)),
+           Rank_Def_Stuff_Rt_PY2 = dense_rank(desc(def_stuff_rate_PY2)),
            Rank_Def_Line_Yds_PY2 = dense_rank(def_line_yds_PY2),
           #  # Rank_def_second_Lvl_Yds_PY2 = dense_rank(def_second_lvl_yds_PY2),
           #  # Rank_def_open_Field_Yds_PY2 = dense_rank(def_open_field_yds_PY2),
@@ -2814,16 +2700,16 @@ if (as.integer(cfb_week) == 0) {
           #  # Rank_def_havoc_front_Seven_PY2 = dense_rank(desc(def_havoc_front_seven_PY2)),
           #  # Rank_def_havoc_db_PY2 = dense_rank(desc(def_havoc_db_PY2)),
            Rank_Def_Standard_Down_EPA_PY2 = dense_rank(def_standard_downs_epa_PY2),
-           Rank_Def_Standard_Down_Success_Rt_PY2 = dense_rank(def_standard_downs_success_rt_PY2),
+           Rank_Def_Standard_Down_Success_Rt_PY2 = dense_rank(def_standard_downs_success_rate_PY2),
            Rank_Def_Standard_Down_Explosiveness_PY2 = dense_rank(def_standard_downs_explosiveness_PY2),
            Rank_Def_Pass_Down_EPA_PY2 = dense_rank(def_passing_downs_epa_PY2),
-           Rank_Def_Pass_Down_Success_Rt_PY2 = dense_rank(def_passing_downs_success_rt_PY2),
+           Rank_Def_Pass_Down_Success_Rt_PY2 = dense_rank(def_passing_downs_success_rate_PY2),
            Rank_Def_Pass_Down_Explosiveness_PY2 = dense_rank(def_passing_downs_explosiveness_PY2),
            Rank_Def_Rush_Play_EPA_PY2 = dense_rank(def_rush_epa_PY2),
-           Rank_Def_Rush_Play_Success_Rt_PY2 = dense_rank(def_rush_success_rt_PY2),
+           Rank_Def_Rush_Play_Success_Rt_PY2 = dense_rank(def_rush_success_rate_PY2),
            Rank_Def_Rush_Play_Explosiveness_PY2 = dense_rank(def_rush_explosiveness_PY2),
            Rank_Def_Pass_Play_EPA_PY2 = dense_rank(def_pass_epa_PY2),
-           Rank_Def_Pass_Play_Success_Rt_PY2 = dense_rank(def_pass_success_rt_PY2),
+           Rank_Def_Pass_Play_Success_Rt_PY2 = dense_rank(def_pass_success_rate_PY2),
            Rank_Def_Pass_Play_Explosiveness_PY2 = dense_rank(def_pass_explosiveness_PY2),
            Rank_EPA_diff_PY2 = dense_rank(desc(EPA_diff_PY2)),
            Rank_SuccessRt_diff_PY2 = dense_rank(desc(SuccessRt_diff_PY2)),
@@ -2844,32 +2730,32 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_YPP_PY2_col2 = dense_rank(desc(adj_off_ypp_PY2)),
           #  # Rank_def_ints_pg_PY2_col2 = dense_rank(desc(def_interceptions_pg_PY2)),
            Rank_Off_EPA_PY2_col2 = dense_rank(desc(adj_off_epa_PY2)),
-           Rank_Off_Success_Rt_PY2_col2 = dense_rank(desc(off_success_rt_PY2)),
+           Rank_Off_Success_Rt_PY2_col2 = dense_rank(desc(off_success_rate_PY2)),
            Rank_Off_Explosiveness_PY2_col2 = dense_rank(desc(adj_off_explosiveness_PY2)),
            Rank_Off_Pwr_Success_PY2_col2 = dense_rank(desc(off_power_success_PY2)),
-           Rank_Off_Stuff_Rt_PY2_col2 = dense_rank(off_stuff_rt_PY2),
+           Rank_Off_Stuff_Rt_PY2_col2 = dense_rank(off_stuff_rate_PY2),
            Rank_Off_Line_Yds_PY2_col2 = dense_rank(desc(off_line_yds_PY2)),
           #  Rank_Off_Second_Lvl_Yds_PY2_col2 = dense_rank(desc(off_second_lvl_yds_PY2)),
           #  Rank_Off_Open_Field_Yds_PY2_col2 = dense_rank(desc(off_open_field_yds_PY2)),
            Rank_Off_Pts_Per_Opp_PY2_col2 = dense_rank(desc(off_pts_per_opp_PY2)),
            Rank_Off_Havoc_Total_PY2_col2 = dense_rank(off_havoc_total_PY2),
            Rank_Off_Standard_Down_EPA_PY2_col2 = dense_rank(desc(off_standard_downs_epa_PY2)),
-           Rank_Off_Standard_Down_Success_Rt_PY2_col2 = dense_rank(desc(off_standard_downs_success_rt_PY2)),
+           Rank_Off_Standard_Down_Success_Rt_PY2_col2 = dense_rank(desc(off_standard_downs_success_rate_PY2)),
            Rank_Off_Standard_Down_Explosiveness_PY2_col2 = dense_rank(desc(off_standard_downs_explosiveness_PY2)),
            Rank_Off_Pass_Down_EPA_PY2_col2 = dense_rank(desc(off_passing_downs_epa_PY2)),
-           Rank_Off_Pass_Down_Success_Rt_PY2_col2 = dense_rank(desc(off_passing_downs_success_rt_PY2)),
+           Rank_Off_Pass_Down_Success_Rt_PY2_col2 = dense_rank(desc(off_passing_downs_success_rate_PY2)),
            Rank_Off_Pass_Down_Explosiveness_PY2_col2 = dense_rank(desc(off_passing_downs_explosiveness_PY2)),
            Rank_Off_Rush_Play_EPA_PY2_col2 = dense_rank(desc(off_rush_epa_PY2)),
-           Rank_Off_Rush_Play_Success_Rt_PY2_col2 = dense_rank(desc(off_rush_success_rt_PY2)),
+           Rank_Off_Rush_Play_Success_Rt_PY2_col2 = dense_rank(desc(off_rush_success_rate_PY2)),
            Rank_Off_Rush_Play_Explosiveness_PY2_col2 = dense_rank(desc(off_rush_explosiveness_PY2)),
            Rank_Off_Pass_Play_EPA_PY2_col2 = dense_rank(desc(off_pass_epa_PY2)),
-           Rank_Off_Pass_Play_Success_Rt_PY2_col2 = dense_rank(desc(off_pass_success_rt_PY2)),
+           Rank_Off_Pass_Play_Success_Rt_PY2_col2 = dense_rank(desc(off_pass_success_rate_PY2)),
            Rank_Off_Pass_Play_Explosiveness_PY2_col2 = dense_rank(desc(off_pass_explosiveness_PY2)),
            Rank_Def_EPA_PY2_col2 = dense_rank(adj_def_epa_PY2),
-           Rank_Def_Success_Rt_PY2_col2 = dense_rank(def_success_rt_PY2),
+           Rank_Def_Success_Rt_PY2_col2 = dense_rank(def_success_rate_PY2),
            Rank_Def_Explosiveness_PY2_col2 = dense_rank(adj_def_explosiveness_PY2),
            Rank_Def_Pwr_Success_PY2_col2 = dense_rank(def_power_success_PY2),
-           Rank_Def_Stuff_Rt_PY2_col2 = dense_rank(desc(def_stuff_rt_PY2)),
+           Rank_Def_Stuff_Rt_PY2_col2 = dense_rank(desc(def_stuff_rate_PY2)),
            Rank_Def_Line_Yds_PY2_col2 = dense_rank(def_line_yds_PY2),
            # Rank_def_second_Lvl_Yds_PY2_col2 = dense_rank(def_second_lvl_yds_PY2),
            # Rank_def_open_Field_Yds_PY2_col2 = dense_rank(def_open_field_yds_PY2),
@@ -2878,16 +2764,16 @@ if (as.integer(cfb_week) == 0) {
            # Rank_def_havoc_front_Seven_PY2_col2 = dense_rank(desc(def_havoc_front_seven_PY2)),
            # Rank_def_havoc_db_PY2_col2 = dense_rank(desc(def_havoc_db_PY2)),
            Rank_Def_Standard_Down_EPA_PY2_col2 = dense_rank(def_standard_downs_epa_PY2),
-           Rank_Def_Standard_Down_Success_Rt_PY2_col2 = dense_rank(def_standard_downs_success_rt_PY2),
+           Rank_Def_Standard_Down_Success_Rt_PY2_col2 = dense_rank(def_standard_downs_success_rate_PY2),
            Rank_Def_Standard_Down_Explosiveness_PY2_col2 = dense_rank(def_standard_downs_explosiveness_PY2),
            Rank_Def_Pass_Down_EPA_PY2_col2 = dense_rank(def_passing_downs_epa_PY2),
-           Rank_Def_Pass_Down_Success_Rt_PY2_col2 = dense_rank(def_passing_downs_success_rt_PY2),
+           Rank_Def_Pass_Down_Success_Rt_PY2_col2 = dense_rank(def_passing_downs_success_rate_PY2),
            Rank_Def_Pass_Down_Explosiveness_PY2_col2 = dense_rank(def_passing_downs_explosiveness_PY2),
            Rank_Def_Rush_Play_EPA_PY2_col2 = dense_rank(def_rush_epa_PY2),
-           Rank_Def_Rush_Play_Success_Rt_PY2_col2 = dense_rank(def_rush_success_rt_PY2),
+           Rank_Def_Rush_Play_Success_Rt_PY2_col2 = dense_rank(def_rush_success_rate_PY2),
            Rank_Def_Rush_Play_Explosiveness_PY2_col2 = dense_rank(def_rush_explosiveness_PY2),
            Rank_Def_Pass_Play_EPA_PY2_col2 = dense_rank(def_pass_epa_PY2),
-           Rank_Def_Pass_Play_Success_Rt_PY2_col2 = dense_rank(def_pass_success_rt_PY2),
+           Rank_Def_Pass_Play_Success_Rt_PY2_col2 = dense_rank(def_pass_success_rate_PY2),
            Rank_Def_Pass_Play_Explosiveness_PY2_col2 = dense_rank(def_pass_explosiveness_PY2),
            Rank_EPA_diff_PY2_col2 = dense_rank(desc(EPA_diff_PY2)),
            Rank_SuccessRt_diff_PY2_col2 = dense_rank(desc(SuccessRt_diff_PY2)),
@@ -2905,8 +2791,8 @@ if (as.integer(cfb_week) == 0) {
            Rank_off_fourth_conv_rate_PY1 = dense_rank(desc(off_fourth_conv_rate_PY1)),
            # Rank_penalty_Yds_pg_PY1 = dense_rank(penalty_yds_pg_PY1),
            # Rank_yds_per_penalty_PY1 = dense_rank(yards_per_penalty_PY1),
-           Rank_st_kick_return_yds_PY1 = dense_rank(desc(st_kick_return_yds_PY1)),
-           Rank_punt_return_yds_PY1 = dense_rank(desc(st_punt_return_yds_PY1)),
+           Rank_kick_return_yds_PY1 = dense_rank(desc(kick_return_yds_PY1)),
+           Rank_punt_return_yds_PY1 = dense_rank(desc(punt_return_yds_PY1)),
            Rank_off_ypg_PY1 = dense_rank(desc(off_ypg_PY1)),
            Rank_off_pass_ypg_PY1 = dense_rank(desc(off_pass_ypg_PY1)),
            Rank_off_rush_ypg_PY1 = dense_rank(desc(off_rush_ypg_PY1)),
@@ -2914,10 +2800,10 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_YPP_PY1 = dense_rank(desc(adj_off_ypp_PY1)),
            # Rank_def_ints_pg_PY1 = dense_rank(desc(def_interceptions_pg_PY1)),
            Rank_Off_EPA_PY1 = dense_rank(desc(adj_off_epa_PY1)),
-           Rank_Off_Success_Rt_PY1 = dense_rank(desc(off_success_rt_PY1)),
+           Rank_Off_Success_Rt_PY1 = dense_rank(desc(off_success_rate_PY1)),
            Rank_Off_Explosiveness_PY1 = dense_rank(desc(adj_off_explosiveness_PY1)),
            Rank_Off_Pwr_Success_PY1 = dense_rank(desc(off_power_success_PY1)),
-           Rank_Off_Stuff_Rt_PY1 = dense_rank(off_stuff_rt_PY1),
+           Rank_Off_Stuff_Rt_PY1 = dense_rank(off_stuff_rate_PY1),
            Rank_Off_Line_Yds_PY1 = dense_rank(desc(off_line_yds_PY1)),
           #  Rank_Off_Second_Lvl_Yds_PY1 = dense_rank(desc(off_second_lvl_yds_PY1)),
           #  Rank_Off_Open_Field_Yds_PY1 = dense_rank(desc(off_open_field_yds_PY1)),
@@ -2926,22 +2812,22 @@ if (as.integer(cfb_week) == 0) {
           #  Rank_Off_Havoc_Front_PY1 = dense_rank(off_havoc_front_seven_PY1),
           #  Rank_Off_Havoc_DB_PY1 = dense_rank(off_havoc_db_PY1),
            Rank_Off_Standard_Down_EPA_PY1 = dense_rank(desc(off_standard_downs_epa_PY1)),
-           Rank_Off_Standard_Down_Success_Rt_PY1 = dense_rank(desc(off_standard_downs_success_rt_PY1)),
+           Rank_Off_Standard_Down_Success_Rt_PY1 = dense_rank(desc(off_standard_downs_success_rate_PY1)),
            Rank_Off_Standard_Down_Explosiveness_PY1 = dense_rank(desc(off_standard_downs_explosiveness_PY1)),
            Rank_Off_Pass_Down_EPA_PY1 = dense_rank(desc(off_passing_downs_epa_PY1)),
-           Rank_Off_Pass_Down_Success_Rt_PY1 = dense_rank(desc(off_passing_downs_success_rt_PY1)),
+           Rank_Off_Pass_Down_Success_Rt_PY1 = dense_rank(desc(off_passing_downs_success_rate_PY1)),
            Rank_Off_Pass_Down_Explosiveness_PY1 = dense_rank(desc(off_passing_downs_explosiveness_PY1)),
            Rank_Off_Rush_Play_EPA_PY1 = dense_rank(desc(off_rush_epa_PY1)),
-           Rank_Off_Rush_Play_Success_Rt_PY1 = dense_rank(desc(off_rush_success_rt_PY1)),
+           Rank_Off_Rush_Play_Success_Rt_PY1 = dense_rank(desc(off_rush_success_rate_PY1)),
            Rank_Off_Rush_Play_Explosiveness_PY1 = dense_rank(desc(off_rush_explosiveness_PY1)),
            Rank_Off_Pass_Play_EPA_PY1 = dense_rank(desc(off_pass_epa_PY1)),
-           Rank_Off_Pass_Play_Success_Rt_PY1 = dense_rank(desc(off_pass_success_rt_PY1)),
+           Rank_Off_Pass_Play_Success_Rt_PY1 = dense_rank(desc(off_pass_success_rate_PY1)),
            Rank_Off_Pass_Play_Explosiveness_PY1 = dense_rank(desc(off_pass_explosiveness_PY1)),
            Rank_Def_EPA_PY1 = dense_rank(adj_def_epa_PY1),
-           Rank_Def_Success_Rt_PY1 = dense_rank(def_success_rt_PY1),
+           Rank_Def_Success_Rt_PY1 = dense_rank(def_success_rate_PY1),
            Rank_Def_Explosiveness_PY1 = dense_rank(adj_def_explosiveness_PY1),
            Rank_Def_Pwr_Success_PY1 = dense_rank(def_power_success_PY1),
-           Rank_Def_Stuff_Rt_PY1 = dense_rank(desc(def_stuff_rt_PY1)),
+           Rank_Def_Stuff_Rt_PY1 = dense_rank(desc(def_stuff_rate_PY1)),
            Rank_Def_Line_Yds_PY1 = dense_rank(def_line_yds_PY1),
            # Rank_def_second_Lvl_Yds_PY1 = dense_rank(def_second_lvl_yds_PY1),
            # Rank_def_open_Field_Yds_PY1 = dense_rank(def_open_field_yds_PY1),
@@ -2950,16 +2836,16 @@ if (as.integer(cfb_week) == 0) {
            # Rank_def_havoc_front_Seven_PY1 = dense_rank(desc(def_havoc_front_seven_PY1)),
            # Rank_def_havoc_db_PY1 = dense_rank(desc(def_havoc_db_PY1)),
            Rank_Def_Standard_Down_EPA_PY1 = dense_rank(def_standard_downs_epa_PY1),
-           Rank_Def_Standard_Down_Success_Rt_PY1 = dense_rank(def_standard_downs_success_rt_PY1),
+           Rank_Def_Standard_Down_Success_Rt_PY1 = dense_rank(def_standard_downs_success_rate_PY1),
            Rank_Def_Standard_Down_Explosiveness_PY1 = dense_rank(def_standard_downs_explosiveness_PY1),
            Rank_Def_Pass_Down_EPA_PY1 = dense_rank(def_passing_downs_epa_PY1),
-           Rank_Def_Pass_Down_Success_Rt_PY1 = dense_rank(def_passing_downs_success_rt_PY1),
+           Rank_Def_Pass_Down_Success_Rt_PY1 = dense_rank(def_passing_downs_success_rate_PY1),
            Rank_Def_Pass_Down_Explosiveness_PY1 = dense_rank(def_passing_downs_explosiveness_PY1),
            Rank_Def_Rush_Play_EPA_PY1 = dense_rank(def_rush_epa_PY1),
-           Rank_Def_Rush_Play_Success_Rt_PY1 = dense_rank(def_rush_success_rt_PY1),
+           Rank_Def_Rush_Play_Success_Rt_PY1 = dense_rank(def_rush_success_rate_PY1),
            Rank_Def_Rush_Play_Explosiveness_PY1 = dense_rank(def_rush_explosiveness_PY1),
            Rank_Def_Pass_Play_EPA_PY1 = dense_rank(def_pass_epa_PY1),
-           Rank_Def_Pass_Play_Success_Rt_PY1 = dense_rank(def_pass_success_rt_PY1),
+           Rank_Def_Pass_Play_Success_Rt_PY1 = dense_rank(def_pass_success_rate_PY1),
            Rank_Def_Pass_Play_Explosiveness_PY1 = dense_rank(def_pass_explosiveness_PY1),
            Rank_EPA_diff_PY1 = dense_rank(desc(EPA_diff_PY1)),
            Rank_SuccessRt_diff_PY1 = dense_rank(desc(SuccessRt_diff_PY1)),
@@ -2982,10 +2868,10 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_YPP_PY1_col2 = dense_rank(desc(adj_off_ypp_PY1)),
            # Rank_def_ints_pg_PY1_col2 = dense_rank(desc(def_interceptions_pg_PY1)),
            Rank_Off_EPA_PY1_col2 = dense_rank(desc(adj_off_epa_PY1)),
-           Rank_Off_Success_Rt_PY1_col2 = dense_rank(desc(off_success_rt_PY1)),
+           Rank_Off_Success_Rt_PY1_col2 = dense_rank(desc(off_success_rate_PY1)),
            Rank_Off_Explosiveness_PY1_col2 = dense_rank(desc(adj_off_explosiveness_PY1)),
            Rank_Off_Pwr_Success_PY1_col2 = dense_rank(desc(off_power_success_PY1)),
-           Rank_Off_Stuff_Rt_PY1_col2 = dense_rank(off_stuff_rt_PY1),
+           Rank_Off_Stuff_Rt_PY1_col2 = dense_rank(off_stuff_rate_PY1),
            Rank_Off_Line_Yds_PY1_col2 = dense_rank(desc(off_line_yds_PY1)),
            Rank_Off_Second_Lvl_Yds_PY1_col2 = dense_rank(desc(off_second_lvl_yds_PY1)),
            Rank_Off_Open_Field_Yds_PY1_col2 = dense_rank(desc(off_open_field_yds_PY1)),
@@ -2995,22 +2881,22 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_Havoc_Front_PY1_col2 = dense_rank(off_havoc_front_seven_PY1),
            Rank_Off_Havoc_DB_PY1_col2 = dense_rank(off_havoc_db_PY1),
            Rank_Off_Standard_Down_EPA_PY1_col2 = dense_rank(desc(off_standard_downs_epa_PY1)),
-           Rank_Off_Standard_Down_Success_Rt_PY1_col2 = dense_rank(desc(off_standard_downs_success_rt_PY1)),
+           Rank_Off_Standard_Down_Success_Rt_PY1_col2 = dense_rank(desc(off_standard_downs_success_rate_PY1)),
            Rank_Off_Standard_Down_Explosiveness_PY1_col2 = dense_rank(desc(off_standard_downs_explosiveness_PY1)),
            Rank_Off_Pass_Down_EPA_PY1_col2 = dense_rank(desc(off_passing_downs_epa_PY1)),
-           Rank_Off_Pass_Down_Success_Rt_PY1_col2 = dense_rank(desc(off_passing_downs_success_rt_PY1)),
+           Rank_Off_Pass_Down_Success_Rt_PY1_col2 = dense_rank(desc(off_passing_downs_success_rate_PY1)),
            Rank_Off_Pass_Down_Explosiveness_PY1_col2 = dense_rank(desc(off_passing_downs_explosiveness_PY1)),
            Rank_Off_Rush_Play_EPA_PY1_col2 = dense_rank(desc(off_rush_epa_PY1)),
-           Rank_Off_Rush_Play_Success_Rt_PY1_col2 = dense_rank(desc(off_rush_success_rt_PY1)),
+           Rank_Off_Rush_Play_Success_Rt_PY1_col2 = dense_rank(desc(off_rush_success_rate_PY1)),
            Rank_Off_Rush_Play_Explosiveness_PY1_col2 = dense_rank(desc(off_rush_explosiveness_PY1)),
            Rank_Off_Pass_Play_EPA_PY1_col2 = dense_rank(desc(off_pass_epa_PY1)),
-           Rank_Off_Pass_Play_Success_Rt_PY1_col2 = dense_rank(desc(off_pass_success_rt_PY1)),
+           Rank_Off_Pass_Play_Success_Rt_PY1_col2 = dense_rank(desc(off_pass_success_rate_PY1)),
            Rank_Off_Pass_Play_Explosiveness_PY1_col2 = dense_rank(desc(off_pass_explosiveness_PY1)),
            Rank_Def_EPA_PY1_col2 = dense_rank(adj_def_epa_PY1),
-           Rank_Def_Success_Rt_PY1_col2 = dense_rank(def_success_rt_PY1),
+           Rank_Def_Success_Rt_PY1_col2 = dense_rank(def_success_rate_PY1),
            Rank_Def_Explosiveness_PY1_col2 = dense_rank(adj_def_explosiveness_PY1),
            Rank_Def_Pwr_Success_PY1_col2 = dense_rank(def_power_success_PY1),
-           Rank_Def_Stuff_Rt_PY1_col2 = dense_rank(desc(def_stuff_rt_PY1)),
+           Rank_Def_Stuff_Rt_PY1_col2 = dense_rank(desc(def_stuff_rate_PY1)),
            Rank_Def_Line_Yds_PY1_col2 = dense_rank(def_line_yds_PY1),
            # Rank_def_second_Lvl_Yds_PY1_col2 = dense_rank(def_second_lvl_yds_PY1),
            # Rank_def_open_Field_Yds_PY1_col2 = dense_rank(def_open_field_yds_PY1),
@@ -3019,90 +2905,22 @@ if (as.integer(cfb_week) == 0) {
            # Rank_def_havoc_front_Seven_PY1_col2 = dense_rank(desc(def_havoc_front_seven_PY1)),
            # Rank_def_havoc_db_PY1_col2 = dense_rank(desc(def_havoc_db_PY1)),
            Rank_Def_Standard_Down_EPA_PY1_col2 = dense_rank(def_standard_downs_epa_PY1),
-           Rank_Def_Standard_Down_Success_Rt_PY1_col2 = dense_rank(def_standard_downs_success_rt_PY1),
+           Rank_Def_Standard_Down_Success_Rt_PY1_col2 = dense_rank(def_standard_downs_success_rate_PY1),
            Rank_Def_Standard_Down_Explosiveness_PY1_col2 = dense_rank(def_standard_downs_explosiveness_PY1),
            Rank_Def_Pass_Down_EPA_PY1_col2 = dense_rank(def_passing_downs_epa_PY1),
-           Rank_Def_Pass_Down_Success_Rt_PY1_col2 = dense_rank(def_passing_downs_success_rt_PY1),
+           Rank_Def_Pass_Down_Success_Rt_PY1_col2 = dense_rank(def_passing_downs_success_rate_PY1),
            Rank_Def_Pass_Down_Explosiveness_PY1_col2 = dense_rank(def_passing_downs_explosiveness_PY1),
            Rank_Def_Rush_Play_EPA_PY1_col2 = dense_rank(def_rush_epa_PY1),
-           Rank_Def_Rush_Play_Success_Rt_PY1_col2 = dense_rank(def_rush_success_rt_PY1),
+           Rank_Def_Rush_Play_Success_Rt_PY1_col2 = dense_rank(def_rush_success_rate_PY1),
            Rank_Def_Rush_Play_Explosiveness_PY1_col2 = dense_rank(def_rush_explosiveness_PY1),
            Rank_Def_Pass_Play_EPA_PY1_col2 = dense_rank(def_pass_epa_PY1),
-           Rank_Def_Pass_Play_Success_Rt_PY1_col2 = dense_rank(def_pass_success_rt_PY1),
+           Rank_Def_Pass_Play_Success_Rt_PY1_col2 = dense_rank(def_pass_success_rate_PY1),
            Rank_Def_Pass_Play_Explosiveness_PY1_col2 = dense_rank(def_pass_explosiveness_PY1),
            Rank_EPA_diff_PY1_col2 = dense_rank(desc(EPA_diff_PY1)),
            Rank_SuccessRt_diff_PY1_col2 = dense_rank(desc(SuccessRt_diff_PY1)),
            Rank_HavocRt_diff_PY1_col2 = dense_rank(desc(HavocRt_diff_PY1)),
            Rank_Explosiveness_diff_PY1_col2 = dense_rank(desc(Explosiveness_diff_PY1)),
            # Rank_recruit_Pts_PY1_col2 = dense_rank(desc(recruit_pts_PY1)),
-           ## PY1 weighted 3 times
-           Rank_Comp_Pct_PY1_col3 = dense_rank(desc(off_comp_pct_PY1)),
-           Rank_off_pass_ypa_PY1_col3 = dense_rank(desc(off_pass_ypa_PY1)),
-           Rank_off_pass_ypr_PY1_col3 = dense_rank(desc(off_pass_ypr_PY1)),
-           # Rank_int_Pct_PY1_col3 = dense_rank(int_pct_PY1),
-           Rank_off_rush_ypa_PY1_col3 = dense_rank(desc(off_rush_ypa_PY1)),
-           Rank_off_turnovers_pg_PY1_col3 = dense_rank(off_turnovers_pg_PY1),
-           Rank_third_conv_rate_PY1_col3 = dense_rank(desc(off_third_conv_rate_PY1)),
-           Rank_off_fourth_conv_rate_PY1_col3 = dense_rank(desc(off_fourth_conv_rate_PY1)),
-           Rank_off_ypg_PY1_col3 = dense_rank(desc(off_ypg_PY1)),
-           Rank_off_pass_ypg_PY1_col3 = dense_rank(desc(off_pass_ypg_PY1)),
-           Rank_off_rush_ypg_PY1_col3 = dense_rank(desc(off_rush_ypg_PY1)),
-           # Rank_first_downs_pg_PY1_col3 = dense_rank(desc(first_downs_pg_PY1)),
-           Rank_Off_YPP_PY1_col3 = dense_rank(desc(adj_off_ypp_PY1)),
-           # Rank_def_ints_pg_PY1_col3 = dense_rank(desc(def_interceptions_pg_PY1)),
-           Rank_Off_EPA_PY1_col3 = dense_rank(desc(adj_off_epa_PY1)),
-           Rank_Off_Success_Rt_PY1_col3 = dense_rank(desc(off_success_rt_PY1)),
-           Rank_Off_Explosiveness_PY1_col3 = dense_rank(desc(adj_off_explosiveness_PY1)),
-           Rank_Off_Pwr_Success_PY1_col3 = dense_rank(desc(off_power_success_PY1)),
-           Rank_Off_Stuff_Rt_PY1_col3 = dense_rank(off_stuff_rt_PY1),
-           Rank_Off_Line_Yds_PY1_col3 = dense_rank(desc(off_line_yds_PY1)),
-           Rank_Off_Second_Lvl_Yds_PY1_col3 = dense_rank(desc(off_second_lvl_yds_PY1)),
-           Rank_Off_Open_Field_Yds_PY1_col3 = dense_rank(desc(off_open_field_yds_PY1)),
-           Rank_Off_Pts_Per_Opp_PY1_col3 = dense_rank(desc(off_pts_per_opp_PY1)),
-           Rank_Off_Field_Pos_Avg_Predicted_Pts_PY1_col3 = dense_rank(desc(off_field_pos_avg_predicted_points_PY1)),
-           Rank_Off_Havoc_Total_PY1_col3 = dense_rank(off_havoc_total_PY1),
-           Rank_Off_Havoc_Front_PY1_col3 = dense_rank(off_havoc_front_seven_PY1),
-           Rank_Off_Havoc_DB_PY1_col3 = dense_rank(off_havoc_db_PY1),
-           Rank_Off_Standard_Down_EPA_PY1_col3 = dense_rank(desc(off_standard_downs_epa_PY1)),
-           Rank_Off_Standard_Down_Success_Rt_PY1_col3 = dense_rank(desc(off_standard_downs_success_rt_PY1)),
-           Rank_Off_Standard_Down_Explosiveness_PY1_col3 = dense_rank(desc(off_standard_downs_explosiveness_PY1)),
-           Rank_Off_Pass_Down_EPA_PY1_col3 = dense_rank(desc(off_passing_downs_epa_PY1)),
-           Rank_Off_Pass_Down_Success_Rt_PY1_col3 = dense_rank(desc(off_passing_downs_success_rt_PY1)),
-           Rank_Off_Pass_Down_Explosiveness_PY1_col3 = dense_rank(desc(off_passing_downs_explosiveness_PY1)),
-           Rank_Off_Rush_Play_EPA_PY1_col3 = dense_rank(desc(off_rush_epa_PY1)),
-           Rank_Off_Rush_Play_Success_Rt_PY1_col3 = dense_rank(desc(off_rush_success_rt_PY1)),
-           Rank_Off_Rush_Play_Explosiveness_PY1_col3 = dense_rank(desc(off_rush_explosiveness_PY1)),
-           Rank_Off_Pass_Play_EPA_PY1_col3 = dense_rank(desc(off_pass_epa_PY1)),
-           Rank_Off_Pass_Play_Success_Rt_PY1_col3 = dense_rank(desc(off_pass_success_rt_PY1)),
-           Rank_Off_Pass_Play_Explosiveness_PY1_col3 = dense_rank(desc(off_pass_explosiveness_PY1)),
-           Rank_Def_EPA_PY1_col3 = dense_rank(adj_def_epa_PY1),
-           Rank_Def_Success_Rt_PY1_col3 = dense_rank(def_success_rt_PY1),
-           Rank_Def_Explosiveness_PY1_col3 = dense_rank(adj_def_explosiveness_PY1),
-           Rank_Def_Pwr_Success_PY1_col3 = dense_rank(def_power_success_PY1),
-           Rank_Def_Stuff_Rt_PY1_col3 = dense_rank(desc(def_stuff_rt_PY1)),
-           Rank_Def_Line_Yds_PY1_col3 = dense_rank(def_line_yds_PY1),
-           # Rank_def_second_Lvl_Yds_PY1_col3 = dense_rank(def_second_lvl_yds_PY1),
-           # Rank_def_open_Field_Yds_PY1_col3 = dense_rank(def_open_field_yds_PY1),
-           Rank_Def_Pts_Per_Opp_PY1_col3 = dense_rank(def_pts_per_opp_PY1),
-           Rank_Def_Havoc_Total_PY1_col3 = dense_rank(desc(def_havoc_total_PY1)),
-           # Rank_def_havoc_front_Seven_PY1_col3 = dense_rank(desc(def_havoc_front_seven_PY1)),
-           # Rank_def_havoc_db_PY1_col3 = dense_rank(desc(def_havoc_db_PY1)),
-           Rank_Def_Standard_Down_EPA_PY1_col3 = dense_rank(def_standard_downs_epa_PY1),
-           Rank_Def_Standard_Down_Success_Rt_PY1_col3 = dense_rank(def_standard_downs_success_rt_PY1),
-           Rank_Def_Standard_Down_Explosiveness_PY1_col3 = dense_rank(def_standard_downs_explosiveness_PY1),
-           Rank_Def_Pass_Down_EPA_PY1_col3 = dense_rank(def_passing_downs_epa_PY1),
-           Rank_Def_Pass_Down_Success_Rt_PY1_col3 = dense_rank(def_passing_downs_success_rt_PY1),
-           Rank_Def_Pass_Down_Explosiveness_PY1_col3 = dense_rank(def_passing_downs_explosiveness_PY1),
-           Rank_Def_Rush_Play_EPA_PY1_col3 = dense_rank(def_rush_epa_PY1),
-           Rank_Def_Rush_Play_Success_Rt_PY1_col3 = dense_rank(def_rush_success_rt_PY1),
-           Rank_Def_Rush_Play_Explosiveness_PY1_col3 = dense_rank(def_rush_explosiveness_PY1),
-           Rank_Def_Pass_Play_EPA_PY1_col3 = dense_rank(def_pass_epa_PY1),
-           Rank_Def_Pass_Play_Success_Rt_PY1_col3 = dense_rank(def_pass_success_rt_PY1),
-           Rank_Def_Pass_Play_Explosiveness_PY1_col3 = dense_rank(def_pass_explosiveness_PY1),
-           Rank_EPA_diff_PY1_col3 = dense_rank(desc(EPA_diff_PY1)),
-           Rank_SuccessRt_diff_PY1_col3 = dense_rank(desc(SuccessRt_diff_PY1)),
-           Rank_HavocRt_diff_PY1_col3 = dense_rank(desc(HavocRt_diff_PY1)),
-           Rank_Explosiveness_diff_PY1_col3 = dense_rank(desc(Explosiveness_diff_PY1)),
            ### incoming recruiting class, weighted once
            # Rank_recruit_Pts = dense_rank(desc(recruit_pts)),
            ### Ranking current stats
@@ -3116,8 +2934,8 @@ if (as.integer(cfb_week) == 0) {
            Rank_off_fourth_conv_rate = dense_rank(desc(off_fourth_conv_rate)),
            # Rank_penalty_Yds_pg = dense_rank(penalty_yds_pg),
            # Rank_yds_per_penalty = dense_rank(yards_per_penalty),
-           Rank_st_kick_return_yds = dense_rank(desc(st_kick_return_yds)),
-           Rank_punt_return_yds = dense_rank(desc(st_punt_return_yds)),
+           Rank_kick_return_yds = dense_rank(desc(kick_return_yds)),
+           Rank_punt_return_yds = dense_rank(desc(punt_return_yds)),
            Rank_off_ypg = dense_rank(desc(off_ypg)),
            Rank_off_pass_ypg = dense_rank(desc(off_pass_ypg)),
            Rank_off_rush_ypg = dense_rank(desc(off_rush_ypg)),
@@ -3125,10 +2943,10 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_YPP = dense_rank(desc(adj_off_ypp)),
            # Rank_def_ints_pg = dense_rank(desc(def_interceptions_pg)),
            Rank_Off_EPA = dense_rank(desc(adj_off_epa)),
-           Rank_Off_Success_Rt = dense_rank(desc(off_success_rt)),
+           Rank_Off_Success_Rt = dense_rank(desc(off_success_rate)),
            Rank_Off_Explosiveness = dense_rank(desc(adj_off_explosiveness)),
            Rank_Off_Pwr_Success = dense_rank(desc(off_power_success)),
-           Rank_Off_Stuff_Rt = dense_rank(off_stuff_rt),
+           Rank_Off_Stuff_Rt = dense_rank(off_stuff_rate),
            Rank_Off_Line_Yds = dense_rank(desc(off_line_yds)),
            Rank_Off_Second_Lvl_Yds = dense_rank(desc(off_second_lvl_yds)),
            Rank_Off_Open_Field_Yds = dense_rank(desc(off_open_field_yds)),
@@ -3138,22 +2956,22 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_Havoc_Front = dense_rank(off_havoc_front_seven),
            Rank_Off_Havoc_DB = dense_rank(off_havoc_db),
            Rank_Off_Standard_Down_EPA = dense_rank(desc(off_standard_downs_epa)),
-           Rank_Off_Standard_Down_Success_Rt = dense_rank(desc(off_standard_downs_success_rt)),
+           Rank_Off_Standard_Down_Success_Rt = dense_rank(desc(off_standard_downs_success_rate)),
            Rank_Off_Standard_Down_Explosiveness = dense_rank(desc(off_standard_downs_explosiveness)),
            Rank_Off_Pass_Down_EPA = dense_rank(desc(off_passing_downs_epa)),
-           Rank_Off_Pass_Down_Success_Rt = dense_rank(desc(off_passing_downs_success_rt)),
+           Rank_Off_Pass_Down_Success_Rt = dense_rank(desc(off_passing_downs_success_rate)),
            Rank_Off_Pass_Down_Explosiveness = dense_rank(desc(off_passing_downs_explosiveness)),
            Rank_Off_Rush_Play_EPA = dense_rank(desc(off_rush_epa)),
-           Rank_Off_Rush_Play_Success_Rt = dense_rank(desc(off_rush_success_rt)),
+           Rank_Off_Rush_Play_Success_Rt = dense_rank(desc(off_rush_success_rate)),
            Rank_Off_Rush_Play_Explosiveness = dense_rank(desc(off_rush_explosiveness)),
            Rank_Off_Pass_Play_EPA = dense_rank(desc(off_pass_epa)),
-           Rank_Off_Pass_Play_Success_Rt = dense_rank(desc(off_pass_success_rt)),
+           Rank_Off_Pass_Play_Success_Rt = dense_rank(desc(off_pass_success_rate)),
            Rank_Off_Pass_Play_Explosiveness = dense_rank(desc(off_pass_explosiveness)),
            Rank_Def_EPA = dense_rank(adj_def_epa),
-           Rank_Def_Success_Rt = dense_rank(def_success_rt),
+           Rank_Def_Success_Rt = dense_rank(def_success_rate),
            Rank_Def_Explosiveness = dense_rank(adj_def_explosiveness),
            Rank_Def_Pwr_Success = dense_rank(def_power_success),
-           Rank_Def_Stuff_Rt = dense_rank(desc(def_stuff_rt)),
+           Rank_Def_Stuff_Rt = dense_rank(desc(def_stuff_rate)),
            Rank_Def_Line_Yds = dense_rank(def_line_yds),
           #  # Rank_def_second_Lvl_Yds = dense_rank(def_second_lvl_yds),
           #  # Rank_def_open_Field_Yds = dense_rank(def_open_field_yds),
@@ -3162,16 +2980,16 @@ if (as.integer(cfb_week) == 0) {
           #  # Rank_def_havoc_front_Seven = dense_rank(desc(def_havoc_front_seven)),
           #  # Rank_def_havoc_db = dense_rank(desc(def_havoc_db)),
            Rank_Def_Standard_Down_EPA = dense_rank(def_standard_downs_epa),
-           Rank_Def_Standard_Down_Success_Rt = dense_rank(def_standard_downs_success_rt),
+           Rank_Def_Standard_Down_Success_Rt = dense_rank(def_standard_downs_success_rate),
            Rank_Def_Standard_Down_Explosiveness = dense_rank(def_standard_downs_explosiveness),
            Rank_Def_Pass_Down_EPA = dense_rank(def_passing_downs_epa),
-           Rank_Def_Pass_Down_Success_Rt = dense_rank(def_passing_downs_success_rt),
+           Rank_Def_Pass_Down_Success_Rt = dense_rank(def_passing_downs_success_rate),
            Rank_Def_Pass_Down_Explosiveness = dense_rank(def_passing_downs_explosiveness),
            Rank_Def_Rush_Play_EPA = dense_rank(def_rush_epa),
-           Rank_Def_Rush_Play_Success_Rt = dense_rank(def_rush_success_rt),
+           Rank_Def_Rush_Play_Success_Rt = dense_rank(def_rush_success_rate),
            Rank_Def_Rush_Play_Explosiveness = dense_rank(def_rush_explosiveness),
            Rank_Def_Pass_Play_EPA = dense_rank(def_pass_epa),
-           Rank_Def_Pass_Play_Success_Rt = dense_rank(def_pass_success_rt),
+           Rank_Def_Pass_Play_Success_Rt = dense_rank(def_pass_success_rate),
            Rank_Def_Pass_Play_Explosiveness = dense_rank(def_pass_explosiveness),
            Rank_EPA_diff = dense_rank(desc(EPA_diff)),
            Rank_SuccessRt_diff = dense_rank(desc(SuccessRt_diff)),
@@ -3180,46 +2998,46 @@ if (as.integer(cfb_week) == 0) {
            ## Extra weighted variables for current year
            Rank_Off_YPP_col2 = dense_rank(desc(adj_off_ypp)),
            Rank_Off_EPA_col2 = dense_rank(desc(adj_off_epa)),
-           Rank_Off_Success_Rt_col2 = dense_rank(desc(off_success_rt)),
+           Rank_Off_Success_Rt_col2 = dense_rank(desc(off_success_rate)),
            Rank_Off_Explosiveness_col2 = dense_rank(desc(adj_off_explosiveness)),
            Rank_Off_Pwr_Success_col2 = dense_rank(desc(off_power_success)),
-           Rank_Off_Stuff_Rt_col2 = dense_rank(off_stuff_rt),
+           Rank_Off_Stuff_Rt_col2 = dense_rank(off_stuff_rate),
            Rank_Off_Pts_Per_Opp_col2 = dense_rank(desc(off_pts_per_opp)),
            Rank_Off_Havoc_Total_col2 = dense_rank(off_havoc_total),
            Rank_Off_Havoc_Front_col2 = dense_rank(off_havoc_front_seven),
            Rank_Off_Havoc_DB_col2 = dense_rank(off_havoc_db),
            Rank_Off_Standard_Down_EPA_col2 = dense_rank(desc(off_standard_downs_epa)),
-           Rank_Off_Standard_Down_Success_Rt_col2 = dense_rank(desc(off_standard_downs_success_rt)),
+           Rank_Off_Standard_Down_Success_Rt_col2 = dense_rank(desc(off_standard_downs_success_rate)),
            Rank_Off_Standard_Down_Explosiveness_col2 = dense_rank(desc(off_standard_downs_explosiveness)),
            Rank_Off_Pass_Down_EPA_col2 = dense_rank(desc(off_passing_downs_epa)),
-           Rank_Off_Pass_Down_Success_Rt_col2 = dense_rank(desc(off_passing_downs_success_rt)),
+           Rank_Off_Pass_Down_Success_Rt_col2 = dense_rank(desc(off_passing_downs_success_rate)),
            Rank_Off_Pass_Down_Explosiveness_col2 = dense_rank(desc(off_passing_downs_explosiveness)),
            Rank_Off_Rush_Play_EPA_col2 = dense_rank(desc(off_rush_epa)),
-           Rank_Off_Rush_Play_Success_Rt_col2 = dense_rank(desc(off_rush_success_rt)),
+           Rank_Off_Rush_Play_Success_Rt_col2 = dense_rank(desc(off_rush_success_rate)),
            Rank_Off_Rush_Play_Explosiveness_col2 = dense_rank(desc(off_rush_explosiveness)),
            Rank_Off_Pass_Play_EPA_col2 = dense_rank(desc(off_pass_epa)),
-           Rank_Off_Pass_Play_Success_Rt_col2 = dense_rank(desc(off_pass_success_rt)),
+           Rank_Off_Pass_Play_Success_Rt_col2 = dense_rank(desc(off_pass_success_rate)),
            Rank_Off_Pass_Play_Explosiveness_col2 = dense_rank(desc(off_pass_explosiveness)),
            Rank_Def_EPA_col2 = dense_rank(adj_def_epa),
-           Rank_Def_Success_Rt_col2 = dense_rank(def_success_rt),
+           Rank_Def_Success_Rt_col2 = dense_rank(def_success_rate),
            Rank_Def_Explosiveness_col2 = dense_rank(adj_def_explosiveness),
            Rank_Def_Pwr_Success_col2 = dense_rank(def_power_success),
-           Rank_Def_Stuff_Rt_col2 = dense_rank(desc(def_stuff_rt)),
+           Rank_Def_Stuff_Rt_col2 = dense_rank(desc(def_stuff_rate)),
            Rank_Def_Pts_Per_Opp_col2 = dense_rank(def_pts_per_opp),
            Rank_Def_Havoc_Total_col2 = dense_rank(desc(def_havoc_total)),
            # Rank_def_havoc_front_Seven_col2 = dense_rank(desc(def_havoc_front_seven)),
            # Rank_def_havoc_db_col2 = dense_rank(desc(def_havoc_db)),
            Rank_Def_Standard_Down_EPA_col2 = dense_rank(def_standard_downs_epa),
-           Rank_Def_Standard_Down_Success_Rt_col2 = dense_rank(def_standard_downs_success_rt),
+           Rank_Def_Standard_Down_Success_Rt_col2 = dense_rank(def_standard_downs_success_rate),
            Rank_Def_Standard_Down_Explosiveness_col2 = dense_rank(def_standard_downs_explosiveness),
            Rank_Def_Pass_Down_EPA_col2 = dense_rank(def_passing_downs_epa),
-           Rank_Def_Pass_Down_Success_Rt_col2 = dense_rank(def_passing_downs_success_rt),
+           Rank_Def_Pass_Down_Success_Rt_col2 = dense_rank(def_passing_downs_success_rate),
            Rank_Def_Pass_Down_Explosiveness_col2 = dense_rank(def_passing_downs_explosiveness),
            Rank_Def_Rush_Play_EPA_col2 = dense_rank(def_rush_epa),
-           Rank_Def_Rush_Play_Success_Rt_col2 = dense_rank(def_rush_success_rt),
+           Rank_Def_Rush_Play_Success_Rt_col2 = dense_rank(def_rush_success_rate),
            Rank_Def_Rush_Play_Explosiveness_col2 = dense_rank(def_rush_explosiveness),
            Rank_Def_Pass_Play_EPA_col2 = dense_rank(def_pass_epa),
-           Rank_Def_Pass_Play_Success_Rt_col2 = dense_rank(def_pass_success_rt),
+           Rank_Def_Pass_Play_Success_Rt_col2 = dense_rank(def_pass_success_rate),
            Rank_Def_Pass_Play_Explosiveness_col2 = dense_rank(def_pass_explosiveness),
            Rank_EPA_diff_col2 = dense_rank(desc(EPA_diff)),
            Rank_SuccessRt_diff_col2 = dense_rank(desc(SuccessRt_diff)),
@@ -3241,8 +3059,8 @@ if (as.integer(cfb_week) == 0) {
            Rank_off_fourth_conv_rate_PY2 = dense_rank(desc(off_fourth_conv_rate_PY2)),
            # Rank_penalty_Yds_pg_PY2 = dense_rank(penalty_yds_pg_PY2),
            # Rank_yds_per_penalty_PY2 = dense_rank(yards_per_penalty_PY2),
-           Rank_st_kick_return_yds_PY2 = dense_rank(desc(st_kick_return_yds_PY2)),
-           Rank_punt_return_yds_PY2 = dense_rank(desc(st_punt_return_yds_PY2)),
+           Rank_kick_return_yds_PY2 = dense_rank(desc(kick_return_yds_PY2)),
+           Rank_punt_return_yds_PY2 = dense_rank(desc(punt_return_yds_PY2)),
            Rank_off_ypg_PY2 = dense_rank(desc(off_ypg_PY2)),
            Rank_off_pass_ypg_PY2 = dense_rank(desc(off_pass_ypg_PY2)),
            Rank_off_rush_ypg_PY2 = dense_rank(desc(off_rush_ypg_PY2)),
@@ -3250,10 +3068,10 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_YPP_PY2 = dense_rank(desc(adj_off_ypp_PY2)),
            # Rank_def_ints_pg_PY2 = dense_rank(desc(def_interceptions_pg_PY2)),
            Rank_Off_EPA_PY2 = dense_rank(desc(adj_off_epa_PY2)),
-           Rank_Off_Success_Rt_PY2 = dense_rank(desc(off_success_rt_PY2)),
+           Rank_Off_Success_Rt_PY2 = dense_rank(desc(off_success_rate_PY2)),
            Rank_Off_Explosiveness_PY2 = dense_rank(desc(adj_off_explosiveness_PY2)),
            Rank_Off_Pwr_Success_PY2 = dense_rank(desc(off_power_success_PY2)),
-           Rank_Off_Stuff_Rt_PY2 = dense_rank(off_stuff_rt_PY2),
+           Rank_Off_Stuff_Rt_PY2 = dense_rank(off_stuff_rate_PY2),
            Rank_Off_Line_Yds_PY2 = dense_rank(desc(off_line_yds_PY2)),
            Rank_Off_Second_Lvl_Yds_PY2 = dense_rank(desc(off_second_lvl_yds_PY2)),
            Rank_Off_Open_Field_Yds_PY2 = dense_rank(desc(off_open_field_yds_PY2)),
@@ -3262,22 +3080,22 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_Havoc_Front_PY2 = dense_rank(off_havoc_front_seven_PY2),
            Rank_Off_Havoc_DB_PY2 = dense_rank(off_havoc_db_PY2),
            Rank_Off_Standard_Down_EPA_PY2 = dense_rank(desc(off_standard_downs_epa_PY2)),
-           Rank_Off_Standard_Down_Success_Rt_PY2 = dense_rank(desc(off_standard_downs_success_rt_PY2)),
+           Rank_Off_Standard_Down_Success_Rt_PY2 = dense_rank(desc(off_standard_downs_success_rate_PY2)),
            Rank_Off_Standard_Down_Explosiveness_PY2 = dense_rank(desc(off_standard_downs_explosiveness_PY2)),
            Rank_Off_Pass_Down_EPA_PY2 = dense_rank(desc(off_passing_downs_epa_PY2)),
-           Rank_Off_Pass_Down_Success_Rt_PY2 = dense_rank(desc(off_passing_downs_success_rt_PY2)),
+           Rank_Off_Pass_Down_Success_Rt_PY2 = dense_rank(desc(off_passing_downs_success_rate_PY2)),
            Rank_Off_Pass_Down_Explosiveness_PY2 = dense_rank(desc(off_passing_downs_explosiveness_PY2)),
            Rank_Off_Rush_Play_EPA_PY2 = dense_rank(desc(off_rush_epa_PY2)),
-           Rank_Off_Rush_Play_Success_Rt_PY2 = dense_rank(desc(off_rush_success_rt_PY2)),
+           Rank_Off_Rush_Play_Success_Rt_PY2 = dense_rank(desc(off_rush_success_rate_PY2)),
            Rank_Off_Rush_Play_Explosiveness_PY2 = dense_rank(desc(off_rush_explosiveness_PY2)),
            Rank_Off_Pass_Play_EPA_PY2 = dense_rank(desc(off_pass_epa_PY2)),
-           Rank_Off_Pass_Play_Success_Rt_PY2 = dense_rank(desc(off_pass_success_rt_PY2)),
+           Rank_Off_Pass_Play_Success_Rt_PY2 = dense_rank(desc(off_pass_success_rate_PY2)),
            Rank_Off_Pass_Play_Explosiveness_PY2 = dense_rank(desc(off_pass_explosiveness_PY2)),
            Rank_Def_EPA_PY2 = dense_rank(adj_def_epa_PY2),
-           Rank_Def_Success_Rt_PY2 = dense_rank(def_success_rt_PY2),
+           Rank_Def_Success_Rt_PY2 = dense_rank(def_success_rate_PY2),
            Rank_Def_Explosiveness_PY2 = dense_rank(adj_def_explosiveness_PY2),
            Rank_Def_Pwr_Success_PY2 = dense_rank(def_power_success_PY2),
-           Rank_Def_Stuff_Rt_PY2 = dense_rank(desc(def_stuff_rt_PY2)),
+           Rank_Def_Stuff_Rt_PY2 = dense_rank(desc(def_stuff_rate_PY2)),
            Rank_Def_Line_Yds_PY2 = dense_rank(def_line_yds_PY2),
            # Rank_def_second_Lvl_Yds_PY2 = dense_rank(def_second_lvl_yds_PY2),
            # Rank_def_open_Field_Yds_PY2 = dense_rank(def_open_field_yds_PY2),
@@ -3286,16 +3104,16 @@ if (as.integer(cfb_week) == 0) {
            # Rank_def_havoc_front_Seven_PY2 = dense_rank(desc(def_havoc_front_seven_PY2)),
            # Rank_def_havoc_db_PY2 = dense_rank(desc(def_havoc_db_PY2)),
            Rank_Def_Standard_Down_EPA_PY2 = dense_rank(def_standard_downs_epa_PY2),
-           Rank_Def_Standard_Down_Success_Rt_PY2 = dense_rank(def_standard_downs_success_rt_PY2),
+           Rank_Def_Standard_Down_Success_Rt_PY2 = dense_rank(def_standard_downs_success_rate_PY2),
            Rank_Def_Standard_Down_Explosiveness_PY2 = dense_rank(def_standard_downs_explosiveness_PY2),
            Rank_Def_Pass_Down_EPA_PY2 = dense_rank(def_passing_downs_epa_PY2),
-           Rank_Def_Pass_Down_Success_Rt_PY2 = dense_rank(def_passing_downs_success_rt_PY2),
+           Rank_Def_Pass_Down_Success_Rt_PY2 = dense_rank(def_passing_downs_success_rate_PY2),
            Rank_Def_Pass_Down_Explosiveness_PY2 = dense_rank(def_passing_downs_explosiveness_PY2),
            Rank_Def_Rush_Play_EPA_PY2 = dense_rank(def_rush_epa_PY2),
-           Rank_Def_Rush_Play_Success_Rt_PY2 = dense_rank(def_rush_success_rt_PY2),
+           Rank_Def_Rush_Play_Success_Rt_PY2 = dense_rank(def_rush_success_rate_PY2),
            Rank_Def_Rush_Play_Explosiveness_PY2 = dense_rank(def_rush_explosiveness_PY2),
            Rank_Def_Pass_Play_EPA_PY2 = dense_rank(def_pass_epa_PY2),
-           Rank_Def_Pass_Play_Success_Rt_PY2 = dense_rank(def_pass_success_rt_PY2),
+           Rank_Def_Pass_Play_Success_Rt_PY2 = dense_rank(def_pass_success_rate_PY2),
            Rank_Def_Pass_Play_Explosiveness_PY2 = dense_rank(def_pass_explosiveness_PY2),
            Rank_EPA_diff_PY2 = dense_rank(desc(EPA_diff_PY2)),
            Rank_SuccessRt_diff_PY2 = dense_rank(desc(SuccessRt_diff_PY2)),
@@ -3313,8 +3131,8 @@ if (as.integer(cfb_week) == 0) {
            Rank_off_fourth_conv_rate_PY1 = dense_rank(desc(off_fourth_conv_rate_PY1)),
            # Rank_penalty_Yds_pg_PY1 = dense_rank(penalty_yds_pg_PY1),
            # Rank_yds_per_penalty_PY1 = dense_rank(yards_per_penalty_PY1),
-           Rank_st_kick_return_yds_PY1 = dense_rank(desc(st_kick_return_yds_PY1)),
-           Rank_punt_return_yds_PY1 = dense_rank(desc(st_punt_return_yds_PY1)),
+           Rank_kick_return_yds_PY1 = dense_rank(desc(kick_return_yds_PY1)),
+           Rank_punt_return_yds_PY1 = dense_rank(desc(punt_return_yds_PY1)),
            Rank_off_ypg_PY1 = dense_rank(desc(off_ypg_PY1)),
            Rank_off_pass_ypg_PY1 = dense_rank(desc(off_pass_ypg_PY1)),
            Rank_off_rush_ypg_PY1 = dense_rank(desc(off_rush_ypg_PY1)),
@@ -3322,10 +3140,10 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_YPP_PY1 = dense_rank(desc(adj_off_ypp_PY1)),
            # Rank_def_ints_pg_PY1 = dense_rank(desc(def_interceptions_pg_PY1)),
            Rank_Off_EPA_PY1 = dense_rank(desc(adj_off_epa_PY1)),
-           Rank_Off_Success_Rt_PY1 = dense_rank(desc(off_success_rt_PY1)),
+           Rank_Off_Success_Rt_PY1 = dense_rank(desc(off_success_rate_PY1)),
            Rank_Off_Explosiveness_PY1 = dense_rank(desc(adj_off_explosiveness_PY1)),
            Rank_Off_Pwr_Success_PY1 = dense_rank(desc(off_power_success_PY1)),
-           Rank_Off_Stuff_Rt_PY1 = dense_rank(off_stuff_rt_PY1),
+           Rank_Off_Stuff_Rt_PY1 = dense_rank(off_stuff_rate_PY1),
            Rank_Off_Line_Yds_PY1 = dense_rank(desc(off_line_yds_PY1)),
            Rank_Off_Second_Lvl_Yds_PY1 = dense_rank(desc(off_second_lvl_yds_PY1)),
            Rank_Off_Open_Field_Yds_PY1 = dense_rank(desc(off_open_field_yds_PY1)),
@@ -3334,22 +3152,22 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_Havoc_Front_PY1 = dense_rank(off_havoc_front_seven_PY1),
            Rank_Off_Havoc_DB_PY1 = dense_rank(off_havoc_db_PY1),
            Rank_Off_Standard_Down_EPA_PY1 = dense_rank(desc(off_standard_downs_epa_PY1)),
-           Rank_Off_Standard_Down_Success_Rt_PY1 = dense_rank(desc(off_standard_downs_success_rt_PY1)),
+           Rank_Off_Standard_Down_Success_Rt_PY1 = dense_rank(desc(off_standard_downs_success_rate_PY1)),
            Rank_Off_Standard_Down_Explosiveness_PY1 = dense_rank(desc(off_standard_downs_explosiveness_PY1)),
            Rank_Off_Pass_Down_EPA_PY1 = dense_rank(desc(off_passing_downs_epa_PY1)),
-           Rank_Off_Pass_Down_Success_Rt_PY1 = dense_rank(desc(off_passing_downs_success_rt_PY1)),
+           Rank_Off_Pass_Down_Success_Rt_PY1 = dense_rank(desc(off_passing_downs_success_rate_PY1)),
            Rank_Off_Pass_Down_Explosiveness_PY1 = dense_rank(desc(off_passing_downs_explosiveness_PY1)),
            Rank_Off_Rush_Play_EPA_PY1 = dense_rank(desc(off_rush_epa_PY1)),
-           Rank_Off_Rush_Play_Success_Rt_PY1 = dense_rank(desc(off_rush_success_rt_PY1)),
+           Rank_Off_Rush_Play_Success_Rt_PY1 = dense_rank(desc(off_rush_success_rate_PY1)),
            Rank_Off_Rush_Play_Explosiveness_PY1 = dense_rank(desc(off_rush_explosiveness_PY1)),
            Rank_Off_Pass_Play_EPA_PY1 = dense_rank(desc(off_pass_epa_PY1)),
-           Rank_Off_Pass_Play_Success_Rt_PY1 = dense_rank(desc(off_pass_success_rt_PY1)),
+           Rank_Off_Pass_Play_Success_Rt_PY1 = dense_rank(desc(off_pass_success_rate_PY1)),
            Rank_Off_Pass_Play_Explosiveness_PY1 = dense_rank(desc(off_pass_explosiveness_PY1)),
            Rank_Def_EPA_PY1 = dense_rank(adj_def_epa_PY1),
-           Rank_Def_Success_Rt_PY1 = dense_rank(def_success_rt_PY1),
+           Rank_Def_Success_Rt_PY1 = dense_rank(def_success_rate_PY1),
            Rank_Def_Explosiveness_PY1 = dense_rank(adj_def_explosiveness_PY1),
            Rank_Def_Pwr_Success_PY1 = dense_rank(def_power_success_PY1),
-           Rank_Def_Stuff_Rt_PY1 = dense_rank(desc(def_stuff_rt_PY1)),
+           Rank_Def_Stuff_Rt_PY1 = dense_rank(desc(def_stuff_rate_PY1)),
            Rank_Def_Line_Yds_PY1 = dense_rank(def_line_yds_PY1),
            # Rank_def_second_Lvl_Yds_PY1 = dense_rank(def_second_lvl_yds_PY1),
            # Rank_def_open_Field_Yds_PY1 = dense_rank(def_open_field_yds_PY1),
@@ -3358,16 +3176,16 @@ if (as.integer(cfb_week) == 0) {
            # Rank_def_havoc_front_Seven_PY1 = dense_rank(desc(def_havoc_front_seven_PY1)),
            # Rank_def_havoc_db_PY1 = dense_rank(desc(def_havoc_db_PY1)),
            Rank_Def_Standard_Down_EPA_PY1 = dense_rank(def_standard_downs_epa_PY1),
-           Rank_Def_Standard_Down_Success_Rt_PY1 = dense_rank(def_standard_downs_success_rt_PY1),
+           Rank_Def_Standard_Down_Success_Rt_PY1 = dense_rank(def_standard_downs_success_rate_PY1),
            Rank_Def_Standard_Down_Explosiveness_PY1 = dense_rank(def_standard_downs_explosiveness_PY1),
            Rank_Def_Pass_Down_EPA_PY1 = dense_rank(def_passing_downs_epa_PY1),
-           Rank_Def_Pass_Down_Success_Rt_PY1 = dense_rank(def_passing_downs_success_rt_PY1),
+           Rank_Def_Pass_Down_Success_Rt_PY1 = dense_rank(def_passing_downs_success_rate_PY1),
            Rank_Def_Pass_Down_Explosiveness_PY1 = dense_rank(def_passing_downs_explosiveness_PY1),
            Rank_Def_Rush_Play_EPA_PY1 = dense_rank(def_rush_epa_PY1),
-           Rank_Def_Rush_Play_Success_Rt_PY1 = dense_rank(def_rush_success_rt_PY1),
+           Rank_Def_Rush_Play_Success_Rt_PY1 = dense_rank(def_rush_success_rate_PY1),
            Rank_Def_Rush_Play_Explosiveness_PY1 = dense_rank(def_rush_explosiveness_PY1),
            Rank_Def_Pass_Play_EPA_PY1 = dense_rank(def_pass_epa_PY1),
-           Rank_Def_Pass_Play_Success_Rt_PY1 = dense_rank(def_pass_success_rt_PY1),
+           Rank_Def_Pass_Play_Success_Rt_PY1 = dense_rank(def_pass_success_rate_PY1),
            Rank_Def_Pass_Play_Explosiveness_PY1 = dense_rank(def_pass_explosiveness_PY1),
            Rank_EPA_diff_PY1 = dense_rank(desc(EPA_diff_PY1)),
            Rank_SuccessRt_diff_PY1 = dense_rank(desc(SuccessRt_diff_PY1)),
@@ -3390,10 +3208,10 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_YPP_PY1_col2 = dense_rank(desc(adj_off_ypp_PY1)),
            # Rank_def_ints_pg_PY1_col2 = dense_rank(desc(def_interceptions_pg_PY1)),
            Rank_Off_EPA_PY1_col2 = dense_rank(desc(adj_off_epa_PY1)),
-           Rank_Off_Success_Rt_PY1_col2 = dense_rank(desc(off_success_rt_PY1)),
+           Rank_Off_Success_Rt_PY1_col2 = dense_rank(desc(off_success_rate_PY1)),
            Rank_Off_Explosiveness_PY1_col2 = dense_rank(desc(adj_off_explosiveness_PY1)),
            Rank_Off_Pwr_Success_PY1_col2 = dense_rank(desc(off_power_success_PY1)),
-           Rank_Off_Stuff_Rt_PY1_col2 = dense_rank(off_stuff_rt_PY1),
+           Rank_Off_Stuff_Rt_PY1_col2 = dense_rank(off_stuff_rate_PY1),
            Rank_Off_Line_Yds_PY1_col2 = dense_rank(desc(off_line_yds_PY1)),
            Rank_Off_Second_Lvl_Yds_PY1_col2 = dense_rank(desc(off_second_lvl_yds_PY1)),
            Rank_Off_Open_Field_Yds_PY1_col2 = dense_rank(desc(off_open_field_yds_PY1)),
@@ -3403,22 +3221,22 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_Havoc_Front_PY1_col2 = dense_rank(off_havoc_front_seven_PY1),
            Rank_Off_Havoc_DB_PY1_col2 = dense_rank(off_havoc_db_PY1),
            Rank_Off_Standard_Down_EPA_PY1_col2 = dense_rank(desc(off_standard_downs_epa_PY1)),
-           Rank_Off_Standard_Down_Success_Rt_PY1_col2 = dense_rank(desc(off_standard_downs_success_rt_PY1)),
+           Rank_Off_Standard_Down_Success_Rt_PY1_col2 = dense_rank(desc(off_standard_downs_success_rate_PY1)),
            Rank_Off_Standard_Down_Explosiveness_PY1_col2 = dense_rank(desc(off_standard_downs_explosiveness_PY1)),
            Rank_Off_Pass_Down_EPA_PY1_col2 = dense_rank(desc(off_passing_downs_epa_PY1)),
-           Rank_Off_Pass_Down_Success_Rt_PY1_col2 = dense_rank(desc(off_passing_downs_success_rt_PY1)),
+           Rank_Off_Pass_Down_Success_Rt_PY1_col2 = dense_rank(desc(off_passing_downs_success_rate_PY1)),
            Rank_Off_Pass_Down_Explosiveness_PY1_col2 = dense_rank(desc(off_passing_downs_explosiveness_PY1)),
            Rank_Off_Rush_Play_EPA_PY1_col2 = dense_rank(desc(off_rush_epa_PY1)),
-           Rank_Off_Rush_Play_Success_Rt_PY1_col2 = dense_rank(desc(off_rush_success_rt_PY1)),
+           Rank_Off_Rush_Play_Success_Rt_PY1_col2 = dense_rank(desc(off_rush_success_rate_PY1)),
            Rank_Off_Rush_Play_Explosiveness_PY1_col2 = dense_rank(desc(off_rush_explosiveness_PY1)),
            Rank_Off_Pass_Play_EPA_PY1_col2 = dense_rank(desc(off_pass_epa_PY1)),
-           Rank_Off_Pass_Play_Success_Rt_PY1_col2 = dense_rank(desc(off_pass_success_rt_PY1)),
+           Rank_Off_Pass_Play_Success_Rt_PY1_col2 = dense_rank(desc(off_pass_success_rate_PY1)),
            Rank_Off_Pass_Play_Explosiveness_PY1_col2 = dense_rank(desc(off_pass_explosiveness_PY1)),
            Rank_Def_EPA_PY1_col2 = dense_rank(adj_def_epa_PY1),
-           Rank_Def_Success_Rt_PY1_col2 = dense_rank(def_success_rt_PY1),
+           Rank_Def_Success_Rt_PY1_col2 = dense_rank(def_success_rate_PY1),
            Rank_Def_Explosiveness_PY1_col2 = dense_rank(adj_def_explosiveness_PY1),
            Rank_Def_Pwr_Success_PY1_col2 = dense_rank(def_power_success_PY1),
-           Rank_Def_Stuff_Rt_PY1_col2 = dense_rank(desc(def_stuff_rt_PY1)),
+           Rank_Def_Stuff_Rt_PY1_col2 = dense_rank(desc(def_stuff_rate_PY1)),
            Rank_Def_Line_Yds_PY1_col2 = dense_rank(def_line_yds_PY1),
            # Rank_def_second_Lvl_Yds_PY1_col2 = dense_rank(def_second_lvl_yds_PY1),
            # Rank_def_open_Field_Yds_PY1_col2 = dense_rank(def_open_field_yds_PY1),
@@ -3427,91 +3245,23 @@ if (as.integer(cfb_week) == 0) {
            # Rank_def_havoc_front_Seven_PY1_col2 = dense_rank(desc(def_havoc_front_seven_PY1)),
            # Rank_def_havoc_db_PY1_col2 = dense_rank(desc(def_havoc_db_PY1)),
            Rank_Def_Standard_Down_EPA_PY1_col2 = dense_rank(def_standard_downs_epa_PY1),
-           Rank_Def_Standard_Down_Success_Rt_PY1_col2 = dense_rank(def_standard_downs_success_rt_PY1),
+           Rank_Def_Standard_Down_Success_Rt_PY1_col2 = dense_rank(def_standard_downs_success_rate_PY1),
            Rank_Def_Standard_Down_Explosiveness_PY1_col2 = dense_rank(def_standard_downs_explosiveness_PY1),
            Rank_Def_Pass_Down_EPA_PY1_col2 = dense_rank(def_passing_downs_epa_PY1),
-           Rank_Def_Pass_Down_Success_Rt_PY1_col2 = dense_rank(def_passing_downs_success_rt_PY1),
+           Rank_Def_Pass_Down_Success_Rt_PY1_col2 = dense_rank(def_passing_downs_success_rate_PY1),
            Rank_Def_Pass_Down_Explosiveness_PY1_col2 = dense_rank(def_passing_downs_explosiveness_PY1),
            Rank_Def_Rush_Play_EPA_PY1_col2 = dense_rank(def_rush_epa_PY1),
-           Rank_Def_Rush_Play_Success_Rt_PY1_col2 = dense_rank(def_rush_success_rt_PY1),
+           Rank_Def_Rush_Play_Success_Rt_PY1_col2 = dense_rank(def_rush_success_rate_PY1),
            Rank_Def_Rush_Play_Explosiveness_PY1_col2 = dense_rank(def_rush_explosiveness_PY1),
            Rank_Def_Pass_Play_EPA_PY1_col2 = dense_rank(def_pass_epa_PY1),
-           Rank_Def_Pass_Play_Success_Rt_PY1_col2 = dense_rank(def_pass_success_rt_PY1),
+           Rank_Def_Pass_Play_Success_Rt_PY1_col2 = dense_rank(def_pass_success_rate_PY1),
            Rank_Def_Pass_Play_Explosiveness_PY1_col2 = dense_rank(def_pass_explosiveness_PY1),
            Rank_EPA_diff_PY1_col2 = dense_rank(desc(EPA_diff_PY1)),
            Rank_SuccessRt_diff_PY1_col2 = dense_rank(desc(SuccessRt_diff_PY1)),
            Rank_HavocRt_diff_PY1_col2 = dense_rank(desc(HavocRt_diff_PY1)),
            Rank_Explosiveness_diff_PY1_col2 = dense_rank(desc(Explosiveness_diff_PY1)),
            # Rank_recruit_Pts_PY1_col2 = dense_rank(desc(recruit_pts_PY1)),
-           ## PY1 weighted 3 times
-           Rank_Comp_Pct_PY1_col3 = dense_rank(desc(off_comp_pct_PY1)),
-           Rank_off_pass_ypa_PY1_col3 = dense_rank(desc(off_pass_ypa_PY1)),
-           Rank_off_pass_ypr_PY1_col3 = dense_rank(desc(off_pass_ypr_PY1)),
-           # Rank_int_Pct_PY1_col3 = dense_rank(int_pct_PY1),
-           Rank_off_rush_ypa_PY1_col3 = dense_rank(desc(off_rush_ypa_PY1)),
-           Rank_off_turnovers_pg_PY1_col3 = dense_rank(off_turnovers_pg_PY1),
-           Rank_third_conv_rate_PY1_col3 = dense_rank(desc(off_third_conv_rate_PY1)),
-           Rank_off_fourth_conv_rate_PY1_col3 = dense_rank(desc(off_fourth_conv_rate_PY1)),
-           Rank_off_ypg_PY1_col3 = dense_rank(desc(off_ypg_PY1)),
-           Rank_off_pass_ypg_PY1_col3 = dense_rank(desc(off_pass_ypg_PY1)),
-           Rank_off_rush_ypg_PY1_col3 = dense_rank(desc(off_rush_ypg_PY1)),
-           # Rank_first_downs_pg_PY1_col3 = dense_rank(desc(first_downs_pg_PY1)),
-           Rank_Off_YPP_PY1_col3 = dense_rank(desc(adj_off_ypp_PY1)),
-           # Rank_def_ints_pg_PY1_col3 = dense_rank(desc(def_interceptions_pg_PY1)),
-           Rank_Off_EPA_PY1_col3 = dense_rank(desc(adj_off_epa_PY1)),
-           Rank_Off_Success_Rt_PY1_col3 = dense_rank(desc(off_success_rt_PY1)),
-           Rank_Off_Explosiveness_PY1_col3 = dense_rank(desc(adj_off_explosiveness_PY1)),
-           Rank_Off_Pwr_Success_PY1_col3 = dense_rank(desc(off_power_success_PY1)),
-           Rank_Off_Stuff_Rt_PY1_col3 = dense_rank(off_stuff_rt_PY1),
-           Rank_Off_Line_Yds_PY1_col3 = dense_rank(desc(off_line_yds_PY1)),
-           Rank_Off_Second_Lvl_Yds_PY1_col3 = dense_rank(desc(off_second_lvl_yds_PY1)),
-           Rank_Off_Open_Field_Yds_PY1_col3 = dense_rank(desc(off_open_field_yds_PY1)),
-           Rank_Off_Pts_Per_Opp_PY1_col3 = dense_rank(desc(off_pts_per_opp_PY1)),
-           Rank_Off_Field_Pos_Avg_Predicted_Pts_PY1_col3 = dense_rank(desc(off_field_pos_avg_predicted_points_PY1)),
-           Rank_Off_Havoc_Total_PY1_col3 = dense_rank(off_havoc_total_PY1),
-           Rank_Off_Havoc_Front_PY1_col3 = dense_rank(off_havoc_front_seven_PY1),
-           Rank_Off_Havoc_DB_PY1_col3 = dense_rank(off_havoc_db_PY1),
-           Rank_Off_Standard_Down_EPA_PY1_col3 = dense_rank(desc(off_standard_downs_epa_PY1)),
-           Rank_Off_Standard_Down_Success_Rt_PY1_col3 = dense_rank(desc(off_standard_downs_success_rt_PY1)),
-           Rank_Off_Standard_Down_Explosiveness_PY1_col3 = dense_rank(desc(off_standard_downs_explosiveness_PY1)),
-           Rank_Off_Pass_Down_EPA_PY1_col3 = dense_rank(desc(off_passing_downs_epa_PY1)),
-           Rank_Off_Pass_Down_Success_Rt_PY1_col3 = dense_rank(desc(off_passing_downs_success_rt_PY1)),
-           Rank_Off_Pass_Down_Explosiveness_PY1_col3 = dense_rank(desc(off_passing_downs_explosiveness_PY1)),
-           Rank_Off_Rush_Play_EPA_PY1_col3 = dense_rank(desc(off_rush_epa_PY1)),
-           Rank_Off_Rush_Play_Success_Rt_PY1_col3 = dense_rank(desc(off_rush_success_rt_PY1)),
-           Rank_Off_Rush_Play_Explosiveness_PY1_col3 = dense_rank(desc(off_rush_explosiveness_PY1)),
-           Rank_Off_Pass_Play_EPA_PY1_col3 = dense_rank(desc(off_pass_epa_PY1)),
-           Rank_Off_Pass_Play_Success_Rt_PY1_col3 = dense_rank(desc(off_pass_success_rt_PY1)),
-           Rank_Off_Pass_Play_Explosiveness_PY1_col3 = dense_rank(desc(off_pass_explosiveness_PY1)),
-           Rank_Def_EPA_PY1_col3 = dense_rank(adj_def_epa_PY1),
-           Rank_Def_Success_Rt_PY1_col3 = dense_rank(def_success_rt_PY1),
-           Rank_Def_Explosiveness_PY1_col3 = dense_rank(adj_def_explosiveness_PY1),
-           Rank_Def_Pwr_Success_PY1_col3 = dense_rank(def_power_success_PY1),
-           Rank_Def_Stuff_Rt_PY1_col3 = dense_rank(desc(def_stuff_rt_PY1)),
-           Rank_Def_Line_Yds_PY1_col3 = dense_rank(def_line_yds_PY1),
-           # Rank_def_second_Lvl_Yds_PY1_col3 = dense_rank(def_second_lvl_yds_PY1),
-           # Rank_def_open_Field_Yds_PY1_col3 = dense_rank(def_open_field_yds_PY1),
-           Rank_Def_Pts_Per_Opp_PY1_col3 = dense_rank(def_pts_per_opp_PY1),
-           Rank_Def_Havoc_Total_PY1_col3 = dense_rank(desc(def_havoc_total_PY1)),
-           # Rank_def_havoc_front_Seven_PY1_col3 = dense_rank(desc(def_havoc_front_seven_PY1)),
-           # Rank_def_havoc_db_PY1_col3 = dense_rank(desc(def_havoc_db_PY1)),
-           Rank_Def_Standard_Down_EPA_PY1_col3 = dense_rank(def_standard_downs_epa_PY1),
-           Rank_Def_Standard_Down_Success_Rt_PY1_col3 = dense_rank(def_standard_downs_success_rt_PY1),
-           Rank_Def_Standard_Down_Explosiveness_PY1_col3 = dense_rank(def_standard_downs_explosiveness_PY1),
-           Rank_Def_Pass_Down_EPA_PY1_col3 = dense_rank(def_passing_downs_epa_PY1),
-           Rank_Def_Pass_Down_Success_Rt_PY1_col3 = dense_rank(def_passing_downs_success_rt_PY1),
-           Rank_Def_Pass_Down_Explosiveness_PY1_col3 = dense_rank(def_passing_downs_explosiveness_PY1),
-           Rank_Def_Rush_Play_EPA_PY1_col3 = dense_rank(def_rush_epa_PY1),
-           Rank_Def_Rush_Play_Success_Rt_PY1_col3 = dense_rank(def_rush_success_rt_PY1),
-           Rank_Def_Rush_Play_Explosiveness_PY1_col3 = dense_rank(def_rush_explosiveness_PY1),
-           Rank_Def_Pass_Play_EPA_PY1_col3 = dense_rank(def_pass_epa_PY1),
-           Rank_Def_Pass_Play_Success_Rt_PY1_col3 = dense_rank(def_pass_success_rt_PY1),
-           Rank_Def_Pass_Play_Explosiveness_PY1_col3 = dense_rank(def_pass_explosiveness_PY1),
-           Rank_EPA_diff_PY1_col3 = dense_rank(desc(EPA_diff_PY1)),
-           Rank_SuccessRt_diff_PY1_col3 = dense_rank(desc(SuccessRt_diff_PY1)),
-           Rank_HavocRt_diff_PY1_col3 = dense_rank(desc(HavocRt_diff_PY1)),
-           Rank_Explosiveness_diff_PY1_col3 = dense_rank(desc(Explosiveness_diff_PY1)),
-           ## Ranking current stats
+           ### ranking current season stats now
            Rank_Comp_Pct = dense_rank(desc(off_comp_pct)),
            Rank_off_pass_ypa = dense_rank(desc(off_pass_ypa)),
            Rank_off_pass_ypr = dense_rank(desc(off_pass_ypr)),
@@ -3522,8 +3272,8 @@ if (as.integer(cfb_week) == 0) {
            Rank_off_fourth_conv_rate = dense_rank(desc(off_fourth_conv_rate)),
            # Rank_penalty_Yds_pg = dense_rank(penalty_yds_pg),
            # Rank_yds_per_penalty = dense_rank(yards_per_penalty),
-           Rank_st_kick_return_yds = dense_rank(desc(st_kick_return_yds)),
-           Rank_punt_return_yds = dense_rank(desc(st_punt_return_yds)),
+           Rank_kick_return_yds = dense_rank(desc(kick_return_yds)),
+           Rank_punt_return_yds = dense_rank(desc(punt_return_yds)),
            Rank_off_ypg = dense_rank(desc(off_ypg)),
            Rank_off_pass_ypg = dense_rank(desc(off_pass_ypg)),
            Rank_off_rush_ypg = dense_rank(desc(off_rush_ypg)),
@@ -3531,10 +3281,10 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_YPP = dense_rank(desc(adj_off_ypp)),
            # Rank_def_ints_pg = dense_rank(desc(def_interceptions_pg)),
            Rank_Off_EPA = dense_rank(desc(adj_off_epa)),
-           Rank_Off_Success_Rt = dense_rank(desc(off_success_rt)),
+           Rank_Off_Success_Rt = dense_rank(desc(off_success_rate)),
            Rank_Off_Explosiveness = dense_rank(desc(adj_off_explosiveness)),
            Rank_Off_Pwr_Success = dense_rank(desc(off_power_success)),
-           Rank_Off_Stuff_Rt = dense_rank(off_stuff_rt),
+           Rank_Off_Stuff_Rt = dense_rank(off_stuff_rate),
            Rank_Off_Line_Yds = dense_rank(desc(off_line_yds)),
            Rank_Off_Second_Lvl_Yds = dense_rank(desc(off_second_lvl_yds)),
            Rank_Off_Open_Field_Yds = dense_rank(desc(off_open_field_yds)),
@@ -3544,22 +3294,22 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_Havoc_Front = dense_rank(off_havoc_front_seven),
            Rank_Off_Havoc_DB = dense_rank(off_havoc_db),
            Rank_Off_Standard_Down_EPA = dense_rank(desc(off_standard_downs_epa)),
-           Rank_Off_Standard_Down_Success_Rt = dense_rank(desc(off_standard_downs_success_rt)),
+           Rank_Off_Standard_Down_Success_Rt = dense_rank(desc(off_standard_downs_success_rate)),
            Rank_Off_Standard_Down_Explosiveness = dense_rank(desc(off_standard_downs_explosiveness)),
            Rank_Off_Pass_Down_EPA = dense_rank(desc(off_passing_downs_epa)),
-           Rank_Off_Pass_Down_Success_Rt = dense_rank(desc(off_passing_downs_success_rt)),
+           Rank_Off_Pass_Down_Success_Rt = dense_rank(desc(off_passing_downs_success_rate)),
            Rank_Off_Pass_Down_Explosiveness = dense_rank(desc(off_passing_downs_explosiveness)),
            Rank_Off_Rush_Play_EPA = dense_rank(desc(off_rush_epa)),
-           Rank_Off_Rush_Play_Success_Rt = dense_rank(desc(off_rush_success_rt)),
+           Rank_Off_Rush_Play_Success_Rt = dense_rank(desc(off_rush_success_rate)),
            Rank_Off_Rush_Play_Explosiveness = dense_rank(desc(off_rush_explosiveness)),
            Rank_Off_Pass_Play_EPA = dense_rank(desc(off_pass_epa)),
-           Rank_Off_Pass_Play_Success_Rt = dense_rank(desc(off_pass_success_rt)),
+           Rank_Off_Pass_Play_Success_Rt = dense_rank(desc(off_pass_success_rate)),
            Rank_Off_Pass_Play_Explosiveness = dense_rank(desc(off_pass_explosiveness)),
            Rank_Def_EPA = dense_rank(adj_def_epa),
-           Rank_Def_Success_Rt = dense_rank(def_success_rt),
+           Rank_Def_Success_Rt = dense_rank(def_success_rate),
            Rank_Def_Explosiveness = dense_rank(adj_def_explosiveness),
            Rank_Def_Pwr_Success = dense_rank(def_power_success),
-           Rank_Def_Stuff_Rt = dense_rank(desc(def_stuff_rt)),
+           Rank_Def_Stuff_Rt = dense_rank(desc(def_stuff_rate)),
            Rank_Def_Line_Yds = dense_rank(def_line_yds),
            # Rank_def_second_Lvl_Yds = dense_rank(def_second_lvl_yds),
            # Rank_def_open_Field_Yds = dense_rank(def_open_field_yds),
@@ -3568,16 +3318,16 @@ if (as.integer(cfb_week) == 0) {
            # Rank_def_havoc_front_Seven = dense_rank(desc(def_havoc_front_seven)),
            # Rank_def_havoc_db = dense_rank(desc(def_havoc_db)),
            Rank_Def_Standard_Down_EPA = dense_rank(def_standard_downs_epa),
-           Rank_Def_Standard_Down_Success_Rt = dense_rank(def_standard_downs_success_rt),
+           Rank_Def_Standard_Down_Success_Rt = dense_rank(def_standard_downs_success_rate),
            Rank_Def_Standard_Down_Explosiveness = dense_rank(def_standard_downs_explosiveness),
            Rank_Def_Pass_Down_EPA = dense_rank(def_passing_downs_epa),
-           Rank_Def_Pass_Down_Success_Rt = dense_rank(def_passing_downs_success_rt),
+           Rank_Def_Pass_Down_Success_Rt = dense_rank(def_passing_downs_success_rate),
            Rank_Def_Pass_Down_Explosiveness = dense_rank(def_passing_downs_explosiveness),
            Rank_Def_Rush_Play_EPA = dense_rank(def_rush_epa),
-           Rank_Def_Rush_Play_Success_Rt = dense_rank(def_rush_success_rt),
+           Rank_Def_Rush_Play_Success_Rt = dense_rank(def_rush_success_rate),
            Rank_Def_Rush_Play_Explosiveness = dense_rank(def_rush_explosiveness),
            Rank_Def_Pass_Play_EPA = dense_rank(def_pass_epa),
-           Rank_Def_Pass_Play_Success_Rt = dense_rank(def_pass_success_rt),
+           Rank_Def_Pass_Play_Success_Rt = dense_rank(def_pass_success_rate),
            Rank_Def_Pass_Play_Explosiveness = dense_rank(def_pass_explosiveness),
            Rank_EPA_diff = dense_rank(desc(EPA_diff)),
            Rank_SuccessRt_diff = dense_rank(desc(SuccessRt_diff)),
@@ -3586,46 +3336,46 @@ if (as.integer(cfb_week) == 0) {
            ## Extra weighted variables for current year
            Rank_Off_YPP_col2 = dense_rank(desc(adj_off_ypp)),
            Rank_Off_EPA_col2 = dense_rank(desc(adj_off_epa)),
-           Rank_Off_Success_Rt_col2 = dense_rank(desc(off_success_rt)),
+           Rank_Off_Success_Rt_col2 = dense_rank(desc(off_success_rate)),
            Rank_Off_Explosiveness_col2 = dense_rank(desc(adj_off_explosiveness)),
            Rank_Off_Pwr_Success_col2 = dense_rank(desc(off_power_success)),
-           Rank_Off_Stuff_Rt_col2 = dense_rank(off_stuff_rt),
+           Rank_Off_Stuff_Rt_col2 = dense_rank(off_stuff_rate),
            Rank_Off_Pts_Per_Opp_col2 = dense_rank(desc(off_pts_per_opp)),
            Rank_Off_Havoc_Total_col2 = dense_rank(off_havoc_total),
            Rank_Off_Havoc_Front_col2 = dense_rank(off_havoc_front_seven),
            Rank_Off_Havoc_DB_col2 = dense_rank(off_havoc_db),
            Rank_Off_Standard_Down_EPA_col2 = dense_rank(desc(off_standard_downs_epa)),
-           Rank_Off_Standard_Down_Success_Rt_col2 = dense_rank(desc(off_standard_downs_success_rt)),
+           Rank_Off_Standard_Down_Success_Rt_col2 = dense_rank(desc(off_standard_downs_success_rate)),
            Rank_Off_Standard_Down_Explosiveness_col2 = dense_rank(desc(off_standard_downs_explosiveness)),
            Rank_Off_Pass_Down_EPA_col2 = dense_rank(desc(off_passing_downs_epa)),
-           Rank_Off_Pass_Down_Success_Rt_col2 = dense_rank(desc(off_passing_downs_success_rt)),
+           Rank_Off_Pass_Down_Success_Rt_col2 = dense_rank(desc(off_passing_downs_success_rate)),
            Rank_Off_Pass_Down_Explosiveness_col2 = dense_rank(desc(off_passing_downs_explosiveness)),
            Rank_Off_Rush_Play_EPA_col2 = dense_rank(desc(off_rush_epa)),
-           Rank_Off_Rush_Play_Success_Rt_col2 = dense_rank(desc(off_rush_success_rt)),
+           Rank_Off_Rush_Play_Success_Rt_col2 = dense_rank(desc(off_rush_success_rate)),
            Rank_Off_Rush_Play_Explosiveness_col2 = dense_rank(desc(off_rush_explosiveness)),
            Rank_Off_Pass_Play_EPA_col2 = dense_rank(desc(off_pass_epa)),
-           Rank_Off_Pass_Play_Success_Rt_col2 = dense_rank(desc(off_pass_success_rt)),
+           Rank_Off_Pass_Play_Success_Rt_col2 = dense_rank(desc(off_pass_success_rate)),
            Rank_Off_Pass_Play_Explosiveness_col2 = dense_rank(desc(off_pass_explosiveness)),
            Rank_Def_EPA_col2 = dense_rank(adj_def_epa),
-           Rank_Def_Success_Rt_col2 = dense_rank(def_success_rt),
+           Rank_Def_Success_Rt_col2 = dense_rank(def_success_rate),
            Rank_Def_Explosiveness_col2 = dense_rank(adj_def_explosiveness),
            Rank_Def_Pwr_Success_col2 = dense_rank(def_power_success),
-           Rank_Def_Stuff_Rt_col2 = dense_rank(desc(def_stuff_rt)),
+           Rank_Def_Stuff_Rt_col2 = dense_rank(desc(def_stuff_rate)),
            Rank_Def_Pts_Per_Opp_col2 = dense_rank(def_pts_per_opp),
            Rank_Def_Havoc_Total_col2 = dense_rank(desc(def_havoc_total)),
            # Rank_def_havoc_front_Seven_col2 = dense_rank(desc(def_havoc_front_seven)),
            # Rank_def_havoc_db_col2 = dense_rank(desc(def_havoc_db)),
            Rank_Def_Standard_Down_EPA_col2 = dense_rank(def_standard_downs_epa),
-           Rank_Def_Standard_Down_Success_Rt_col2 = dense_rank(def_standard_downs_success_rt),
+           Rank_Def_Standard_Down_Success_Rt_col2 = dense_rank(def_standard_downs_success_rate),
            Rank_Def_Standard_Down_Explosiveness_col2 = dense_rank(def_standard_downs_explosiveness),
            Rank_Def_Pass_Down_EPA_col2 = dense_rank(def_passing_downs_epa),
-           Rank_Def_Pass_Down_Success_Rt_col2 = dense_rank(def_passing_downs_success_rt),
+           Rank_Def_Pass_Down_Success_Rt_col2 = dense_rank(def_passing_downs_success_rate),
            Rank_Def_Pass_Down_Explosiveness_col2 = dense_rank(def_passing_downs_explosiveness),
            Rank_Def_Rush_Play_EPA_col2 = dense_rank(def_rush_epa),
-           Rank_Def_Rush_Play_Success_Rt_col2 = dense_rank(def_rush_success_rt),
+           Rank_Def_Rush_Play_Success_Rt_col2 = dense_rank(def_rush_success_rate),
            Rank_Def_Rush_Play_Explosiveness_col2 = dense_rank(def_rush_explosiveness),
            Rank_Def_Pass_Play_EPA_col2 = dense_rank(def_pass_epa),
-           Rank_Def_Pass_Play_Success_Rt_col2 = dense_rank(def_pass_success_rt),
+           Rank_Def_Pass_Play_Success_Rt_col2 = dense_rank(def_pass_success_rate),
            Rank_Def_Pass_Play_Explosiveness_col2 = dense_rank(def_pass_explosiveness),
            Rank_EPA_diff_col2 = dense_rank(desc(EPA_diff)),
            Rank_SuccessRt_diff_col2 = dense_rank(desc(SuccessRt_diff)),
@@ -3647,8 +3397,8 @@ if (as.integer(cfb_week) == 0) {
            Rank_off_fourth_conv_rate_PY2 = dense_rank(desc(off_fourth_conv_rate_PY2)),
            # Rank_penalty_Yds_pg_PY2 = dense_rank(penalty_yds_pg_PY2),
            # Rank_yds_per_penalty_PY2 = dense_rank(yards_per_penalty_PY2),
-           Rank_st_kick_return_yds_PY2 = dense_rank(desc(st_kick_return_yds_PY2)),
-           Rank_punt_return_yds_PY2 = dense_rank(desc(st_punt_return_yds_PY2)),
+           Rank_kick_return_yds_PY2 = dense_rank(desc(kick_return_yds_PY2)),
+           Rank_punt_return_yds_PY2 = dense_rank(desc(punt_return_yds_PY2)),
            Rank_off_ypg_PY2 = dense_rank(desc(off_ypg_PY2)),
            Rank_off_pass_ypg_PY2 = dense_rank(desc(off_pass_ypg_PY2)),
            Rank_off_rush_ypg_PY2 = dense_rank(desc(off_rush_ypg_PY2)),
@@ -3656,10 +3406,10 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_YPP_PY2 = dense_rank(desc(adj_off_ypp_PY2)),
            # Rank_def_ints_pg_PY2 = dense_rank(desc(def_interceptions_pg_PY2)),
            Rank_Off_EPA_PY2 = dense_rank(desc(adj_off_epa_PY2)),
-           Rank_Off_Success_Rt_PY2 = dense_rank(desc(off_success_rt_PY2)),
+           Rank_Off_Success_Rt_PY2 = dense_rank(desc(off_success_rate_PY2)),
            Rank_Off_Explosiveness_PY2 = dense_rank(desc(adj_off_explosiveness_PY2)),
            Rank_Off_Pwr_Success_PY2 = dense_rank(desc(off_power_success_PY2)),
-           Rank_Off_Stuff_Rt_PY2 = dense_rank(off_stuff_rt_PY2),
+           Rank_Off_Stuff_Rt_PY2 = dense_rank(off_stuff_rate_PY2),
            Rank_Off_Line_Yds_PY2 = dense_rank(desc(off_line_yds_PY2)),
            Rank_Off_Second_Lvl_Yds_PY2 = dense_rank(desc(off_second_lvl_yds_PY2)),
            Rank_Off_Open_Field_Yds_PY2 = dense_rank(desc(off_open_field_yds_PY2)),
@@ -3669,22 +3419,22 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_Havoc_Front_PY2 = dense_rank(off_havoc_front_seven_PY2),
            Rank_Off_Havoc_DB_PY2 = dense_rank(off_havoc_db_PY2),
            Rank_Off_Standard_Down_EPA_PY2 = dense_rank(desc(off_standard_downs_epa_PY2)),
-           Rank_Off_Standard_Down_Success_Rt_PY2 = dense_rank(desc(off_standard_downs_success_rt_PY2)),
+           Rank_Off_Standard_Down_Success_Rt_PY2 = dense_rank(desc(off_standard_downs_success_rate_PY2)),
            Rank_Off_Standard_Down_Explosiveness_PY2 = dense_rank(desc(off_standard_downs_explosiveness_PY2)),
            Rank_Off_Pass_Down_EPA_PY2 = dense_rank(desc(off_passing_downs_epa_PY2)),
-           Rank_Off_Pass_Down_Success_Rt_PY2 = dense_rank(desc(off_passing_downs_success_rt_PY2)),
+           Rank_Off_Pass_Down_Success_Rt_PY2 = dense_rank(desc(off_passing_downs_success_rate_PY2)),
            Rank_Off_Pass_Down_Explosiveness_PY2 = dense_rank(desc(off_passing_downs_explosiveness_PY2)),
            Rank_Off_Rush_Play_EPA_PY2 = dense_rank(desc(off_rush_epa_PY2)),
-           Rank_Off_Rush_Play_Success_Rt_PY2 = dense_rank(desc(off_rush_success_rt_PY2)),
+           Rank_Off_Rush_Play_Success_Rt_PY2 = dense_rank(desc(off_rush_success_rate_PY2)),
            Rank_Off_Rush_Play_Explosiveness_PY2 = dense_rank(desc(off_rush_explosiveness_PY2)),
            Rank_Off_Pass_Play_EPA_PY2 = dense_rank(desc(off_pass_epa_PY2)),
-           Rank_Off_Pass_Play_Success_Rt_PY2 = dense_rank(desc(off_pass_success_rt_PY2)),
+           Rank_Off_Pass_Play_Success_Rt_PY2 = dense_rank(desc(off_pass_success_rate_PY2)),
            Rank_Off_Pass_Play_Explosiveness_PY2 = dense_rank(desc(off_pass_explosiveness_PY2)),
            Rank_Def_EPA_PY2 = dense_rank(adj_def_epa_PY2),
-           Rank_Def_Success_Rt_PY2 = dense_rank(def_success_rt_PY2),
+           Rank_Def_Success_Rt_PY2 = dense_rank(def_success_rate_PY2),
            Rank_Def_Explosiveness_PY2 = dense_rank(adj_def_explosiveness_PY2),
            Rank_Def_Pwr_Success_PY2 = dense_rank(def_power_success_PY2),
-           Rank_Def_Stuff_Rt_PY2 = dense_rank(desc(def_stuff_rt_PY2)),
+           Rank_Def_Stuff_Rt_PY2 = dense_rank(desc(def_stuff_rate_PY2)),
            Rank_Def_Line_Yds_PY2 = dense_rank(def_line_yds_PY2),
            # Rank_def_second_Lvl_Yds_PY2 = dense_rank(def_second_lvl_yds_PY2),
            # Rank_def_open_Field_Yds_PY2 = dense_rank(def_open_field_yds_PY2),
@@ -3693,16 +3443,16 @@ if (as.integer(cfb_week) == 0) {
            # Rank_def_havoc_front_Seven_PY2 = dense_rank(desc(def_havoc_front_seven_PY2)),
            # Rank_def_havoc_db_PY2 = dense_rank(desc(def_havoc_db_PY2)),
            Rank_Def_Standard_Down_EPA_PY2 = dense_rank(def_standard_downs_epa_PY2),
-           Rank_Def_Standard_Down_Success_Rt_PY2 = dense_rank(def_standard_downs_success_rt_PY2),
+           Rank_Def_Standard_Down_Success_Rt_PY2 = dense_rank(def_standard_downs_success_rate_PY2),
            Rank_Def_Standard_Down_Explosiveness_PY2 = dense_rank(def_standard_downs_explosiveness_PY2),
            Rank_Def_Pass_Down_EPA_PY2 = dense_rank(def_passing_downs_epa_PY2),
-           Rank_Def_Pass_Down_Success_Rt_PY2 = dense_rank(def_passing_downs_success_rt_PY2),
+           Rank_Def_Pass_Down_Success_Rt_PY2 = dense_rank(def_passing_downs_success_rate_PY2),
            Rank_Def_Pass_Down_Explosiveness_PY2 = dense_rank(def_passing_downs_explosiveness_PY2),
            Rank_Def_Rush_Play_EPA_PY2 = dense_rank(def_rush_epa_PY2),
-           Rank_Def_Rush_Play_Success_Rt_PY2 = dense_rank(def_rush_success_rt_PY2),
+           Rank_Def_Rush_Play_Success_Rt_PY2 = dense_rank(def_rush_success_rate_PY2),
            Rank_Def_Rush_Play_Explosiveness_PY2 = dense_rank(def_rush_explosiveness_PY2),
            Rank_Def_Pass_Play_EPA_PY2 = dense_rank(def_pass_epa_PY2),
-           Rank_Def_Pass_Play_Success_Rt_PY2 = dense_rank(def_pass_success_rt_PY2),
+           Rank_Def_Pass_Play_Success_Rt_PY2 = dense_rank(def_pass_success_rate_PY2),
            Rank_Def_Pass_Play_Explosiveness_PY2 = dense_rank(def_pass_explosiveness_PY2),
            Rank_EPA_diff_PY2 = dense_rank(desc(EPA_diff_PY2)),
            Rank_SuccessRt_diff_PY2 = dense_rank(desc(SuccessRt_diff_PY2)),
@@ -3719,8 +3469,8 @@ if (as.integer(cfb_week) == 0) {
            Rank_off_fourth_conv_rate_PY1 = dense_rank(desc(off_fourth_conv_rate_PY1)),
            # Rank_penalty_Yds_pg_PY1 = dense_rank(penalty_yds_pg_PY1),
            # Rank_yds_per_penalty_PY1 = dense_rank(yards_per_penalty_PY1),
-           Rank_st_kick_return_yds_PY1 = dense_rank(desc(st_kick_return_yds_PY1)),
-           Rank_punt_return_yds_PY1 = dense_rank(desc(st_punt_return_yds_PY1)),
+           Rank_kick_return_yds_PY1 = dense_rank(desc(kick_return_yds_PY1)),
+           Rank_punt_return_yds_PY1 = dense_rank(desc(punt_return_yds_PY1)),
            Rank_off_ypg_PY1 = dense_rank(desc(off_ypg_PY1)),
            Rank_off_pass_ypg_PY1 = dense_rank(desc(off_pass_ypg_PY1)),
            Rank_off_rush_ypg_PY1 = dense_rank(desc(off_rush_ypg_PY1)),
@@ -3728,10 +3478,10 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_YPP_PY1 = dense_rank(desc(adj_off_ypp_PY1)),
            # Rank_def_ints_pg_PY1 = dense_rank(desc(def_interceptions_pg_PY1)),
            Rank_Off_EPA_PY1 = dense_rank(desc(adj_off_epa_PY1)),
-           Rank_Off_Success_Rt_PY1 = dense_rank(desc(off_success_rt_PY1)),
+           Rank_Off_Success_Rt_PY1 = dense_rank(desc(off_success_rate_PY1)),
            Rank_Off_Explosiveness_PY1 = dense_rank(desc(adj_off_explosiveness_PY1)),
            Rank_Off_Pwr_Success_PY1 = dense_rank(desc(off_power_success_PY1)),
-           Rank_Off_Stuff_Rt_PY1 = dense_rank(off_stuff_rt_PY1),
+           Rank_Off_Stuff_Rt_PY1 = dense_rank(off_stuff_rate_PY1),
            Rank_Off_Line_Yds_PY1 = dense_rank(desc(off_line_yds_PY1)),
            Rank_Off_Second_Lvl_Yds_PY1 = dense_rank(desc(off_second_lvl_yds_PY1)),
            Rank_Off_Open_Field_Yds_PY1 = dense_rank(desc(off_open_field_yds_PY1)),
@@ -3741,22 +3491,22 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_Havoc_Front_PY1 = dense_rank(off_havoc_front_seven_PY1),
            Rank_Off_Havoc_DB_PY1 = dense_rank(off_havoc_db_PY1),
            Rank_Off_Standard_Down_EPA_PY1 = dense_rank(desc(off_standard_downs_epa_PY1)),
-           Rank_Off_Standard_Down_Success_Rt_PY1 = dense_rank(desc(off_standard_downs_success_rt_PY1)),
+           Rank_Off_Standard_Down_Success_Rt_PY1 = dense_rank(desc(off_standard_downs_success_rate_PY1)),
            Rank_Off_Standard_Down_Explosiveness_PY1 = dense_rank(desc(off_standard_downs_explosiveness_PY1)),
            Rank_Off_Pass_Down_EPA_PY1 = dense_rank(desc(off_passing_downs_epa_PY1)),
-           Rank_Off_Pass_Down_Success_Rt_PY1 = dense_rank(desc(off_passing_downs_success_rt_PY1)),
+           Rank_Off_Pass_Down_Success_Rt_PY1 = dense_rank(desc(off_passing_downs_success_rate_PY1)),
            Rank_Off_Pass_Down_Explosiveness_PY1 = dense_rank(desc(off_passing_downs_explosiveness_PY1)),
            Rank_Off_Rush_Play_EPA_PY1 = dense_rank(desc(off_rush_epa_PY1)),
-           Rank_Off_Rush_Play_Success_Rt_PY1 = dense_rank(desc(off_rush_success_rt_PY1)),
+           Rank_Off_Rush_Play_Success_Rt_PY1 = dense_rank(desc(off_rush_success_rate_PY1)),
            Rank_Off_Rush_Play_Explosiveness_PY1 = dense_rank(desc(off_rush_explosiveness_PY1)),
            Rank_Off_Pass_Play_EPA_PY1 = dense_rank(desc(off_pass_epa_PY1)),
-           Rank_Off_Pass_Play_Success_Rt_PY1 = dense_rank(desc(off_pass_success_rt_PY1)),
+           Rank_Off_Pass_Play_Success_Rt_PY1 = dense_rank(desc(off_pass_success_rate_PY1)),
            Rank_Off_Pass_Play_Explosiveness_PY1 = dense_rank(desc(off_pass_explosiveness_PY1)),
            Rank_Def_EPA_PY1 = dense_rank(adj_def_epa_PY1),
-           Rank_Def_Success_Rt_PY1 = dense_rank(def_success_rt_PY1),
+           Rank_Def_Success_Rt_PY1 = dense_rank(def_success_rate_PY1),
            Rank_Def_Explosiveness_PY1 = dense_rank(adj_def_explosiveness_PY1),
            Rank_Def_Pwr_Success_PY1 = dense_rank(def_power_success_PY1),
-           Rank_Def_Stuff_Rt_PY1 = dense_rank(desc(def_stuff_rt_PY1)),
+           Rank_Def_Stuff_Rt_PY1 = dense_rank(desc(def_stuff_rate_PY1)),
            Rank_Def_Line_Yds_PY1 = dense_rank(def_line_yds_PY1),
            # Rank_def_second_Lvl_Yds_PY1 = dense_rank(def_second_lvl_yds_PY1),
            # Rank_def_open_Field_Yds_PY1 = dense_rank(def_open_field_yds_PY1),
@@ -3765,16 +3515,16 @@ if (as.integer(cfb_week) == 0) {
            # Rank_def_havoc_front_Seven_PY1 = dense_rank(desc(def_havoc_front_seven_PY1)),
            # Rank_def_havoc_db_PY1 = dense_rank(desc(def_havoc_db_PY1)),
            Rank_Def_Standard_Down_EPA_PY1 = dense_rank(def_standard_downs_epa_PY1),
-           Rank_Def_Standard_Down_Success_Rt_PY1 = dense_rank(def_standard_downs_success_rt_PY1),
+           Rank_Def_Standard_Down_Success_Rt_PY1 = dense_rank(def_standard_downs_success_rate_PY1),
            Rank_Def_Standard_Down_Explosiveness_PY1 = dense_rank(def_standard_downs_explosiveness_PY1),
            Rank_Def_Pass_Down_EPA_PY1 = dense_rank(def_passing_downs_epa_PY1),
-           Rank_Def_Pass_Down_Success_Rt_PY1 = dense_rank(def_passing_downs_success_rt_PY1),
+           Rank_Def_Pass_Down_Success_Rt_PY1 = dense_rank(def_passing_downs_success_rate_PY1),
            Rank_Def_Pass_Down_Explosiveness_PY1 = dense_rank(def_passing_downs_explosiveness_PY1),
            Rank_Def_Rush_Play_EPA_PY1 = dense_rank(def_rush_epa_PY1),
-           Rank_Def_Rush_Play_Success_Rt_PY1 = dense_rank(def_rush_success_rt_PY1),
+           Rank_Def_Rush_Play_Success_Rt_PY1 = dense_rank(def_rush_success_rate_PY1),
            Rank_Def_Rush_Play_Explosiveness_PY1 = dense_rank(def_rush_explosiveness_PY1),
            Rank_Def_Pass_Play_EPA_PY1 = dense_rank(def_pass_epa_PY1),
-           Rank_Def_Pass_Play_Success_Rt_PY1 = dense_rank(def_pass_success_rt_PY1),
+           Rank_Def_Pass_Play_Success_Rt_PY1 = dense_rank(def_pass_success_rate_PY1),
            Rank_Def_Pass_Play_Explosiveness_PY1 = dense_rank(def_pass_explosiveness_PY1),
            Rank_EPA_diff_PY1 = dense_rank(desc(EPA_diff_PY1)),
            Rank_SuccessRt_diff_PY1 = dense_rank(desc(SuccessRt_diff_PY1)),
@@ -3791,8 +3541,8 @@ if (as.integer(cfb_week) == 0) {
            Rank_off_fourth_conv_rate = dense_rank(desc(off_fourth_conv_rate)),
            # Rank_penalty_Yds_pg = dense_rank(penalty_yds_pg),
            # Rank_yds_per_penalty = dense_rank(yards_per_penalty),
-           Rank_st_kick_return_yds = dense_rank(desc(st_kick_return_yds)),
-           Rank_punt_return_yds = dense_rank(desc(st_punt_return_yds)),
+           Rank_kick_return_yds = dense_rank(desc(kick_return_yds)),
+           Rank_punt_return_yds = dense_rank(desc(punt_return_yds)),
            Rank_off_ypg = dense_rank(desc(off_ypg)),
            Rank_off_pass_ypg = dense_rank(desc(off_pass_ypg)),
            Rank_off_rush_ypg = dense_rank(desc(off_rush_ypg)),
@@ -3800,10 +3550,10 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_YPP = dense_rank(desc(adj_off_ypp)),
            # Rank_def_ints_pg = dense_rank(desc(def_interceptions_pg)),
            Rank_Off_EPA = dense_rank(desc(adj_off_epa)),
-           Rank_Off_Success_Rt = dense_rank(desc(off_success_rt)),
+           Rank_Off_Success_Rt = dense_rank(desc(off_success_rate)),
            Rank_Off_Explosiveness = dense_rank(desc(adj_off_explosiveness)),
            Rank_Off_Pwr_Success = dense_rank(desc(off_power_success)),
-           Rank_Off_Stuff_Rt = dense_rank(off_stuff_rt),
+           Rank_Off_Stuff_Rt = dense_rank(off_stuff_rate),
            Rank_Off_Line_Yds = dense_rank(desc(off_line_yds)),
            Rank_Off_Second_Lvl_Yds = dense_rank(desc(off_second_lvl_yds)),
            Rank_Off_Open_Field_Yds = dense_rank(desc(off_open_field_yds)),
@@ -3813,22 +3563,22 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_Havoc_Front = dense_rank(off_havoc_front_seven),
            Rank_Off_Havoc_DB = dense_rank(off_havoc_db),
            Rank_Off_Standard_Down_EPA = dense_rank(desc(off_standard_downs_epa)),
-           Rank_Off_Standard_Down_Success_Rt = dense_rank(desc(off_standard_downs_success_rt)),
+           Rank_Off_Standard_Down_Success_Rt = dense_rank(desc(off_standard_downs_success_rate)),
            Rank_Off_Standard_Down_Explosiveness = dense_rank(desc(off_standard_downs_explosiveness)),
            Rank_Off_Pass_Down_EPA = dense_rank(desc(off_passing_downs_epa)),
-           Rank_Off_Pass_Down_Success_Rt = dense_rank(desc(off_passing_downs_success_rt)),
+           Rank_Off_Pass_Down_Success_Rt = dense_rank(desc(off_passing_downs_success_rate)),
            Rank_Off_Pass_Down_Explosiveness = dense_rank(desc(off_passing_downs_explosiveness)),
            Rank_Off_Rush_Play_EPA = dense_rank(desc(off_rush_epa)),
-           Rank_Off_Rush_Play_Success_Rt = dense_rank(desc(off_rush_success_rt)),
+           Rank_Off_Rush_Play_Success_Rt = dense_rank(desc(off_rush_success_rate)),
            Rank_Off_Rush_Play_Explosiveness = dense_rank(desc(off_rush_explosiveness)),
            Rank_Off_Pass_Play_EPA = dense_rank(desc(off_pass_epa)),
-           Rank_Off_Pass_Play_Success_Rt = dense_rank(desc(off_pass_success_rt)),
+           Rank_Off_Pass_Play_Success_Rt = dense_rank(desc(off_pass_success_rate)),
            Rank_Off_Pass_Play_Explosiveness = dense_rank(desc(off_pass_explosiveness)),
            Rank_Def_EPA = dense_rank(adj_def_epa),
-           Rank_Def_Success_Rt = dense_rank(def_success_rt),
+           Rank_Def_Success_Rt = dense_rank(def_success_rate),
            Rank_Def_Explosiveness = dense_rank(adj_def_explosiveness),
            Rank_Def_Pwr_Success = dense_rank(def_power_success),
-           Rank_Def_Stuff_Rt = dense_rank(desc(def_stuff_rt)),
+           Rank_Def_Stuff_Rt = dense_rank(desc(def_stuff_rate)),
            Rank_Def_Line_Yds = dense_rank(def_line_yds),
            # Rank_def_second_Lvl_Yds = dense_rank(def_second_lvl_yds),
            # Rank_def_open_Field_Yds = dense_rank(def_open_field_yds),
@@ -3837,16 +3587,16 @@ if (as.integer(cfb_week) == 0) {
            # Rank_def_havoc_front_Seven = dense_rank(desc(def_havoc_front_seven)),
            # Rank_def_havoc_db = dense_rank(desc(def_havoc_db)),
            Rank_Def_Standard_Down_EPA = dense_rank(def_standard_downs_epa),
-           Rank_Def_Standard_Down_Success_Rt = dense_rank(def_standard_downs_success_rt),
+           Rank_Def_Standard_Down_Success_Rt = dense_rank(def_standard_downs_success_rate),
            Rank_Def_Standard_Down_Explosiveness = dense_rank(def_standard_downs_explosiveness),
            Rank_Def_Pass_Down_EPA = dense_rank(def_passing_downs_epa),
-           Rank_Def_Pass_Down_Success_Rt = dense_rank(def_passing_downs_success_rt),
+           Rank_Def_Pass_Down_Success_Rt = dense_rank(def_passing_downs_success_rate),
            Rank_Def_Pass_Down_Explosiveness = dense_rank(def_passing_downs_explosiveness),
            Rank_Def_Rush_Play_EPA = dense_rank(def_rush_epa),
-           Rank_Def_Rush_Play_Success_Rt = dense_rank(def_rush_success_rt),
+           Rank_Def_Rush_Play_Success_Rt = dense_rank(def_rush_success_rate),
            Rank_Def_Rush_Play_Explosiveness = dense_rank(def_rush_explosiveness),
            Rank_Def_Pass_Play_EPA = dense_rank(def_pass_epa),
-           Rank_Def_Pass_Play_Success_Rt = dense_rank(def_pass_success_rt),
+           Rank_Def_Pass_Play_Success_Rt = dense_rank(def_pass_success_rate),
            Rank_Def_Pass_Play_Explosiveness = dense_rank(def_pass_explosiveness),
            Rank_EPA_diff = dense_rank(desc(EPA_diff)),
            Rank_SuccessRt_diff = dense_rank(desc(SuccessRt_diff)),
@@ -3867,10 +3617,10 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_YPP_col2 = dense_rank(desc(adj_off_ypp)),
            # Rank_def_ints_pg_col2 = dense_rank(desc(def_interceptions_pg)),
            Rank_Off_EPA_col2 = dense_rank(desc(adj_off_epa)),
-           Rank_Off_Success_Rt_col2 = dense_rank(desc(off_success_rt)),
+           Rank_Off_Success_Rt_col2 = dense_rank(desc(off_success_rate)),
            Rank_Off_Explosiveness_col2 = dense_rank(desc(adj_off_explosiveness)),
            Rank_Off_Pwr_Success_col2 = dense_rank(desc(off_power_success)),
-           Rank_Off_Stuff_Rt_col2 = dense_rank(off_stuff_rt),
+           Rank_Off_Stuff_Rt_col2 = dense_rank(off_stuff_rate),
            Rank_Off_Line_Yds_col2 = dense_rank(desc(off_line_yds)),
            Rank_Off_Second_Lvl_Yds_col2 = dense_rank(desc(off_second_lvl_yds)),
            Rank_Off_Open_Field_Yds_col2 = dense_rank(desc(off_open_field_yds)),
@@ -3880,22 +3630,22 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_Havoc_Front_col2 = dense_rank(off_havoc_front_seven),
            Rank_Off_Havoc_DB_col2 = dense_rank(off_havoc_db),
            Rank_Off_Standard_Down_EPA_col2 = dense_rank(desc(off_standard_downs_epa)),
-           Rank_Off_Standard_Down_Success_Rt_col2 = dense_rank(desc(off_standard_downs_success_rt)),
+           Rank_Off_Standard_Down_Success_Rt_col2 = dense_rank(desc(off_standard_downs_success_rate)),
            Rank_Off_Standard_Down_Explosiveness_col2 = dense_rank(desc(off_standard_downs_explosiveness)),
            Rank_Off_Pass_Down_EPA_col2 = dense_rank(desc(off_passing_downs_epa)),
-           Rank_Off_Pass_Down_Success_Rt_col2 = dense_rank(desc(off_passing_downs_success_rt)),
+           Rank_Off_Pass_Down_Success_Rt_col2 = dense_rank(desc(off_passing_downs_success_rate)),
            Rank_Off_Pass_Down_Explosiveness_col2 = dense_rank(desc(off_passing_downs_explosiveness)),
            Rank_Off_Rush_Play_EPA_col2 = dense_rank(desc(off_rush_epa)),
-           Rank_Off_Rush_Play_Success_Rt_col2 = dense_rank(desc(off_rush_success_rt)),
+           Rank_Off_Rush_Play_Success_Rt_col2 = dense_rank(desc(off_rush_success_rate)),
            Rank_Off_Rush_Play_Explosiveness_col2 = dense_rank(desc(off_rush_explosiveness)),
            Rank_Off_Pass_Play_EPA_col2 = dense_rank(desc(off_pass_epa)),
-           Rank_Off_Pass_Play_Success_Rt_col2 = dense_rank(desc(off_pass_success_rt)),
+           Rank_Off_Pass_Play_Success_Rt_col2 = dense_rank(desc(off_pass_success_rate)),
            Rank_Off_Pass_Play_Explosiveness_col2 = dense_rank(desc(off_pass_explosiveness)),
            Rank_Def_EPA_col2 = dense_rank(adj_def_epa),
-           Rank_Def_Success_Rt_col2 = dense_rank(def_success_rt),
+           Rank_Def_Success_Rt_col2 = dense_rank(def_success_rate),
            Rank_Def_Explosiveness_col2 = dense_rank(adj_def_explosiveness),
            Rank_Def_Pwr_Success_col2 = dense_rank(def_power_success),
-           Rank_Def_Stuff_Rt_col2 = dense_rank(desc(def_stuff_rt)),
+           Rank_Def_Stuff_Rt_col2 = dense_rank(desc(def_stuff_rate)),
            Rank_Def_Line_Yds_col2 = dense_rank(def_line_yds),
            # Rank_def_second_Lvl_Yds_col2 = dense_rank(def_second_lvl_yds),
            # Rank_def_open_Field_Yds_col2 = dense_rank(def_open_field_yds),
@@ -3904,16 +3654,16 @@ if (as.integer(cfb_week) == 0) {
            # Rank_def_havoc_front_Seven_col2 = dense_rank(desc(def_havoc_front_seven)),
            # Rank_def_havoc_db_col2 = dense_rank(desc(def_havoc_db)),
            Rank_Def_Standard_Down_EPA_col2 = dense_rank(def_standard_downs_epa),
-           Rank_Def_Standard_Down_Success_Rt_col2 = dense_rank(def_standard_downs_success_rt),
+           Rank_Def_Standard_Down_Success_Rt_col2 = dense_rank(def_standard_downs_success_rate),
            Rank_Def_Standard_Down_Explosiveness_col2 = dense_rank(def_standard_downs_explosiveness),
            Rank_Def_Pass_Down_EPA_col2 = dense_rank(def_passing_downs_epa),
-           Rank_Def_Pass_Down_Success_Rt_col2 = dense_rank(def_passing_downs_success_rt),
+           Rank_Def_Pass_Down_Success_Rt_col2 = dense_rank(def_passing_downs_success_rate),
            Rank_Def_Pass_Down_Explosiveness_col2 = dense_rank(def_passing_downs_explosiveness),
            Rank_Def_Rush_Play_EPA_col2 = dense_rank(def_rush_epa),
-           Rank_Def_Rush_Play_Success_Rt_col2 = dense_rank(def_rush_success_rt),
+           Rank_Def_Rush_Play_Success_Rt_col2 = dense_rank(def_rush_success_rate),
            Rank_Def_Rush_Play_Explosiveness_col2 = dense_rank(def_rush_explosiveness),
            Rank_Def_Pass_Play_EPA_col2 = dense_rank(def_pass_epa),
-           Rank_Def_Pass_Play_Success_Rt_col2 = dense_rank(def_pass_success_rt),
+           Rank_Def_Pass_Play_Success_Rt_col2 = dense_rank(def_pass_success_rate),
            Rank_Def_Pass_Play_Explosiveness_col2 = dense_rank(def_pass_explosiveness),
            Rank_EPA_diff_col2 = dense_rank(desc(EPA_diff)),
            Rank_SuccessRt_diff_col2 = dense_rank(desc(SuccessRt_diff)),
@@ -3935,18 +3685,18 @@ if (as.integer(cfb_week) == 0) {
            Rank_off_fourth_conv_rate_PY1 = dense_rank(desc(off_fourth_conv_rate_PY1)),
            # Rank_penalty_Yds_pg_PY1 = dense_rank(penalty_yds_pg_PY1),
            # Rank_yds_per_penalty_PY1 = dense_rank(yards_per_penalty_PY1),
-           Rank_st_kick_return_yds_PY1 = dense_rank(desc(st_kick_return_yds_PY1)),
-           Rank_punt_return_yds_PY1 = dense_rank(desc(st_punt_return_yds_PY1)),
+           Rank_kick_return_yds_PY1 = dense_rank(desc(kick_return_yds_PY1)),
+           Rank_punt_return_yds_PY1 = dense_rank(desc(punt_return_yds_PY1)),
            Rank_off_ypg_PY1 = dense_rank(desc(off_ypg_PY1)),
            Rank_off_pass_ypg_PY1 = dense_rank(desc(off_pass_ypg_PY1)),
            Rank_off_rush_ypg_PY1 = dense_rank(desc(off_rush_ypg_PY1)),
            Rank_Off_YPP_PY1 = dense_rank(desc(adj_off_ypp_PY1)),
            # Rank_def_ints_pg_PY1 = dense_rank(desc(def_interceptions_pg_PY1)),
            Rank_Off_EPA_PY1 = dense_rank(desc(adj_off_epa_PY1)),
-           Rank_Off_Success_Rt_PY1 = dense_rank(desc(off_success_rt_PY1)),
+           Rank_Off_Success_Rt_PY1 = dense_rank(desc(off_success_rate_PY1)),
            Rank_Off_Explosiveness_PY1 = dense_rank(desc(adj_off_explosiveness_PY1)),
            Rank_Off_Pwr_Success_PY1 = dense_rank(desc(off_power_success_PY1)),
-           Rank_Off_Stuff_Rt_PY1 = dense_rank(off_stuff_rt_PY1),
+           Rank_Off_Stuff_Rt_PY1 = dense_rank(off_stuff_rate_PY1),
            Rank_Off_Line_Yds_PY1 = dense_rank(desc(off_line_yds_PY1)),
            Rank_Off_Second_Lvl_Yds_PY1 = dense_rank(desc(off_second_lvl_yds_PY1)),
            Rank_Off_Open_Field_Yds_PY1 = dense_rank(desc(off_open_field_yds_PY1)),
@@ -3956,22 +3706,22 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_Havoc_Front_PY1 = dense_rank(off_havoc_front_seven_PY1),
            Rank_Off_Havoc_DB_PY1 = dense_rank(off_havoc_db_PY1),
            Rank_Off_Standard_Down_EPA_PY1 = dense_rank(desc(off_standard_downs_epa_PY1)),
-           Rank_Off_Standard_Down_Success_Rt_PY1 = dense_rank(desc(off_standard_downs_success_rt_PY1)),
+           Rank_Off_Standard_Down_Success_Rt_PY1 = dense_rank(desc(off_standard_downs_success_rate_PY1)),
            Rank_Off_Standard_Down_Explosiveness_PY1 = dense_rank(desc(off_standard_downs_explosiveness_PY1)),
            Rank_Off_Pass_Down_EPA_PY1 = dense_rank(desc(off_passing_downs_epa_PY1)),
-           Rank_Off_Pass_Down_Success_Rt_PY1 = dense_rank(desc(off_passing_downs_success_rt_PY1)),
+           Rank_Off_Pass_Down_Success_Rt_PY1 = dense_rank(desc(off_passing_downs_success_rate_PY1)),
            Rank_Off_Pass_Down_Explosiveness_PY1 = dense_rank(desc(off_passing_downs_explosiveness_PY1)),
            Rank_Off_Rush_Play_EPA_PY1 = dense_rank(desc(off_rush_epa_PY1)),
-           Rank_Off_Rush_Play_Success_Rt_PY1 = dense_rank(desc(off_rush_success_rt_PY1)),
+           Rank_Off_Rush_Play_Success_Rt_PY1 = dense_rank(desc(off_rush_success_rate_PY1)),
            Rank_Off_Rush_Play_Explosiveness_PY1 = dense_rank(desc(off_rush_explosiveness_PY1)),
            Rank_Off_Pass_Play_EPA_PY1 = dense_rank(desc(off_pass_epa_PY1)),
-           Rank_Off_Pass_Play_Success_Rt_PY1 = dense_rank(desc(off_pass_success_rt_PY1)),
+           Rank_Off_Pass_Play_Success_Rt_PY1 = dense_rank(desc(off_pass_success_rate_PY1)),
            Rank_Off_Pass_Play_Explosiveness_PY1 = dense_rank(desc(off_pass_explosiveness_PY1)),
            Rank_Def_EPA_PY1 = dense_rank(adj_def_epa_PY1),
-           Rank_Def_Success_Rt_PY1 = dense_rank(def_success_rt_PY1),
+           Rank_Def_Success_Rt_PY1 = dense_rank(def_success_rate_PY1),
            Rank_Def_Explosiveness_PY1 = dense_rank(adj_def_explosiveness_PY1),
            Rank_Def_Pwr_Success_PY1 = dense_rank(def_power_success_PY1),
-           Rank_Def_Stuff_Rt_PY1 = dense_rank(desc(def_stuff_rt_PY1)),
+           Rank_Def_Stuff_Rt_PY1 = dense_rank(desc(def_stuff_rate_PY1)),
            Rank_Def_Line_Yds_PY1 = dense_rank(def_line_yds_PY1),
            # Rank_def_second_Lvl_Yds_PY1 = dense_rank(def_second_lvl_yds_PY1),
            # Rank_def_open_Field_Yds_PY1 = dense_rank(def_open_field_yds_PY1),
@@ -3980,16 +3730,16 @@ if (as.integer(cfb_week) == 0) {
            # Rank_def_havoc_front_Seven_PY1 = dense_rank(desc(def_havoc_front_seven_PY1)),
            # Rank_def_havoc_db_PY1 = dense_rank(desc(def_havoc_db_PY1)),
            Rank_Def_Standard_Down_EPA_PY1 = dense_rank(def_standard_downs_epa_PY1),
-           Rank_Def_Standard_Down_Success_Rt_PY1 = dense_rank(def_standard_downs_success_rt_PY1),
+           Rank_Def_Standard_Down_Success_Rt_PY1 = dense_rank(def_standard_downs_success_rate_PY1),
            Rank_Def_Standard_Down_Explosiveness_PY1 = dense_rank(def_standard_downs_explosiveness_PY1),
            Rank_Def_Pass_Down_EPA_PY1 = dense_rank(def_passing_downs_epa_PY1),
-           Rank_Def_Pass_Down_Success_Rt_PY1 = dense_rank(def_passing_downs_success_rt_PY1),
+           Rank_Def_Pass_Down_Success_Rt_PY1 = dense_rank(def_passing_downs_success_rate_PY1),
            Rank_Def_Pass_Down_Explosiveness_PY1 = dense_rank(def_passing_downs_explosiveness_PY1),
            Rank_Def_Rush_Play_EPA_PY1 = dense_rank(def_rush_epa_PY1),
-           Rank_Def_Rush_Play_Success_Rt_PY1 = dense_rank(def_rush_success_rt_PY1),
+           Rank_Def_Rush_Play_Success_Rt_PY1 = dense_rank(def_rush_success_rate_PY1),
            Rank_Def_Rush_Play_Explosiveness_PY1 = dense_rank(def_rush_explosiveness_PY1),
            Rank_Def_Pass_Play_EPA_PY1 = dense_rank(def_pass_epa_PY1),
-           Rank_Def_Pass_Play_Success_Rt_PY1 = dense_rank(def_pass_success_rt_PY1),
+           Rank_Def_Pass_Play_Success_Rt_PY1 = dense_rank(def_pass_success_rate_PY1),
            Rank_Def_Pass_Play_Explosiveness_PY1 = dense_rank(def_pass_explosiveness_PY1),
            Rank_EPA_diff_PY1 = dense_rank(desc(EPA_diff_PY1)),
            Rank_SuccessRt_diff_PY1 = dense_rank(desc(SuccessRt_diff_PY1)),
@@ -4007,8 +3757,8 @@ if (as.integer(cfb_week) == 0) {
            Rank_off_fourth_conv_rate = dense_rank(desc(off_fourth_conv_rate)),
            # Rank_penalty_Yds_pg = dense_rank(penalty_yds_pg),
            # Rank_yds_per_penalty = dense_rank(yards_per_penalty),
-           Rank_st_kick_return_yds = dense_rank(desc(st_kick_return_yds)),
-           Rank_punt_return_yds = dense_rank(desc(st_punt_return_yds)),
+           Rank_kick_return_yds = dense_rank(desc(kick_return_yds)),
+           Rank_punt_return_yds = dense_rank(desc(punt_return_yds)),
            Rank_off_ypg = dense_rank(desc(off_ypg)),
            Rank_off_pass_ypg = dense_rank(desc(off_pass_ypg)),
            Rank_off_rush_ypg = dense_rank(desc(off_rush_ypg)),
@@ -4016,10 +3766,10 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_YPP = dense_rank(desc(adj_off_ypp)),
            # Rank_def_ints_pg = dense_rank(desc(def_interceptions_pg)),
            Rank_Off_EPA = dense_rank(desc(adj_off_epa)),
-           Rank_Off_Success_Rt = dense_rank(desc(off_success_rt)),
+           Rank_Off_Success_Rt = dense_rank(desc(off_success_rate)),
            Rank_Off_Explosiveness = dense_rank(desc(adj_off_explosiveness)),
            Rank_Off_Pwr_Success = dense_rank(desc(off_power_success)),
-           Rank_Off_Stuff_Rt = dense_rank(off_stuff_rt),
+           Rank_Off_Stuff_Rt = dense_rank(off_stuff_rate),
            Rank_Off_Line_Yds = dense_rank(desc(off_line_yds)),
            Rank_Off_Second_Lvl_Yds = dense_rank(desc(off_second_lvl_yds)),
            Rank_Off_Open_Field_Yds = dense_rank(desc(off_open_field_yds)),
@@ -4029,22 +3779,22 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_Havoc_Front = dense_rank(off_havoc_front_seven),
            Rank_Off_Havoc_DB = dense_rank(off_havoc_db),
            Rank_Off_Standard_Down_EPA = dense_rank(desc(off_standard_downs_epa)),
-           Rank_Off_Standard_Down_Success_Rt = dense_rank(desc(off_standard_downs_success_rt)),
+           Rank_Off_Standard_Down_Success_Rt = dense_rank(desc(off_standard_downs_success_rate)),
            Rank_Off_Standard_Down_Explosiveness = dense_rank(desc(off_standard_downs_explosiveness)),
            Rank_Off_Pass_Down_EPA = dense_rank(desc(off_passing_downs_epa)),
-           Rank_Off_Pass_Down_Success_Rt = dense_rank(desc(off_passing_downs_success_rt)),
+           Rank_Off_Pass_Down_Success_Rt = dense_rank(desc(off_passing_downs_success_rate)),
            Rank_Off_Pass_Down_Explosiveness = dense_rank(desc(off_passing_downs_explosiveness)),
            Rank_Off_Rush_Play_EPA = dense_rank(desc(off_rush_epa)),
-           Rank_Off_Rush_Play_Success_Rt = dense_rank(desc(off_rush_success_rt)),
+           Rank_Off_Rush_Play_Success_Rt = dense_rank(desc(off_rush_success_rate)),
            Rank_Off_Rush_Play_Explosiveness = dense_rank(desc(off_rush_explosiveness)),
            Rank_Off_Pass_Play_EPA = dense_rank(desc(off_pass_epa)),
-           Rank_Off_Pass_Play_Success_Rt = dense_rank(desc(off_pass_success_rt)),
+           Rank_Off_Pass_Play_Success_Rt = dense_rank(desc(off_pass_success_rate)),
            Rank_Off_Pass_Play_Explosiveness = dense_rank(desc(off_pass_explosiveness)),
            Rank_Def_EPA = dense_rank(adj_def_epa),
-           Rank_Def_Success_Rt = dense_rank(def_success_rt),
+           Rank_Def_Success_Rt = dense_rank(def_success_rate),
            Rank_Def_Explosiveness = dense_rank(adj_def_explosiveness),
            Rank_Def_Pwr_Success = dense_rank(def_power_success),
-           Rank_Def_Stuff_Rt = dense_rank(desc(def_stuff_rt)),
+           Rank_Def_Stuff_Rt = dense_rank(desc(def_stuff_rate)),
            Rank_Def_Line_Yds = dense_rank(def_line_yds),
            # Rank_def_second_Lvl_Yds = dense_rank(def_second_lvl_yds),
            # Rank_def_open_Field_Yds = dense_rank(def_open_field_yds),
@@ -4053,16 +3803,16 @@ if (as.integer(cfb_week) == 0) {
            # Rank_def_havoc_front_Seven = dense_rank(desc(def_havoc_front_seven)),
            # Rank_def_havoc_db = dense_rank(desc(def_havoc_db)),
            Rank_Def_Standard_Down_EPA = dense_rank(def_standard_downs_epa),
-           Rank_Def_Standard_Down_Success_Rt = dense_rank(def_standard_downs_success_rt),
+           Rank_Def_Standard_Down_Success_Rt = dense_rank(def_standard_downs_success_rate),
            Rank_Def_Standard_Down_Explosiveness = dense_rank(def_standard_downs_explosiveness),
            Rank_Def_Pass_Down_EPA = dense_rank(def_passing_downs_epa),
-           Rank_Def_Pass_Down_Success_Rt = dense_rank(def_passing_downs_success_rt),
+           Rank_Def_Pass_Down_Success_Rt = dense_rank(def_passing_downs_success_rate),
            Rank_Def_Pass_Down_Explosiveness = dense_rank(def_passing_downs_explosiveness),
            Rank_Def_Rush_Play_EPA = dense_rank(def_rush_epa),
-           Rank_Def_Rush_Play_Success_Rt = dense_rank(def_rush_success_rt),
+           Rank_Def_Rush_Play_Success_Rt = dense_rank(def_rush_success_rate),
            Rank_Def_Rush_Play_Explosiveness = dense_rank(def_rush_explosiveness),
            Rank_Def_Pass_Play_EPA = dense_rank(def_pass_epa),
-           Rank_Def_Pass_Play_Success_Rt = dense_rank(def_pass_success_rt),
+           Rank_Def_Pass_Play_Success_Rt = dense_rank(def_pass_success_rate),
            Rank_Def_Pass_Play_Explosiveness = dense_rank(def_pass_explosiveness),
            Rank_EPA_diff = dense_rank(desc(EPA_diff)),
            Rank_SuccessRt_diff = dense_rank(desc(SuccessRt_diff)),
@@ -4083,10 +3833,10 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_YPP_col2 = dense_rank(desc(adj_off_ypp)),
            # Rank_def_ints_pg_col2 = dense_rank(desc(def_interceptions_pg)),
            Rank_Off_EPA_col2 = dense_rank(desc(adj_off_epa)),
-           Rank_Off_Success_Rt_col2 = dense_rank(desc(off_success_rt)),
+           Rank_Off_Success_Rt_col2 = dense_rank(desc(off_success_rate)),
            Rank_Off_Explosiveness_col2 = dense_rank(desc(adj_off_explosiveness)),
            Rank_Off_Pwr_Success_col2 = dense_rank(desc(off_power_success)),
-           Rank_Off_Stuff_Rt_col2 = dense_rank(off_stuff_rt),
+           Rank_Off_Stuff_Rt_col2 = dense_rank(off_stuff_rate),
            Rank_Off_Line_Yds_col2 = dense_rank(desc(off_line_yds)),
            Rank_Off_Second_Lvl_Yds_col2 = dense_rank(desc(off_second_lvl_yds)),
            Rank_Off_Open_Field_Yds_col2 = dense_rank(desc(off_open_field_yds)),
@@ -4094,16 +3844,16 @@ if (as.integer(cfb_week) == 0) {
            Rank_Off_Field_Pos_Avg_Predicted_Pts_col2 = dense_rank(desc(off_field_pos_avg_predicted_points)),
            Rank_Off_Havoc_Total_col2 = dense_rank(off_havoc_total),
            Rank_Off_Standard_Down_EPA_col2 = dense_rank(desc(off_standard_downs_epa)),
-           Rank_Off_Standard_Down_Success_Rt_col2 = dense_rank(desc(off_standard_downs_success_rt)),
+           Rank_Off_Standard_Down_Success_Rt_col2 = dense_rank(desc(off_standard_downs_success_rate)),
            Rank_Off_Standard_Down_Explosiveness_col2 = dense_rank(desc(off_standard_downs_explosiveness)),
            Rank_Off_Pass_Down_EPA_col2 = dense_rank(desc(off_passing_downs_epa)),
-           Rank_Off_Pass_Down_Success_Rt_col2 = dense_rank(desc(off_passing_downs_success_rt)),
+           Rank_Off_Pass_Down_Success_Rt_col2 = dense_rank(desc(off_passing_downs_success_rate)),
            Rank_Off_Pass_Down_Explosiveness_col2 = dense_rank(desc(off_passing_downs_explosiveness)),
            Rank_Def_EPA_col2 = dense_rank(adj_def_epa),
-           Rank_Def_Success_Rt_col2 = dense_rank(def_success_rt),
+           Rank_Def_Success_Rt_col2 = dense_rank(def_success_rate),
            Rank_Def_Explosiveness_col2 = dense_rank(adj_def_explosiveness),
            Rank_Def_Pwr_Success_col2 = dense_rank(def_power_success),
-           Rank_Def_Stuff_Rt_col2 = dense_rank(desc(def_stuff_rt)),
+           Rank_Def_Stuff_Rt_col2 = dense_rank(desc(def_stuff_rate)),
            Rank_Def_Line_Yds_col2 = dense_rank(def_line_yds),
            # Rank_def_second_Lvl_Yds_col2 = dense_rank(def_second_lvl_yds),
            # Rank_def_open_Field_Yds_col2 = dense_rank(def_open_field_yds),
@@ -4112,16 +3862,16 @@ if (as.integer(cfb_week) == 0) {
            # Rank_def_havoc_front_Seven_col2 = dense_rank(desc(def_havoc_front_seven)),
            # Rank_def_havoc_db_col2 = dense_rank(desc(def_havoc_db)),
            Rank_Def_Standard_Down_EPA_col2 = dense_rank(def_standard_downs_epa),
-           Rank_Def_Standard_Down_Success_Rt_col2 = dense_rank(def_standard_downs_success_rt),
+           Rank_Def_Standard_Down_Success_Rt_col2 = dense_rank(def_standard_downs_success_rate),
            Rank_Def_Standard_Down_Explosiveness_col2 = dense_rank(def_standard_downs_explosiveness),
            Rank_Def_Pass_Down_EPA_col2 = dense_rank(def_passing_downs_epa),
-           Rank_Def_Pass_Down_Success_Rt_col2 = dense_rank(def_passing_downs_success_rt),
+           Rank_Def_Pass_Down_Success_Rt_col2 = dense_rank(def_passing_downs_success_rate),
            Rank_Def_Pass_Down_Explosiveness_col2 = dense_rank(def_passing_downs_explosiveness),
            Rank_Def_Rush_Play_EPA_col2 = dense_rank(def_rush_epa),
-           Rank_Def_Rush_Play_Success_Rt_col2 = dense_rank(def_rush_success_rt),
+           Rank_Def_Rush_Play_Success_Rt_col2 = dense_rank(def_rush_success_rate),
            Rank_Def_Rush_Play_Explosiveness_col2 = dense_rank(def_rush_explosiveness),
            Rank_Def_Pass_Play_EPA_col2 = dense_rank(def_pass_epa),
-           Rank_Def_Pass_Play_Success_Rt_col2 = dense_rank(def_pass_success_rt),
+           Rank_Def_Pass_Play_Success_Rt_col2 = dense_rank(def_pass_success_rate),
            Rank_Def_Pass_Play_Explosiveness_col2 = dense_rank(def_pass_explosiveness),
            Rank_EPA_diff_col2 = dense_rank(desc(EPA_diff)),
            Rank_SuccessRt_diff_col2 = dense_rank(desc(SuccessRt_diff)),
@@ -4139,32 +3889,32 @@ if (as.integer(cfb_week) == 0) {
 ##### calculating the mean stat ranking, VoA_Output #####
 if (as.integer(cfb_week) == 0) {
   ## correcting "season" column to reflect the season for which these rankings are being produced
-  # VoAVariables$season <- rep(as.numeric(year), nrow(VoAVariables))
+  # VoAVariables$season <- rep(as.integer(year), nrow(VoAVariables))
   ### Append new column of Model output, which is the mean of all rank columns
-  VoAVariablesTrain_PY1 <- VoAVariablesTrain_PY1 |>
+  VoATrain_PY1 <- VoATrain_PY1 |>
     mutate(
-      VoA_Output = (rowMeans(VoAVariablesTrain_PY1[,
-        VoATrain_Ncols:ncol(VoAVariablesTrain_PY1)
+      VoA_Output = (rowMeans(VoATrain_PY1[,
+        VoATrain_Ncols:ncol(VoATrain_PY1)
       ]))
     )
-  VoAVariablesTrain_PY2 <- VoAVariablesTrain_PY2 |>
+  VoATrain_PY2 <- VoATrain_PY2 |>
     mutate(
-      VoA_Output = (rowMeans(VoAVariablesTrain_PY2[,
-        VoATrain_Ncols:ncol(VoAVariablesTrain_PY2)
+      VoA_Output = (rowMeans(VoATrain_PY2[,
+        VoATrain_Ncols:ncol(VoATrain_PY2)
       ]))
     )
-  VoAVariablesTrain_PY3 <- VoAVariablesTrain_PY3 |>
+  VoATrain_PY3 <- VoATrain_PY3 |>
     mutate(
-      VoA_Output = (rowMeans(VoAVariablesTrain_PY3[,
-        VoATrain_Ncols:ncol(VoAVariablesTrain_PY3)
+      VoA_Output = (rowMeans(VoATrain_PY3[,
+        VoATrain_Ncols:ncol(VoATrain_PY3)
       ]))
     )
-  # VoAVariablesTrain_PY4 <- VoAVariablesTrain_PY4 |>
-  #   mutate(
-  #     VoA_Output = (rowMeans(VoAVariablesTrain_PY4[,
-  #       VoATrain_Ncols:ncol(VoAVariablesTrain_PY4)
-  #     ]))
-  #   )
+  VoATrain_PY4 <- VoATrain_PY4 |>
+    mutate(
+      VoA_Output = (rowMeans(VoATrain_PY4[,
+        VoATrain_Ncols:ncol(VoATrain_PY4)
+      ]))
+    )
   VoAVariables <- VoAVariables |>
     mutate(
       VoA_Output = (rowMeans(VoAVariables[, VoA_Ncols:ncol(VoAVariables)]))
@@ -4186,10 +3936,10 @@ if (as.integer(cfb_week) == 0) {
 
 ##### Using Intial VoA Outputs to add in conference strength metric #####
 if (as.integer(cfb_week) == 0) {
-  VoAVariablesTrain_PY1 <- calc_output_conf_avg(VoAVariablesTrain_PY1)
-  VoAVariablesTrain_PY2 <- calc_output_conf_avg(VoAVariablesTrain_PY2)
-  VoAVariablesTrain_PY3 <- calc_output_conf_avg(VoAVariablesTrain_PY3)
-  # VoAVariablesTrain_PY4 <- calc_output_conf_avg(VoAVariablesTrain_PY4)
+  VoATrain_PY1 <- calc_output_conf_avg(VoATrain_PY1)
+  VoATrain_PY2 <- calc_output_conf_avg(VoATrain_PY2)
+  VoATrain_PY3 <- calc_output_conf_avg(VoATrain_PY3)
+  VoATrain_PY4 <- calc_output_conf_avg(VoATrain_PY4)
   VoAVariables <- calc_output_conf_avg(VoAVariables)
 } else {
   VoAVariables <- calc_output_conf_avg(VoAVariables)
@@ -4200,42 +3950,42 @@ if (as.integer(cfb_week) == 0) {
 ### script wouldn't run properly without a real number in the later weeks so I'll have to come back and edit the number in during the season as I figure out how big VoAVariables gets
 if (as.integer(cfb_week) == 0) {
   ### Append new column of Model output, which is the mean of all rank columns + conference averages
-  VoAVariablesTrain_PY1 <- VoAVariablesTrain_PY1 |>
+  VoATrain_PY1 <- VoATrain_PY1 |>
     mutate(
-      VoA_Output = (rowMeans(VoAVariablesTrain_PY1[,
-        VoATrain_Ncols:ncol(VoAVariablesTrain_PY1)
+      VoA_Output = (rowMeans(VoATrain_PY1[,
+        VoATrain_Ncols:ncol(VoATrain_PY1)
       ]))
     )
-  VoAVariablesTrain_PY2 <- VoAVariablesTrain_PY2 |>
+  VoATrain_PY2 <- VoATrain_PY2 |>
     mutate(
-      VoA_Output = (rowMeans(VoAVariablesTrain_PY2[,
-        VoATrain_Ncols:ncol(VoAVariablesTrain_PY2)
+      VoA_Output = (rowMeans(VoATrain_PY2[,
+        VoATrain_Ncols:ncol(VoATrain_PY2)
       ]))
     )
-  VoAVariablesTrain_PY3 <- VoAVariablesTrain_PY3 |>
+  VoATrain_PY3 <- VoATrain_PY3 |>
     mutate(
-      VoA_Output = (rowMeans(VoAVariablesTrain_PY3[,
-        VoATrain_Ncols:ncol(VoAVariablesTrain_PY3)
+      VoA_Output = (rowMeans(VoATrain_PY3[,
+        VoATrain_Ncols:ncol(VoATrain_PY3)
       ]))
     )
-  # VoAVariablesTrain_PY4 <- VoAVariablesTrain_PY4 |>
-  #   mutate(
-  #     VoA_Output = (rowMeans(VoAVariablesTrain_PY4[,
-  #       VoATrain_Ncols:ncol(VoAVariablesTrain_PY4)
-  #     ]))
-  #   )
+  VoATrain_PY4 <- VoATrain_PY4 |>
+    mutate(
+      VoA_Output = (rowMeans(VoATrain_PY4[,
+        VoATrain_Ncols:ncol(VoATrain_PY4)
+      ]))
+    )
   ### binding train dfs together since there are no more calculations to perform separately
-  # VoATrain <- rbind(
-  #   VoAVariablesTrain_PY1,
-  #   rbind(
-  #     VoAVariablesTrain_PY2,
-  #     rbind(VoAVariablesTrain_PY3, VoAVariablesTrain_PY4)
-  #   )
-  # )
   VoATrain <- rbind(
-    VoAVariablesTrain_PY1,
-    rbind(VoAVariablesTrain_PY2, VoAVariablesTrain_PY3)
+    VoATrain_PY1,
+    rbind(
+      VoATrain_PY2,
+      rbind(VoATrain_PY3, VoATrain_PY4)
+    )
   )
+  # VoATrain <- rbind(
+  #   VoATrain_PY1,
+  #   rbind(VoATrain_PY2, VoATrain_PY3)
+  # )
   VoAVariables <- VoAVariables |>
     mutate(
       VoA_Output = (rowMeans(VoAVariables[, VoA_Ncols:ncol(VoAVariables)]))
@@ -4256,11 +4006,11 @@ if (as.integer(cfb_week) == 0) {
 ### End of if statement
 
 ## using Stan function to create FPI/SP+ like metric
-# includes PPA, success rate, explosiveness, VoA_Output, VoA's Conference_Strength, and pts_per_opp (offense and defense where applicable)
+# includes EPA, success rate, explosiveness, VoA_Output, VoA's Conf_Rk, and pts_per_opp (offense and defense where applicable)
 # set.seed(802)
 
 ##### using Stan to create FPI/SP+ like metrics #####
-if (as.numeric(cfb_week) == 0) {
+if (as.integer(cfb_week) == 0) {
   ##### Week 0 Stan Models #####
   ### VoA Offensive Rating Model
   ### making list of data to declare what goes into stan model
@@ -4269,7 +4019,7 @@ if (as.numeric(cfb_week) == 0) {
     off_ppg = VoATrain$adj_off_ppg,
     off_epa = VoATrain$adj_off_epa,
     off_ypp = VoATrain$adj_off_ypp,
-    off_success_rate = VoATrain$off_success_rt,
+    off_success_rate = VoATrain$off_success_rate,
     off_explosiveness = VoATrain$adj_off_explosiveness,
     third_conv_rate = VoATrain$off_third_conv_rate,
     off_pts_per_opp = VoATrain$off_pts_per_opp,
@@ -4295,6 +4045,13 @@ if (as.numeric(cfb_week) == 0) {
 
   ### Print the diagnostics
   print(Off_VoA_fit$cmdstan_diagnose())
+
+  ### saving fitted model object so I don't have to refit the model ever again
+  write_rds(
+    Off_VoA_fit,
+    file = here("Data", "FittedModels", "OffVoAStanFit.rds"),
+    compress = "gz"
+  )
 
   ### Extracting Parameters
   Off_VoA_pars <- Off_VoA_fit$draws(
@@ -4327,7 +4084,7 @@ if (as.numeric(cfb_week) == 0) {
   #         Off_VoA_pars$beta_off_epa[p] * VoAVariables$weighted_off_epa[t] +
   #         Off_VoA_pars$beta_off_ypp[p] * VoAVariables$weighted_off_ypp[t] +
   #         Off_VoA_pars$beta_off_success_rate[p] *
-  #           VoAVariables$weighted_off_success_rt[t] +
+  #           VoAVariables$weighted_off_success_rate[t] +
   #         Off_VoA_pars$beta_off_explosiveness[p] *
   #           VoAVariables$weighted_off_explosiveness[t] +
   #         Off_VoA_pars$beta_third_conv_rate[p] *
@@ -4337,7 +4094,7 @@ if (as.numeric(cfb_week) == 0) {
   #         Off_VoA_pars$beta_off_plays_pg[p] *
   #           VoAVariables$weighted_off_plays_pg[t] +
   #         Off_VoA_pars$beta_VoA_Output[p] * (1 / VoAVariables$VoA_Output[t]) +
-  #         Off_VoA_pars$beta_Conference_Strength[p] *
+  #         Off_VoA_pars$beta_Conf_Rk[p] *
   #           (1 / VoAVariables$Conf_Rk[t]),
   #       sd = Off_VoA_pars$sigma[p]
   #     )
@@ -4350,7 +4107,7 @@ if (as.numeric(cfb_week) == 0) {
     b0 = 1,
     beta_off_epa = VoAVariables$weighted_off_epa,
     beta_off_ypp = VoAVariables$weighted_off_ypp,
-    beta_off_success_rate = VoAVariables$weighted_off_success_rt,
+    beta_off_success_rate = VoAVariables$weighted_off_success_rate,
     beta_off_explosiveness = VoAVariables$weighted_off_explosiveness,
     beta_third_conv_rate = VoAVariables$weighted_off_third_conv_rate,
     beta_off_pts_per_opp = VoAVariables$weighted_off_pts_per_opp,
@@ -4396,7 +4153,7 @@ if (as.numeric(cfb_week) == 0) {
     def_ppg = VoATrain$adj_def_ppg,
     def_epa = VoATrain$adj_def_epa,
     def_ypp = VoATrain$adj_def_ypp,
-    def_success_rate = VoATrain$def_success_rt,
+    def_success_rate = VoATrain$def_success_rate,
     def_explosiveness = VoATrain$adj_def_explosiveness,
     def_third_conv_rate = VoATrain$def_third_conv_rate,
     def_pts_per_opp = VoATrain$def_pts_per_opp,
@@ -4423,6 +4180,12 @@ if (as.numeric(cfb_week) == 0) {
 
   ### Print the diagnostics
   print(Def_VoA_fit$cmdstan_diagnose())
+  ### saving the moel so I don't have to refit or recompile in later weeks, and also to keep initial coefficients stable
+  write_rds(
+    Def_VoA_fit,
+    file = here("Data", "FittedModels", "DefVoAStanFit.rds"),
+    compress = "gz"
+  )
 
   ### Extracting Parameters
   Def_VoA_pars <- Def_VoA_fit$draws(
@@ -4453,7 +4216,7 @@ if (as.numeric(cfb_week) == 0) {
   #     Def_VoA_Rating <- rnorm(
   #       1,
   #       mean = Def_VoA_pars$b0[p] +
-  #         Def_VoA_pars$beta_def_ppa[p] * VoAVariables$weighted_def_ppa[t] +
+  #         Def_VoA_pars$beta_def_epa[p] * VoAVariables$weighted_def_epa[t] +
   #         Def_VoA_pars$beta_def_ypp[p] * VoAVariables$weighted_def_ypp[t] +
   #         Def_VoA_pars$beta_def_success_rate[p] *
   #           VoAVariables$weighted_def_success_rate[t] +
@@ -4468,20 +4231,20 @@ if (as.numeric(cfb_week) == 0) {
   #         Def_VoA_pars$beta_def_plays_pg[p] *
   #           VoAVariables$weighted_def_plays_pg[t] +
   #         Def_VoA_pars$beta_VoA_Output[p] * VoAVariables$VoA_Output[t] +
-  #         Def_VoA_pars$beta_Conference_Strength[p] *
-  #           VoAVariables$Conference_Strength[t],
+  #         Def_VoA_pars$beta_Conf_Rk[p] *
+  #           VoAVariables$Conf_Rk[t],
   #       sd = Def_VoA_pars$sigma[p]
   #     )
   #     Def_VoA_Ratings[p, t] <- Def_VoA_Rating
   #   }
   # }
 
-  ## Create the Design Matrix (Teams x Predictors)
+  ### Create the Design Matrix (Teams x Predictors)
   DefDesignMatrix <- as.matrix(cbind(
     b0 = 1,
     beta_def_epa = VoAVariables$weighted_def_epa,
     beta_def_ypp = VoAVariables$weighted_def_ypp,
-    beta_def_success_rate = VoAVariables$weighted_def_success_rt,
+    beta_def_success_rate = VoAVariables$weighted_def_success_rate,
     beta_def_explosiveness = VoAVariables$weighted_def_explosiveness,
     beta_def_third_conv_rate = VoAVariables$weighted_def_third_conv_rate,
     beta_def_pts_per_opp = VoAVariables$weighted_def_pts_per_opp,
@@ -4529,7 +4292,8 @@ if (as.numeric(cfb_week) == 0) {
     net_kick_return_avg = VoATrain$net_kick_return_yds,
     net_punt_return_avg = VoATrain$net_punt_return_yds,
     net_fg_rate = VoATrain$net_fg_rate,
-    net_st_epa = VoAtrain$net_adj_st_epa
+    net_st_epa = VoATrain$net_adj_st_epa
+    # net_st_epa = VoATrain$st_net_epa
   )
 
   ### compile the stan model
@@ -4549,6 +4313,12 @@ if (as.numeric(cfb_week) == 0) {
 
   ### Print the diagnostics
   print(ST_VoA_fit$cmdstan_diagnose())
+
+  write_rds(
+    ST_VoA_fit,
+    file = here("Data", "FittedModels", "STVoAStanFit.rds"),
+    compress = "gz"
+  )
 
   ### extracting parameters
   ST_VoA_pars <- ST_VoA_fit$draws(
@@ -4583,24 +4353,320 @@ if (as.numeric(cfb_week) == 0) {
   #           VoAVariables$weighted_net_punt_return_avg[t] +
   #         ST_VoA_pars$beta_net_fg_rate[p] *
   #           VoAVariables$weighted_net_fg_rate[t] +
-  #         ST_VoA_pars$beta_net_st_ppa[p] *
-  #           VoAVariables$weighted_net_adj_st_ppa[t],
+  #         ST_VoA_pars$beta_net_st_epa[p] *
+  #           VoAVariables$weighted_net_adj_st_epa[t],
   #       sd = ST_VoA_pars$sigma[p]
   #     )
   #     ST_VoA_Ratings[p, t] <- ST_VoA_Rating
   #   }
   # }
 
-  ## Create the Design Matrix (Teams x Predictors)
+  ### Create the Design Matrix (Teams x Predictors)
   STDesignMatrix <- as.matrix(cbind(
     b0 = 1,
-    beta_net_kick_return_avg = VoAVariables$weighted_net_st_kick_return_yds,
+    beta_net_kick_return_avg = VoAVariables$weighted_net_kick_return_yds,
     beta_net_punt_return_avg = VoAVariables$weighted_net_punt_return_yds,
-    beta_net_fg_rate = VoAVariables$weighted_net_fg_rt,
+    beta_net_fg_rate = VoAVariables$weighted_net_fg_rate,
     beta_net_st_epa = VoAVariables$weighted_net_adj_st_epa
   ))
 
+  ### Parameter Matrix (Posterior samples x Predictors)
+  ST_VoA_pars_matrix <- as.matrix(ST_VoA_pars[, colnames(STDesignMatrix)])
+
+  ### Calculate Means for ALL (p, t) pairs in one operation
+  ### Off_VoA_pars_matrix %*% t(DesignMatrix) produces a matrix of size (N_draws x N_teams)
+  STMeans_matrix <- ST_VoA_pars_matrix %*% t(STDesignMatrix)
+
+  ### Add normal noise vectorized using the sigma array
+  P <- length(ST_VoA_pars$b0)
+  T_num <- nrow(VoAVariables)
+
+  ### applying rnorm to generate a matrix of ratings using the matrix of samples from the posterior distributions
+  set.seed(802)
+  ST_VoA_Ratings <- matrix(
+    rnorm(P * T_num, mean = STMeans_matrix, sd = ST_VoA_pars$sigma),
+    nrow = P,
+    ncol = T_num
+  )
+
+  ### generating median and mean and quantile ratings
+  MeanPred <- apply(ST_VoA_Ratings, 2, mean)
+  MedianPred <- apply(ST_VoA_Ratings, 2, median)
+  Upper <- apply(ST_VoA_Ratings, 2, quantile, prob = .95)
+  Lower <- apply(ST_VoA_Ratings, 2, quantile, prob = .05)
+
+  VoAVariables$STVoA_MeanRating <- MeanPred
+  VoAVariables$STVoA_MedRating <- MedianPred
+  VoAVariables$STVoA_95PctRating <- Upper
+  VoAVariables$STVoA_05PctRating <- Lower
+} else if (as.integer(cfb_week) <= 9) {
+  ##### Weeks 1-9 Stan Models, current season data only #####
+  ### VoA Offensive Rating Model
+  ### making list of data to declare what goes into stan model
+  # Off_VoA_datalist <- list(
+  #   N = nrow(VoAVariables),
+  #   off_ppg = VoAVariables$adj_off_ppg,
+  #   off_epa = VoAVariables$adj_off_epa,
+  #   off_ypp = VoAVariables$adj_off_ypp,
+  #   off_success_rate = VoAVariables$off_success_rate,
+  #   off_explosiveness = VoAVariables$adj_off_explosiveness,
+  #   third_conv_rate = VoAVariables$third_conv_rate,
+  #   off_pts_per_opp = VoAVariables$off_pts_per_opp,
+  #   off_plays_pg = VoAVariables$off_plays_pg,
+  #   VoA_Output = 1 / VoAVariables$VoA_Output,
+  #   Conference_Strength = 1 / VoAVariables$Conf_Rk
+  # )
+
+  # ### compile the stan model
+  # Off_VoA_model <- cmdstan_model(
+  #   stan_file = here("Scripts", "Stan", "Off_VoA.stan")
+  # )
+  # ### fitting stan model
+  # set.seed(802)
+  # Off_VoA_fit <- Off_VoA_model$sample(
+  #   data = Off_VoA_datalist,
+  #   chains = 3,
+  #   iter_sampling = 10000,
+  #   iter_warmup = 2500,
+  #   seed = 802
+  # )
+  # Off_VoA_fit
+
+  ### loading offensive Stan model
+  Off_VoA_fit <- read_rds(here("Data", "FittedModels", "OffVoAStanFit.rds"))
+
+  ### Print the diagnostics
+  print(Off_VoA_fit$cmdstan_diagnose())
+
+  ### Extracting Parameters
+  Off_VoA_pars <- Off_VoA_fit$draws(
+    variables = c(
+      "b0",
+      "beta_off_epa",
+      "beta_off_ypp",
+      "beta_off_success_rate",
+      "beta_off_explosiveness",
+      "beta_third_conv_rate",
+      "beta_off_pts_per_opp",
+      "beta_off_plays_pg",
+      "beta_VoA_Output",
+      "beta_Conference_Strength",
+      "sigma"
+    ),
+    format = "draws_df"
+  )
+
+  ### creating matrix to hold ratings
+  # Off_VoA_Ratings <- matrix(NA, length(Off_VoA_pars$b0), nrow(VoAVariables))
+
+  ### creating ratings
+  ### Create the Design Matrix (Teams x Predictors)
+  OffDesignMatrix <- as.matrix(cbind(
+    b0 = 1,
+    beta_off_epa = VoAVariables$weighted_off_epa,
+    beta_off_ypp = VoAVariables$weighted_off_ypp,
+    beta_off_success_rate = VoAVariables$weighted_off_success_rate,
+    beta_off_explosiveness = VoAVariables$weighted_off_explosiveness,
+    beta_third_conv_rate = VoAVariables$weighted_off_third_conv_rate,
+    beta_off_pts_per_opp = VoAVariables$weighted_off_pts_per_opp,
+    beta_off_plays_pg = VoAVariables$weighted_off_plays_pg,
+    beta_VoA_Output = 1 / VoAVariables$VoA_Output,
+    beta_Conference_Strength = 1 / VoAVariables$Conf_Rk
+  ))
+
   #### Parameter Matrix (Posterior samples x Predictors)
+  Off_VoA_pars_matrix <- as.matrix(Off_VoA_pars[, colnames(OffDesignMatrix)])
+
+  ### Calculate Means for ALL (p, t) pairs in one operation
+  ### Off_VoA_pars_matrix %*% t(DesignMatrix) produces a matrix of size (N_draws x N_teams)
+  OffMeans_matrix <- Off_VoA_pars_matrix %*% t(OffDesignMatrix)
+
+  ### Add normal noise vectorized using the sigma array
+  P <- length(Off_VoA_pars$b0)
+  T_num <- nrow(VoAVariables)
+
+  ### applying rnorm to generate a matrix of ratings using the matrix of samples from the posterior distributions
+  set.seed(802)
+  Off_VoA_Ratings <- matrix(
+    rnorm(P * T_num, mean = OffMeans_matrix, sd = Off_VoA_pars$sigma),
+    nrow = P,
+    ncol = T_num
+  )
+
+  ### generating median and mean and quantile ratings
+  MeanPred <- apply(Off_VoA_Ratings, 2, mean)
+  MedianPred <- apply(Off_VoA_Ratings, 2, median)
+  Upper <- apply(Off_VoA_Ratings, 2, quantile, prob = .95)
+  Lower <- apply(Off_VoA_Ratings, 2, quantile, prob = .05)
+  ### assigning ratings to columns in VoA Variables
+  VoAVariables$OffVoA_MeanRating <- MeanPred
+  VoAVariables$OffVoA_MedRating <- MedianPred
+  VoAVariables$OffVoA_95PctRating <- Upper
+  VoAVariables$OffVoA_05PctRating <- Lower
+
+  ### VoA Defensive Rating Model
+  ### making list of data to declare what goes into stan model
+  # Def_VoA_datalist <- list(
+  #   N = nrow(VoAVariables),
+  #   def_ppg = VoAVariables$adj_def_ppg,
+  #   def_epa = VoAVariables$adj_def_epa,
+  #   def_ypp = VoAVariables$adj_def_ypp,
+  #   def_success_rate = VoAVariables$def_success_rate,
+  #   def_explosiveness = VoAVariables$adj_def_explosiveness,
+  #   def_third_conv_rate = VoAVariables$def_third_conv_rate,
+  #   def_pts_per_opp = VoAVariables$def_pts_per_opp,
+  #   def_havoc_total = VoAVariables$def_havoc_total,
+  #   def_plays_pg = VoAVariables$def_plays_pg,
+  #   VoA_Output = VoAVariables$VoA_Output,
+  #   Conference_Strength = VoAVariables$Conf_Rk
+  # )
+
+  ### compile the stan model
+  # Def_VoA_model <- cmdstan_model(
+  #   stan_file = here("Scripts", "Stan", "Def_VoA.stan")
+  # )
+  # ### fitting stan model
+  # set.seed(802)
+  # Def_VoA_fit <- Def_VoA_model$sample(
+  #   data = Def_VoA_datalist,
+  #   chains = 3,
+  #   iter_sampling = 10000,
+  #   iter_warmup = 2500,
+  #   seed = 802
+  # )
+  # Def_VoA_fit
+
+  ### loading defensive Stan model
+  Def_VoA_fit <- read_rds(here("Data", "FittedModels", "DefVoAStanFit.rds"))
+
+  ### Print the diagnostics
+  print(Def_VoA_fit$cmdstan_diagnose())
+
+  ### Extracting Parameters
+  Def_VoA_pars <- Def_VoA_fit$draws(
+    variables = c(
+      "b0",
+      "beta_def_epa",
+      "beta_def_ypp",
+      "beta_def_success_rate",
+      "beta_def_explosiveness",
+      "beta_def_third_conv_rate",
+      "beta_def_pts_per_opp",
+      "beta_def_havoc_total",
+      "beta_def_plays_pg",
+      "beta_VoA_Output",
+      "beta_Conference_Strength",
+      "sigma"
+    ),
+    format = "draws_df"
+  )
+
+  ### creating matrix to hold ratings
+  ### adding in process uncertainty
+  # Def_VoA_Ratings <- matrix(NA, length(Def_VoA_pars$b0), nrow(VoAVariables))
+
+  ### creating ratings
+  ### Create the Design Matrix (Teams x Predictors)
+  DefDesignMatrix <- as.matrix(cbind(
+    b0 = 1,
+    beta_def_epa = VoAVariables$weighted_def_epa,
+    beta_def_ypp = VoAVariables$weighted_def_ypp,
+    beta_def_success_rate = VoAVariables$weighted_def_success_rate,
+    beta_def_explosiveness = VoAVariables$weighted_def_explosiveness,
+    beta_def_third_conv_rate = VoAVariables$weighted_def_third_conv_rate,
+    beta_def_pts_per_opp = VoAVariables$weighted_def_pts_per_opp,
+    beta_def_havoc_total = VoAVariables$weighted_def_havoc_total,
+    beta_def_plays_pg = VoAVariables$weighted_def_plays_pg,
+    beta_VoA_Output = VoAVariables$VoA_Output,
+    beta_Conference_Strength = VoAVariables$Conf_Rk
+  ))
+
+  #### Parameter Matrix (Posterior samples x Predictors)
+  Def_VoA_pars_matrix <- as.matrix(Def_VoA_pars[, colnames(DefDesignMatrix)])
+
+  ### Calculate Means for ALL (p, t) pairs in one operation
+  ### Def_VoA_pars_matrix %*% t(DesignMatrix) produces a matrix of size (N_draws x N_teams)
+  DefMeans_matrix <- Def_VoA_pars_matrix %*% t(DefDesignMatrix)
+
+  ### Add normal noise vectorized using the sigma array
+  P <- length(Def_VoA_pars$b0)
+  T_num <- nrow(VoAVariables)
+
+  ### applying rnorm to generate a matrix of ratings using the matrix of samples from the posterior distributions
+  set.seed(802)
+  Def_VoA_Ratings <- matrix(
+    rnorm(P * T_num, mean = DefMeans_matrix, sd = Def_VoA_pars$sigma),
+    nrow = P,
+    ncol = T_num
+  )
+
+  ### generating median and mean and quantile ratings
+  MeanPred <- apply(Def_VoA_Ratings, 2, mean)
+  MedianPred <- apply(Def_VoA_Ratings, 2, median)
+  Upper <- apply(Def_VoA_Ratings, 2, quantile, prob = .95)
+  Lower <- apply(Def_VoA_Ratings, 2, quantile, prob = .05)
+
+  VoAVariables$DefVoA_MeanRating <- MeanPred
+  VoAVariables$DefVoA_MedRating <- MedianPred
+  VoAVariables$DefVoA_95PctRating <- Upper
+  VoAVariables$DefVoA_05PctRating <- Lower
+
+  ### Special Teams VoA
+  ### making list of data to declare what goes into Stan model
+  # ST_VoA_datalist <- list(
+  #   N = nrow(VoAVariables),
+  #   net_st_ppg = VoAVariables$net_st_ppg,
+  #   net_kick_return_avg = VoAVariables$net_kick_return_avg,
+  #   net_punt_return_avg = VoAVariables$net_punt_return_avg,
+  #   net_fg_rate = VoAVariables$net_fg_rate,
+  #   net_st_epa = VoAVariables$net_adj_st_epa
+  # )
+
+  ### compile the stan model
+  # ST_VoA_model <- cmdstan_model(
+  #   stan_file = here("Scripts", "Stan", "ST_VoA.stan")
+  # )
+  ### fitting special teams stan model
+  # set.seed(802)
+  # ST_VoA_fit <- ST_VoA_model$sample(
+  #   data = ST_VoA_datalist,
+  #   chains = 3,
+  #   iter_sampling = 5000,
+  #   iter_warmup = 2500,
+  #   seed = 802
+  # )
+  # ST_VoA_fit
+
+  ### loading special teams Stan model
+  ST_VoA_fit <- read_rds(here("Data", "FittedModels", "STVoAStanFit.rds"))
+
+  ### Print the diagnostics
+  print(ST_VoA_fit$cmdstan_diagnose())
+
+  ### extracting parameters
+  ST_VoA_pars <- ST_VoA_fit$draws(
+    variables = c(
+      "b0",
+      "beta_net_kick_return_avg",
+      "beta_net_punt_return_avg",
+      "beta_net_fg_rate",
+      "beta_net_st_epa",
+      "sigma"
+    ),
+    format = "draws_df"
+  )
+
+  ### creating special teams VoA_Ratings
+  ### Create the Design Matrix (Teams x Predictors)
+  STDesignMatrix <- as.matrix(cbind(
+    b0 = 1,
+    beta_net_kick_return_avg = VoAVariables$weighted_net_kick_return_yds,
+    beta_net_punt_return_avg = VoAVariables$weighted_net_punt_return_yds,
+    beta_net_fg_rate = VoAVariables$weighted_net_fg_rate,
+    beta_net_st_epa = VoAVariables$weighted_net_adj_st_epa
+  ))
+
+  ### Parameter Matrix (Posterior samples x Predictors)
   ST_VoA_pars_matrix <- as.matrix(ST_VoA_pars[, colnames(STDesignMatrix)])
 
   ### Calculate Means for ALL (p, t) pairs in one operation
@@ -4630,7 +4696,7 @@ if (as.numeric(cfb_week) == 0) {
   VoAVariables$STVoA_95PctRating <- Upper
   VoAVariables$STVoA_05PctRating <- Lower
 } else {
-  ##### Weeks 9-End of Season Stan Models, current season data only #####
+  ##### Weeks 10-End of Season Stan Models, current season data only #####
   ### VoA Offensive Rating Model
   ### making list of data to declare what goes into stan model
   # Off_VoA_datalist <- list(
@@ -4644,7 +4710,7 @@ if (as.numeric(cfb_week) == 0) {
   #   off_pts_per_opp = VoAVariables$off_pts_per_opp,
   #   off_plays_pg = VoAVariables$off_plays_pg,
   #   VoA_Output = 1 / VoAVariables$VoA_Output,
-  #   Conference_Strength = 1 / VoAVariables$Conference_Strength
+  #   Conference_Strength = 1 / VoAVariables$Conf_Rk
   # )
 
   # ### compile the stan model
@@ -4662,6 +4728,9 @@ if (as.numeric(cfb_week) == 0) {
   # )
   # Off_VoA_fit
 
+  ### loading offensive Stan model
+  Off_VoA_fit <- read_rds(here("Data", "FittedModels", "OffVoAStanFit.rds"))
+
   ### Print the diagnostics
   print(Off_VoA_fit$cmdstan_diagnose())
 
@@ -4669,7 +4738,7 @@ if (as.numeric(cfb_week) == 0) {
   Off_VoA_pars <- Off_VoA_fit$draws(
     variables = c(
       "b0",
-      "beta_off_ppa",
+      "beta_off_epa",
       "beta_off_ypp",
       "beta_off_success_rate",
       "beta_off_explosiveness",
@@ -4686,32 +4755,39 @@ if (as.numeric(cfb_week) == 0) {
   ### creating matrix to hold ratings
   # Off_VoA_Ratings <- matrix(NA, length(Off_VoA_pars$b0), nrow(VoAVariables))
 
-  # ### creating ratings
-  # set.seed(802)
-  # for (p in 1:length(Off_VoA_pars$b0)) {
-  #   for (t in 1:nrow(VoAVariables)) {
-  #     Off_VoA_Rating <- rnorm(
-  #       1,
-  #       mean = Off_VoA_pars$b0[p] +
-  #         Off_VoA_pars$beta_off_ppa[p] * VoAVariables$adj_off_ppa[t] +
-  #         Off_VoA_pars$beta_off_ypp[p] * VoAVariables$adj_off_ypp[t] +
-  #         Off_VoA_pars$beta_off_success_rate[p] *
-  #           VoAVariables$off_success_rate[t] +
-  #         Off_VoA_pars$beta_off_explosiveness[p] *
-  #           VoAVariables$adj_off_explosiveness[t] +
-  #         Off_VoA_pars$beta_third_conv_rate[p] *
-  #           VoAVariables$third_conv_rate[t] +
-  #         Off_VoA_pars$beta_off_pts_per_opp[p] *
-  #           VoAVariables$off_pts_per_opp[t] +
-  #         Off_VoA_pars$beta_off_plays_pg[p] * VoAVariables$off_plays_pg[t] +
-  #         Off_VoA_pars$beta_VoA_Output[p] * (1 / VoAVariables$VoA_Output[t]) +
-  #         Off_VoA_pars$beta_Conference_Strength[p] *
-  #           (1 / VoAVariables$Conference_Strength[t]),
-  #       sd = Off_VoA_pars$sigma[p]
-  #     )
-  #     Off_VoA_Ratings[p, t] <- Off_VoA_Rating
-  #   }
-  # }
+  ### creating ratings
+  ### Create the Design Matrix (Teams x Predictors)
+  OffDesignMatrix <- as.matrix(cbind(
+    b0 = 1,
+    beta_off_epa = VoAVariables$adj_off_epa,
+    beta_off_ypp = VoAVariables$adj_off_ypp,
+    beta_off_success_rate = VoAVariables$off_success_rate,
+    beta_off_explosiveness = VoAVariables$adj_off_explosiveness,
+    beta_third_conv_rate = VoAVariables$off_third_conv_rate,
+    beta_off_pts_per_opp = VoAVariables$off_pts_per_opp,
+    beta_off_plays_pg = VoAVariables$adj_off_plays_pg,
+    beta_VoA_Output = 1 / VoAVariables$VoA_Output,
+    beta_Conference_Strength = 1 / VoAVariables$Conf_Rk
+  ))
+
+  #### Parameter Matrix (Posterior samples x Predictors)
+  Off_VoA_pars_matrix <- as.matrix(Off_VoA_pars[, colnames(OffDesignMatrix)])
+
+  ### Calculate Means for ALL (p, t) pairs in one operation
+  ### Off_VoA_pars_matrix %*% t(DesignMatrix) produces a matrix of size (N_draws x N_teams)
+  OffMeans_matrix <- Off_VoA_pars_matrix %*% t(OffDesignMatrix)
+
+  ### Add normal noise vectorized using the sigma array
+  P <- length(Off_VoA_pars$b0)
+  T_num <- nrow(VoAVariables)
+
+  ### applying rnorm to generate a matrix of ratings using the matrix of samples from the posterior distributions
+  set.seed(802)
+  Off_VoA_Ratings <- matrix(
+    rnorm(P * T_num, mean = OffMeans_matrix, sd = Off_VoA_pars$sigma),
+    nrow = P,
+    ncol = T_num
+  )
 
   ### generating median and mean and quantile ratings
   MeanPred <- apply(Off_VoA_Ratings, 2, mean)
@@ -4729,7 +4805,7 @@ if (as.numeric(cfb_week) == 0) {
   # Def_VoA_datalist <- list(
   #   N = nrow(VoAVariables),
   #   def_ppg = VoAVariables$adj_def_ppg,
-  #   def_ppa = VoAVariables$adj_def_ppa,
+  #   def_epa = VoAVariables$adj_def_epa,
   #   def_ypp = VoAVariables$adj_def_ypp,
   #   def_success_rate = VoAVariables$def_success_rate,
   #   def_explosiveness = VoAVariables$adj_def_explosiveness,
@@ -4738,7 +4814,7 @@ if (as.numeric(cfb_week) == 0) {
   #   def_havoc_total = VoAVariables$def_havoc_total,
   #   def_plays_pg = VoAVariables$def_plays_pg,
   #   VoA_Output = VoAVariables$VoA_Output,
-  #   Conference_Strength = VoAVariables$Conference_Strength
+  #   Conf_Rk = VoAVariables$Conf_Rk
   # )
 
   ### compile the stan model
@@ -4756,6 +4832,9 @@ if (as.numeric(cfb_week) == 0) {
   # )
   # Def_VoA_fit
 
+  ### loading defensive Stan model
+  Def_VoA_fit <- read_rds(here("Data", "FittedModels", "DefVoAStanFit.rds"))
+
   ### Print the diagnostics
   print(Def_VoA_fit$cmdstan_diagnose())
 
@@ -4763,7 +4842,7 @@ if (as.numeric(cfb_week) == 0) {
   Def_VoA_pars <- Def_VoA_fit$draws(
     variables = c(
       "b0",
-      "beta_def_ppa",
+      "beta_def_epa",
       "beta_def_ypp",
       "beta_def_success_rate",
       "beta_def_explosiveness",
@@ -4782,34 +4861,40 @@ if (as.numeric(cfb_week) == 0) {
   ### adding in process uncertainty
   # Def_VoA_Ratings <- matrix(NA, length(Def_VoA_pars$b0), nrow(VoAVariables))
 
-  # ### creating ratings
-  # set.seed(802)
-  # for (p in 1:length(Def_VoA_pars$b0)) {
-  #   for (t in 1:nrow(VoAVariables)) {
-  #     Def_VoA_Rating <- rnorm(
-  #       1,
-  #       mean = Def_VoA_pars$b0[p] +
-  #         Def_VoA_pars$beta_def_ppa[p] * VoAVariables$adj_def_ppa[t] +
-  #         Def_VoA_pars$beta_def_ypp[p] * VoAVariables$adj_def_ypp[t] +
-  #         Def_VoA_pars$beta_def_success_rate[p] *
-  #           VoAVariables$def_success_rate[t] +
-  #         Def_VoA_pars$beta_def_explosiveness[p] *
-  #           VoAVariables$adj_def_explosiveness[t] +
-  #         Def_VoA_pars$beta_def_third_conv_rate[p] *
-  #           VoAVariables$def_third_conv_rate[t] +
-  #         Def_VoA_pars$beta_def_pts_per_opp[p] *
-  #           VoAVariables$def_pts_per_opp[t] +
-  #         Def_VoA_pars$beta_def_havoc_total[p] *
-  #           VoAVariables$def_havoc_total[t] +
-  #         Def_VoA_pars$beta_def_plays_pg[p] * VoAVariables$def_plays_pg[t] +
-  #         Def_VoA_pars$beta_VoA_Output[p] * VoAVariables$VoA_Output[t] +
-  #         Def_VoA_pars$beta_Conference_Strength[p] *
-  #           VoAVariables$Conference_Strength[t],
-  #       sd = Def_VoA_pars$sigma[p]
-  #     )
-  #     Def_VoA_Ratings[p, t] <- Def_VoA_Rating
-  #   }
-  # }
+  ### creating ratings
+  ### Create the Design Matrix (Teams x Predictors)
+  DefDesignMatrix <- as.matrix(cbind(
+    b0 = 1,
+    beta_def_epa = VoAVariables$adj_def_epa,
+    beta_def_ypp = VoAVariables$adj_def_ypp,
+    beta_def_success_rate = VoAVariables$def_success_rate,
+    beta_def_explosiveness = VoAVariables$adj_def_explosiveness,
+    beta_def_third_conv_rate = VoAVariables$def_third_conv_rate,
+    beta_def_pts_per_opp = VoAVariables$def_pts_per_opp,
+    beta_def_havoc_total = VoAVariables$def_havoc_total,
+    beta_def_plays_pg = VoAVariables$adj_def_plays_pg,
+    beta_VoA_Output = VoAVariables$VoA_Output,
+    beta_Conference_Strength = VoAVariables$Conf_Rk
+  ))
+
+  #### Parameter Matrix (Posterior samples x Predictors)
+  Def_VoA_pars_matrix <- as.matrix(Def_VoA_pars[, colnames(DefDesignMatrix)])
+
+  ### Calculate Means for ALL (p, t) pairs in one operation
+  ### Def_VoA_pars_matrix %*% t(DesignMatrix) produces a matrix of size (N_draws x N_teams)
+  DefMeans_matrix <- Def_VoA_pars_matrix %*% t(DefDesignMatrix)
+
+  ### Add normal noise vectorized using the sigma array
+  P <- length(Def_VoA_pars$b0)
+  T_num <- nrow(VoAVariables)
+
+  ### applying rnorm to generate a matrix of ratings using the matrix of samples from the posterior distributions
+  set.seed(802)
+  Def_VoA_Ratings <- matrix(
+    rnorm(P * T_num, mean = DefMeans_matrix, sd = Def_VoA_pars$sigma),
+    nrow = P,
+    ncol = T_num
+  )
 
   ### generating median and mean and quantile ratings
   MeanPred <- apply(Def_VoA_Ratings, 2, mean)
@@ -4823,30 +4908,8 @@ if (as.numeric(cfb_week) == 0) {
   VoAVariables$DefVoA_05PctRating <- Lower
 
   ### Special Teams VoA
-  ### making list of data to declare what goes into Stan model
-  # ST_VoA_datalist <- list(
-  #   N = nrow(VoAVariables),
-  #   net_st_ppg = VoAVariables$net_st_ppg,
-  #   net_kick_return_avg = VoAVariables$net_kick_return_avg,
-  #   net_punt_return_avg = VoAVariables$net_punt_return_avg,
-  #   net_fg_rate = VoAVariables$net_fg_rate,
-  #   net_st_ppa = VoAVariables$net_adj_st_ppa
-  # )
-
-  ### compile the stan model
-  # ST_VoA_model <- cmdstan_model(
-  #   stan_file = here("Scripts", "Stan", "ST_VoA.stan")
-  # )
-  ### fitting special teams stan model
-  # set.seed(802)
-  # ST_VoA_fit <- ST_VoA_model$sample(
-  #   data = ST_VoA_datalist,
-  #   chains = 3,
-  #   iter_sampling = 5000,
-  #   iter_warmup = 2500,
-  #   seed = 802
-  # )
-  # ST_VoA_fit
+  ### loading special teams Stan model
+  ST_VoA_fit <- read_rds(here("Data", "FittedModels", "STVoAStanFit.rds"))
 
   ### Print the diagnostics
   print(ST_VoA_fit$cmdstan_diagnose())
@@ -4858,37 +4921,40 @@ if (as.numeric(cfb_week) == 0) {
       "beta_net_kick_return_avg",
       "beta_net_punt_return_avg",
       "beta_net_fg_rate",
-      "beta_net_st_ppa",
+      "beta_net_st_epa",
       "sigma"
     ),
     format = "draws_df"
   )
 
-  ### creating matrix to store special teams VoA_Ratings
-  ST_VoA_Ratings <- matrix(
-    NA,
-    nrow = length(ST_VoA_pars$b0),
-    ncol = nrow(VoAVariables)
-  )
-
   ### creating special teams VoA_Ratings
-  # set.seed(802)
-  # for (p in 1:length(ST_VoA_pars$b0)) {
-  #   for (t in 1:nrow(VoAVariables)) {
-  #     ST_VoA_Rating <- rnorm(
-  #       1,
-  #       mean = ST_VoA_pars$b0[p] +
-  #         ST_VoA_pars$beta_net_kick_return_avg[p] *
-  #           VoAVariables$net_kick_return_avg[t] +
-  #         ST_VoA_pars$beta_net_punt_return_avg[p] *
-  #           VoAVariables$net_punt_return_avg[t] +
-  #         ST_VoA_pars$beta_net_fg_rate[p] * VoAVariables$net_fg_rate[t] +
-  #         ST_VoA_pars$beta_net_st_ppa[p] * VoAVariables$net_adj_st_ppa[t],
-  #       sd = ST_VoA_pars$sigma[p]
-  #     )
-  #     ST_VoA_Ratings[p, t] <- ST_VoA_Rating
-  #   }
-  # }
+  ### Create the Design Matrix (Teams x Predictors)
+  STDesignMatrix <- as.matrix(cbind(
+    b0 = 1,
+    beta_net_kick_return_avg = VoAVariables$net_kick_return_yds,
+    beta_net_punt_return_avg = VoAVariables$net_punt_return_yds,
+    beta_net_fg_rate = VoAVariables$net_fg_rate,
+    beta_net_st_epa = VoAVariables$net_adj_st_epa
+  ))
+
+  ### Parameter Matrix (Posterior samples x Predictors)
+  ST_VoA_pars_matrix <- as.matrix(ST_VoA_pars[, colnames(STDesignMatrix)])
+
+  ### Calculate Means for ALL (p, t) pairs in one operation
+  ### Off_VoA_pars_matrix %*% t(DesignMatrix) produces a matrix of size (N_draws x N_teams)
+  STMeans_matrix <- ST_VoA_pars_matrix %*% t(STDesignMatrix)
+
+  ### Add normal noise vectorized using the sigma array
+  P <- length(ST_VoA_pars$b0)
+  T_num <- nrow(VoAVariables)
+
+  ### applying rnorm to generate a matrix of ratings using the matrix of samples from the posterior distributions
+  set.seed(802)
+  ST_VoA_Ratings <- matrix(
+    rnorm(P * T_num, mean = STMeans_matrix, sd = ST_VoA_pars$sigma),
+    nrow = P,
+    ncol = T_num
+  )
 
   ### generating median and mean and quantile ratings
   MeanPred <- apply(ST_VoA_Ratings, 2, mean)
@@ -4935,27 +5001,7 @@ VoAVariables <- VoAVariables |>
     STVoA_Ranking = dense_rank(desc(STVoA_MeanRating))
   )
 
-
-## testing tidymodel workflow to turn VoA_Output into FPI or SP+ like metric
-## VoA_bootstrap <- rsample::bootstraps(VoAVariables_Test, times = 20, breaks = 5)
-# VoA_rf <- parsnip::rand_forest(
-#   mode = "regression",
-#   engine = "ranger",
-#   mtry = 2,
-#   trees = 5000
-# )
-# # fmt: skip
-# VoA_rf_fit <- parsnip::fit(VoA_rf,
-#                                 AllPY_FPI_SP_mean ~ off_epa_PY1 + off_epa_PY2 + def_epa_PY1 + def_epa_PY2 + off_epa_PY3 + def_epa_PY3,
-#                                 data = VoAVariables_Test)
-# VoA_rf_predict <- parsnip::predict_raw(VoA_rf_fit, VoAVariables_Test)
-# VoAVariables_Test <- VoAVariables_Test |>
-#   mutate(
-#     VoA_Rating = VoA_rf_predict$predictions,
-#     VoA_Ranking = dense_rank(desc(VoA_Rating))
-#   )
-
-## Creating data frames of just variables used for creating gt tables of rankings and Unintelligible Charts™©® showing VoA output and ranking during the season (after week 2)
+### creating data frame with just team, VoA ratings, VoA Rankings, and VoA output
 FinalTable <- VoAVariables |>
   select(
     school,
@@ -4965,11 +5011,11 @@ FinalTable <- VoAVariables |>
     VoA_Output,
     VoA_Rating_Ovr,
     VoA_Ranking_Ovr,
-    OffVoA_MedRating,
+    OffVoA_MeanRating,
     OffVoA_Ranking,
-    DefVoA_MedRating,
+    DefVoA_MeanRating,
     DefVoA_Ranking,
-    STVoA_MedRating,
+    STVoA_MeanRating,
     STVoA_Ranking,
     Conf_Rk
   ) |>
@@ -4997,17 +5043,17 @@ VoATop25Table <- FinalVoATop25 |>
   ) |>
   fmt_number(
     # A column (numeric data)
-    columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+    columns = c(OffVoA_MeanRating), # What column variable? FinalVoATop25$VoA_Rating
     decimals = 3 # With four decimal places
   ) |>
   fmt_number(
     # A column (numeric data)
-    columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+    columns = c(DefVoA_MeanRating), # What column variable? FinalVoATop25$VoA_Rating
     decimals = 3 # With four decimal places
   ) |>
   fmt_number(
     # A column (numeric data)
-    columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+    columns = c(STVoA_MeanRating), # What column variable? FinalVoATop25$VoA_Rating
     decimals = 3 # With four decimal places
   ) |>
   fmt_number(
@@ -5027,7 +5073,7 @@ VoATop25Table <- FinalVoATop25 |>
   ) |>
   data_color(
     # Update cell colors, testing different color palettes
-    columns = c(OffVoA_MedRating), # ...for dose column
+    columns = c(OffVoA_MeanRating), # ...for dose column
     fn = scales::col_numeric(
       # <- bc it's numeric
       palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
@@ -5037,7 +5083,7 @@ VoATop25Table <- FinalVoATop25 |>
   ) |>
   data_color(
     # Update cell colors, testing different color palettes
-    columns = c(DefVoA_MedRating), # ...for dose column
+    columns = c(DefVoA_MeanRating), # ...for dose column
     fn = scales::col_numeric(
       # <- bc it's numeric
       palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
@@ -5047,7 +5093,7 @@ VoATop25Table <- FinalVoATop25 |>
   ) |>
   data_color(
     # Update cell colors, testing different color palettes
-    columns = c(STVoA_MedRating), # ...for dose column
+    columns = c(STVoA_MeanRating), # ...for dose column
     fn = scales::col_numeric(
       # <- bc it's numeric
       palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
@@ -5058,17 +5104,23 @@ VoATop25Table <- FinalVoATop25 |>
   cols_label(
     VoA_Rating_Ovr = "Overall VoA Rating",
     VoA_Ranking_Ovr = "VoA Ranking",
-    OffVoA_MedRating = "Off VoA Rating",
+    OffVoA_MeanRating = "Off VoA Rating",
     OffVoA_Ranking = "Off Ranking",
-    DefVoA_MedRating = "Def VoA Rating",
+    DefVoA_MeanRating = "Def VoA Rating",
     DefVoA_Ranking = "Def Ranking",
-    STVoA_MedRating = "ST VoA Rating",
+    STVoA_MeanRating = "ST VoA Rating",
     STVoA_Ranking = "ST Ranking"
   ) |> # Update labels
   # cols_move_to_end(columns = "VoA_Rating") |>
-  cols_hide(c(conference, CFB_Week, VoA_Output, Conf_Rk)) |>
+  cols_hide(c(
+    classification,
+    conference,
+    CFB_Week,
+    VoA_Output,
+    Conf_Rk
+  )) |>
   tab_footnote(
-    footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
+    footnote = "Table by @gshelor, data from CFB Data API via cfbfastR"
   )
 
 ## Full 134 teams table
@@ -5089,17 +5141,17 @@ VoA_Full_Table <- FinalTable |>
   ) |>
   fmt_number(
     # A column (numeric data)
-    columns = c(OffVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+    columns = c(OffVoA_MeanRating), # What column variable? FinalVoATop25$VoA_Rating
     decimals = 3 # With four decimal places
   ) |>
   fmt_number(
     # A column (numeric data)
-    columns = c(DefVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+    columns = c(DefVoA_MeanRating), # What column variable? FinalVoATop25$VoA_Rating
     decimals = 3 # With four decimal places
   ) |>
   fmt_number(
     # A column (numeric data)
-    columns = c(STVoA_MedRating), # What column variable? FinalVoATop25$VoA_Rating
+    columns = c(STVoA_MeanRating), # What column variable? FinalVoATop25$VoA_Rating
     decimals = 3 # With four decimal places
   ) |>
   fmt_number(
@@ -5119,7 +5171,7 @@ VoA_Full_Table <- FinalTable |>
   ) |>
   data_color(
     # Update cell colors, testing different color palettes
-    columns = c(OffVoA_MedRating), # ...for dose column
+    columns = c(OffVoA_MeanRating), # ...for dose column
     fn = scales::col_numeric(
       # <- bc it's numeric
       palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
@@ -5129,7 +5181,7 @@ VoA_Full_Table <- FinalTable |>
   ) |>
   data_color(
     # Update cell colors, testing different color palettes
-    columns = c(DefVoA_MedRating), # ...for dose column
+    columns = c(DefVoA_MeanRating), # ...for dose column
     fn = scales::col_numeric(
       # <- bc it's numeric
       palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
@@ -5139,7 +5191,7 @@ VoA_Full_Table <- FinalTable |>
   ) |>
   data_color(
     # Update cell colors, testing different color palettes
-    columns = c(STVoA_MedRating), # ...for dose column
+    columns = c(STVoA_MeanRating), # ...for dose column
     fn = scales::col_numeric(
       # <- bc it's numeric
       palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
@@ -5150,100 +5202,2179 @@ VoA_Full_Table <- FinalTable |>
   cols_label(
     VoA_Rating_Ovr = "Overall VoA Rating",
     VoA_Ranking_Ovr = "VoA Ranking",
-    OffVoA_MedRating = "Off VoA Rating",
+    OffVoA_MeanRating = "Off VoA Rating",
     OffVoA_Ranking = "Off Ranking",
-    DefVoA_MedRating = "Def VoA Rating",
+    DefVoA_MeanRating = "Def VoA Rating",
     DefVoA_Ranking = "Def Ranking",
-    STVoA_MedRating = "ST VoA Rating",
+    STVoA_MeanRating = "ST VoA Rating",
     STVoA_Ranking = "ST Ranking"
   ) |> # Update labels
   # cols_move_to_end(columns = "VoA_Rating_Ovr") |>
-  cols_hide(c(conference, CFB_Week, VoA_Output, Conf_Rk)) |>
+  cols_hide(c(
+    classification,
+    conference,
+    CFB_Week,
+    VoA_Output,
+    Conf_Rk
+  )) |>
   tab_footnote(
-    footnote = "Table by @gshelor, data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org"
+    footnote = "Table by @gshelor, data from CFB Data API via cfbfastR"
   )
-# VoA_Full_Table |>
-#   gtsave(
-#     fulltable_file_pathway, expand = 5,
-#     path = here("RVoA", "Outputs", "Test")
-#   )
 
-#### possible future code for trying out different formats for top 25 tables
-## testing adding column colors
-# VoATableColors <- Final_gt_Top25 |>
-#   gt() |> # Make a gt table with it
-#   gt_theme_538() |>
-#   ## gt_color_rows(VoA_Output, palette = "ggsci::blue_material") |>
-#   tab_header(
-#     title = paste(year, week_text, cfb_week, VoA_Top25_text), # Add a title
-#     subtitle = "it's a brand new upgraded version of a table! Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy" # And a subtitle
-#   ) |>
-#   fmt_passthrough( # Not sure about this but it works...
-#     columns = c(Team) # First column: team (character)
-#   ) |>
-#   fmt_number(
-#     columns = c(VoA_Output), # Second column: VoA_Output (numeric)
-#     decimals = 5 # With 5 decimal places
-#   ) |>
-#   fmt_number(
-#     columns = c(VoA_Ranking), # Third column: VoA_Ranking (numeric)
-#     decimals = 0 # With 0 decimal places
-#   ) |>
-#   #  data_color( # Update cell colors...
-#   #    columns = c(VoA_Output), # ...for dose column
-#   #    colors = scales::col_numeric( # <- bc it's numeric
-#   #      palette = c(
-#   #        "dodgerblue4","cadetblue1"), # A color scheme (gradient)
-#   #      domain = c() # Column scale endpoints
-#   #    )
-#   # ) |>
-#   data_color( # Update cell colors, testing different color palettes
-#     columns = c(VoA_Output), # ...for VoA_Output column
-#     colors = scales::col_numeric( # <- bc it's numeric
-#       palette = brewer.pal(9, "Reds"), # A color scheme (gradient)
-#       domain = c() # Column scale endpoints
-#     )
-#   ) |>
-#   cols_label(team= "Team", VoA_Output = "Final VoA Output", VoA_Ranking = "VoA Ranking") |> # Make the column headers
-#   tab_footnote(
-#     footnote = "rounded to 5 decimals", # Another line of footnote text
-#     locations = cells_column_labels(
-#       columns = c(VoA_Output) # Associated with column 'VoA_Output'
-#     )
-#   ) |>
-#   cols_move_to_end(columns = "VoA_Output")
-# VoATableColors
-#
-# ## Save GT table with colors in columns
-# VoATableColors |>
-#   gtsave(
-#    "VoAGTwithColors.png", expand = 5,
-#    path = here("RVoA", "Outputs")
-#  )
+##### Resume VoA #####
+### determining mean VoA Rating of top 12 teams in VoA, comparing how this hypothetical average top 12 team would do given each team's schedule
+## choosing top 12 because of future playoff expansion which seems likely if not already certain
+## it really should only be 8 max but whatever, I'm gonna be just fine
+### Resume VoA only created after week 9 (Week 10 - end of season)
+if (as.integer(cfb_week) > 11) {
+  ### adding column to VoAVariables to hold Resume VoA metric
+  ## placing dummy value for now, will be filled in for loop further down
+  VoAVariables <- VoAVariables |>
+    mutate(Resume_VoA = -999)
 
-##### Testing Resume VoA #####
+  ### calculating top 12 average since 12 teams make the playoff
+  Top12 <- VoAVariables |>
+    filter(VoA_Ranking_Ovr <= 12) |>
+    select(
+      season,
+      school,
+      OffVoA_MeanRating,
+      DefVoA_MeanRating,
+      STVoA_MeanRating
+    )
+  Top12_off_mean <- mean(Top12$OffVoA_MeanRating)
+  Top12_def_mean <- mean(Top12$DefVoA_MeanRating)
+  Top12_st_mean <- mean(Top12$STVoA_MeanRating)
+  Top12_mean <- Top12_off_mean - Top12_def_mean + Top12_st_mean
 
-########### BREAK HERE EVERYTHING BELOW IS NOT PART OF CURRENT TESTING ######
-break
+  ### pulling in completed games
+  completed_games <- cfbd_game_info(as.integer(year)) |>
+    filter(
+      home_team %in% VoAVariables$school | away_team %in% VoAVariables$school
+    ) |>
+    select(
+      game_id,
+      season,
+      week,
+      neutral_site,
+      completed,
+      home_team,
+      home_points,
+      away_team,
+      away_points
+    ) |>
+    filter(completed == TRUE)
 
-##### DEBUGGING WEIRD AND STUPID NA ERRORS #####
-## Making values numeric
-# VoAVariables[,6:ncol(VoAVariables)] <- VoAVariables[,6:ncol(VoAVariables)] |> mutate_if(is.character,as.numeric)
-#
-## nas why
-nas_why <- data.frame(apply(VoAVariables, 2, anyNA))
-nas_sum <- data.frame(apply(VoAVariables, 2, is.na))
-nas_sum <- data.frame(apply(nas_sum, 2, sum))
-colnames(nas_why) <- c("containsNAs")
-colnames(nas_sum) <- c("NAsum")
-nas_sum <- nas_sum |>
-  filter(NAsum > 0)
-nas_why <- nas_why |>
-  filter(containsNAs == TRUE)
-nas_why_col <- VoAVariables |>
-  filter(is.na())
-# recruit_nas_teams <- anti_join(VoAVariables, recruit, by = "team")
+  ### using SRS ratings for FCS teams instead of the randomly sampled VoA rating based on
+  ## bottom half of VoA ratings as done during 2022 CFB season
+  FCS <- cfbd_ratings_srs(year = as.integer(year)) |>
+    filter(team %nin% VoAVariables$school) |>
+    filter(
+      team %in% completed_games$home_team | team %in% completed_games$away_team
+    )
 
-colnames(VoAVariables)[apply(VoAVariables, 2, anyNA)]
+  ##### Calculating Resume VoA team by team #####
+  for (x in 1:nrow(VoAVariables)) {
+    temp_team <- completed_games |>
+      filter(
+        home_team == VoAVariables$school[x] |
+          away_team == VoAVariables$school[x]
+      ) |>
+      mutate(
+        team = VoAVariables$school[x],
+        team_opp = case_when(
+          home_team == VoAVariables$school[x] ~ away_team,
+          TRUE ~ home_team
+        ),
+        team_VoA_rating = VoAVariables$VoA_Rating_Ovr[x]
+      )
+    ### extracting ratings of FBS opponents
+    temp_teamFBSOpps <- VoAVariables |>
+      filter(team %in% temp_team$team_opp) |>
+      select(team, VoA_Rating_Ovr)
+    ### extracting SRS ratings of FCS opponents
+    temp_teamFCSOpps <- FCS |>
+      filter(team %in% temp_team$team_opp) |>
+      select(team, rating)
+    colnames(temp_teamFCSOpps) <- c("team", "VoA_Rating_Ovr")
+    temp_teamOpps <- rbind(temp_teamFBSOpps, temp_teamFCSOpps)
+    colnames(temp_teamOpps) <- c("team_opp", "opp_VoA_rating")
 
-########## END OF DEBUGGING
+    ### adding opponent ratings to main team df
+    temp_team <- full_join(temp_team, temp_teamOpps, by = "team_opp")
+
+    ### calculating resume score
+    temp_team <- temp_team |>
+      mutate(
+        actual_diff = case_when(
+          home_team == VoAVariables$school[x] ~ home_points - away_points,
+          TRUE ~ away_points - home_points
+        ),
+        projected_diff = case_when(
+          home_team == VoAVariables$school[x] &
+            neutral_site == FALSE ~ (team_VoA_rating + 2) - opp_VoA_rating,
+          away_team == VoAVariables$school[x] &
+            neutral_site == FALSE ~ team_VoA_rating - (opp_VoA_rating + 2),
+          TRUE ~ team_VoA_rating - opp_VoA_rating
+        ),
+        Top12_proj = case_when(
+          home_team == VoAVariables$school[x] &
+            neutral_site == FALSE ~ (Top12_mean + 2) - opp_VoA_rating,
+          TRUE ~ Top12_mean - opp_VoA_rating
+        ),
+        Resume_Score = actual_diff - Top12_proj
+      )
+
+    ## determining number of losses
+    temp_team_losses <- temp_team |>
+      filter(
+        home_team == VoAVariables$school[x] &
+          home_points < away_points |
+          away_team == VoAVariables$school[x] & away_points < home_points
+      )
+    ## storing overall team Resume Score as vector
+    VoAVariables$Resume_VoA[x] <- sum(temp_team$Resume_Score) -
+      (7 * nrow(temp_team_losses))
+  }
+
+  VoAVariables <- VoAVariables |>
+    mutate(Resume_VoA_Rank = dense_rank(desc(Resume_VoA)))
+
+  ### filtering resume top 25 out for table
+  ResumeVoATop25 <- VoAVariables |>
+    select(team, Resume_VoA, Resume_VoA_Rank) |>
+    filter(Resume_VoA_Rank < 26) |>
+    arrange(Resume_VoA_Rank)
+
+  ### full resume VoA, simplified for table
+  FinalResumeTable <- VoAVariables |>
+    select(team, Resume_VoA, Resume_VoA_Rank) |>
+    arrange(Resume_VoA_Rank)
+} else {
+  print("no Resume VoA until Week 12!")
+}
+
+##### Creating Top 25 and Full Tables Arranged by Resume VoA #####
+if (as.integer(cfb_week) > 11) {
+  ## Top 25 Table
+  # adding title and subtitle
+  ResumeVoATop25Table <- ResumeVoATop25 |>
+    gt() |> # use 'gt' to make an awesome table...
+    gt_theme_espn() |>
+    tab_header(
+      title = paste(year, week_text, cfb_week, resume_text, VoA_Top25_text), # ...with this title
+      subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy"
+    ) |> # and this subtitle
+    ## tab_style(style = cell_fill("bisque"),
+    ##           locations = cells_body()) |>  # add fill color to table
+    fmt_number(
+      # A column (numeric data)
+      columns = c(Resume_VoA), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number(
+      # Another column (also numeric data)
+      columns = c(Resume_VoA_Rank), # What column variable? FinalVoATop25$VoA_Ranking
+      decimals = 0 # I want this column to have zero decimal places
+    ) |>
+    data_color(
+      # Update cell colors, testing different color palettes
+      columns = c(Resume_VoA), # ...for dose column
+      fn = scales::col_numeric(
+        # <- bc it's numeric
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    cols_label(
+      Resume_VoA = "Resume VoA Rating",
+      Resume_VoA_Rank = "Resume VoA Ranking"
+    ) |> # Update labels
+    cols_move_to_end(columns = "Resume_VoA") |>
+    # cols_hide(c(conference, CFB_Week, VoA_Output)) |>
+    tab_footnote(
+      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR"
+    )
+
+  ### Full 134 teams table
+  # adding title and subtitle
+  Resume_VoA_Table <- FinalResumeTable |>
+    gt() |> # use 'gt' to make an awesome table...
+    gt_theme_espn() |>
+    tab_header(
+      title = paste(year, week_text, cfb_week, resume_text, VoA_text), # ...with this title
+      subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy"
+    ) |> # and this subtitle
+    ##tab_style(style = cell_fill("bisque"),
+    ##        locations = cells_body()) |>  # add fill color to table
+    fmt_number(
+      # A column (numeric data)
+      columns = c(Resume_VoA), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number(
+      # Another column (also numeric data)
+      columns = c(Resume_VoA_Rank), # What column variable? FinalVoATop25$VoA_Ranking
+      decimals = 0 # I want this column to have zero decimal places
+    ) |>
+    data_color(
+      # Update cell colors, testing different color palettes
+      columns = c(Resume_VoA), # ...for dose column
+      fn = scales::col_numeric(
+        # <- bc it's numeric
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    cols_label(
+      Resume_VoA = "Resume VoA Rating",
+      Resume_VoA_Rank = "Resume VoA Rank"
+    ) |> # Update labels
+    cols_move_to_end(columns = "Resume_VoA") |>
+    # cols_hide(c(conference, CFB_Week, VoA_Output)) |>
+    tab_footnote(
+      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR"
+    )
+} else if (as.integer(cfb_week) == 20) {
+  ## Top 25 Table
+  # adding title and subtitle
+  ResumeVoATop25Table <- ResumeVoATop25 |>
+    gt() |> # use 'gt' to make an awesome table...
+    gt_theme_espn() |>
+    tab_header(
+      title = paste(year, Postseason_text, resume_text, VoA_Top25_text), # ...with this title
+      subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy"
+    ) |> # and this subtitle
+    ## tab_style(style = cell_fill("bisque"),
+    ##           locations = cells_body()) |>  # add fill color to table
+    fmt_number(
+      # A column (numeric data)
+      columns = c(Resume_VoA), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number(
+      # Another column (also numeric data)
+      columns = c(Resume_VoA_Rank), # What column variable? FinalVoATop25$VoA_Ranking
+      decimals = 0 # I want this column to have zero decimal places
+    ) |>
+    data_color(
+      # Update cell colors, testing different color palettes
+      columns = c(Resume_VoA), # ...for dose column
+      fn = scales::col_numeric(
+        # <- bc it's numeric
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    cols_label(
+      Resume_VoA = "Resume VoA Rating",
+      Resume_VoA_Rank = "Resume VoA Ranking"
+    ) |> # Update labels
+    cols_move_to_end(columns = "Resume_VoA") |>
+    # cols_hide(c(conference, CFB_Week, VoA_Output)) |>
+    tab_footnote(
+      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR"
+    )
+
+  ### Full 134 teams table
+  ### adding title and subtitle
+  Resume_VoA_Table <- FinalResumeTable |>
+    gt() |> # use 'gt' to make an awesome table...
+    gt_theme_espn() |>
+    tab_header(
+      title = paste(year, Postseason_text, resume_text, VoA_text), # ...with this title
+      subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy"
+    ) |> # and this subtitle
+    ##tab_style(style = cell_fill("bisque"),
+    ##        locations = cells_body()) |>  # add fill color to table
+    fmt_number(
+      # A column (numeric data)
+      columns = c(Resume_VoA), # What column variable? FinalVoATop25$VoA_Rating
+      decimals = 3 # With four decimal places
+    ) |>
+    fmt_number(
+      # Another column (also numeric data)
+      columns = c(Resume_VoA_Rank), # What column variable? FinalVoATop25$VoA_Ranking
+      decimals = 0 # I want this column to have zero decimal places
+    ) |>
+    data_color(
+      # Update cell colors, testing different color palettes
+      columns = c(Resume_VoA), # ...for dose column
+      fn = scales::col_numeric(
+        # <- bc it's numeric
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    cols_label(
+      Resume_VoA = "Resume VoA Rating",
+      Resume_VoA_Rank = "Resume VoA Rank"
+    ) |> # Update labels
+    cols_move_to_end(columns = "Resume_VoA") |>
+    # cols_hide(c(conference, CFB_Week, VoA_Output)) |>
+    tab_footnote(
+      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR"
+    )
+} else {
+  print("No Resume VoA until Week 12!")
+}
+
+
+##### Saving tables and final VoAVariables csv #####
+### viewing and saving the gt tables outside the if statement so that I can see them in the RStudio viewer
+VoATop25Table
+VoATop25Table |>
+  gtsave(
+    top25_file_pathway,
+    expand = 5,
+    path = output_dir
+  )
+VoA_Full_Table
+VoA_Full_Table |>
+  gtsave(
+    fulltable_file_pathway,
+    expand = 5,
+    path = output_dir
+  )
+
+## Resume VoA not produced until Week 10
+if (as.integer(cfb_week) > 9) {
+  ### Resume tables
+  ResumeVoATop25Table
+  ResumeVoATop25Table |>
+    gtsave(
+      resumetop25_file_pathway,
+      expand = 5,
+      path = output_dir
+    )
+  Resume_VoA_Table
+  Resume_VoA_Table |>
+    gtsave(
+      resumefulltable_file_pathway,
+      expand = 5,
+      path = output_dir
+    )
+} else {
+  print("No Resume VoA tables until week 12!")
+}
+
+## Exporting final dataframe as parquet file
+write_parquet(VoAVariables, file_pathway)
+### also writing out file represent the "current" VoA ratings so it can be more easily visualized on my website and/or a shiny app maybe
+write_csv(VoAVariables, here("Data", CurrentFBSVoA.csv))
+
+##### Setting up the Unintelligible Charts #####
+### Tracks VoA Ratings and Rankings by week
+### now reading in and merging VoA rating and ranking data up to current week
+### changing FinalTable to only be columns needed for Unintelligible Charts
+FinalTable <- FinalTable |>
+  select(
+    team,
+    conference,
+    CFB_Week,
+    VoA_Output,
+    VoA_Ranking_Ovr,
+    VoA_Rating_Ovr
+  )
+if (as.integer(cfb_week) == 3) {
+  Week0_VoA <- read_parquet(here(
+    "Data",
+    paste0("VoA", year),
+    paste0(year, "Week0_VoA.parquet")
+  )) |>
+    select(
+      team,
+      conference,
+      CFB_Week,
+      VoA_Output,
+      VoA_Ranking_Ovr,
+      VoA_Rating_Ovr
+    )
+  Week1_VoA <- read_parquet(here(
+    "Data",
+    paste0("VoA", year),
+    paste0(year, "Week1_VoA.parquet")
+  )) |>
+    select(
+      team,
+      conference,
+      CFB_Week,
+      VoA_Output,
+      VoA_Ranking_Ovr,
+      VoA_Rating_Ovr
+    )
+  Week2_VoA <- read_parquet(here(
+    "Data",
+    paste0("VoA", year),
+    paste0(year, "Week2_VoA.parquet")
+  )) |>
+    select(
+      team,
+      conference,
+      CFB_Week,
+      VoA_Output,
+      VoA_Ranking_Ovr,
+      VoA_Rating_Ovr
+    )
+  Full_Ratings_Rks <- rbind(
+    Week0_VoA,
+    rbind(Week1_VoA, rbind(Week2_VoA, FinalTable))
+  )
+  write_parquet(
+    Full_Ratings_Rks,
+    paste(
+      data_dir,
+      "/TrackingChartCSVs",
+      "/",
+      year,
+      week_text,
+      "0_3Ratings_Rks.parquet",
+      sep = ""
+    )
+  )
+} else if (as.integer(cfb_week) > 3) {
+  ### reading in previous week's csv of ratings and ranks for charts
+  Full_Ratings_Rks <- read_parquet(here(
+    "Data",
+    paste0("VoA", year),
+    "TrackingChartCSVs",
+    paste0(
+      year,
+      week_text,
+      "0_",
+      as.integer(cfb_week) - 1,
+      "Ratings_Rks.parquet"
+    )
+  )) |>
+    select(
+      team,
+      conference,
+      CFB_Week,
+      VoA_Output,
+      VoA_Ranking_Ovr,
+      VoA_Rating_Ovr
+    )
+  Full_Ratings_Rks <- rbind(Full_Ratings_Rks, FinalTable)
+  write_parquet(
+    Full_Ratings_Rks,
+    paste0(
+      data_dir,
+      "/TrackingChartCSVs",
+      "/",
+      year,
+      week_text,
+      "0_",
+      cfb_week,
+      "Ratings_Rks.parquet"
+    )
+  )
+} else {
+  print("No charts until Week 3!")
+}
+### end of if statement
+
+### Filtering by conference for unintelligible charts
+if (as.integer(cfb_week) >= 3) {
+  ### each conference (including independents) gets separate charts
+  ### given that the Pac12 is now really the 2Pac, they get lumped in with the Indies
+  AAC_Ratings_Rks <- Full_Ratings_Rks |>
+    filter(conference == "American Athletic")
+  ACC_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "ACC")
+  Big12_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Big 12")
+  Big10_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Big Ten")
+  CUSA_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Conference USA")
+  ### lumping the 2Pac with the Indys for unintelligible chart purposes
+  Indy_Ratings_Rks <- Full_Ratings_Rks |>
+    filter(conference == "FBS Independents" | conference == "Pac-12")
+  MAC_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Mid-American")
+  MWC_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Mountain West")
+  # Pac12_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Pac-12")
+  SEC_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "SEC")
+  SunBelt_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Sun Belt")
+
+  ##### Creating Charts #####
+  ### charting VoA_Rating and VoA_Ranking for each week from week 2 on
+  AAC_VoA_Rating_Chart <- ggplot(
+    AAC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("American Conference Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(AAC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(AAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(AAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(AAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  AAC_VoA_Rating_Chart
+  ggsave(
+    AAC_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  AAC_VoA_Ranking_Chart <- ggplot(
+    AAC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("American Conference Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  AAC_VoA_Ranking_Chart
+  ggsave(
+    AAC_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  ACC_VoA_Rating_Chart <- ggplot(
+    ACC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("ACC Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(ACC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(ACC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(ACC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(ACC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  ACC_VoA_Rating_Chart
+  ggsave(
+    ACC_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  ACC_VoA_Ranking_Chart <- ggplot(
+    ACC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("ACC Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  ACC_VoA_Ranking_Chart
+  ggsave(
+    ACC_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  Big12_VoA_Rating_Chart <- ggplot(
+    Big12_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Big 12 Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(Big12_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(Big12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(Big12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(Big12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  Big12_VoA_Rating_Chart
+  ggsave(
+    Big12_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  Big12_VoA_Ranking_Chart <- ggplot(
+    Big12_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Big 12 Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  Big12_VoA_Ranking_Chart
+  ggsave(
+    Big12_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  Big10_VoA_Rating_Chart <- ggplot(
+    Big10_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Big 10 Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(Big10_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(Big10_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(Big10_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(Big10_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  Big10_VoA_Rating_Chart
+  ggsave(
+    Big10_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  Big10_VoA_Ranking_Chart <- ggplot(
+    Big10_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Big 10 Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  Big10_VoA_Ranking_Chart
+  ggsave(
+    Big10_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  CUSA_VoA_Rating_Chart <- ggplot(
+    CUSA_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("CUSA Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(CUSA_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(CUSA_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(CUSA_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(CUSA_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  CUSA_VoA_Rating_Chart
+  ggsave(
+    CUSA_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  CUSA_VoA_Ranking_Chart <- ggplot(
+    CUSA_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("CUSA Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  CUSA_VoA_Ranking_Chart
+  ggsave(
+    CUSA_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  Indy_VoA_Rating_Chart <- ggplot(
+    Indy_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Independents Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  Indy_VoA_Rating_Chart
+  ggsave(
+    Indy_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  Indy_VoA_Ranking_Chart <- ggplot(
+    Indy_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Independents Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  Indy_VoA_Ranking_Chart
+  ggsave(
+    Indy_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  MAC_VoA_Rating_Chart <- ggplot(
+    MAC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("MAC Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(MAC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(MAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(MAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(MAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  MAC_VoA_Rating_Chart
+  ggsave(
+    MAC_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  MAC_VoA_Ranking_Chart <- ggplot(
+    MAC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("MAC Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  MAC_VoA_Ranking_Chart
+  ggsave(
+    MAC_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  MWC_VoA_Rating_Chart <- ggplot(
+    MWC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Mountain West Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(MWC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(MWC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(MWC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(MWC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  MWC_VoA_Rating_Chart
+  ggsave(
+    MWC_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  MWC_VoA_Ranking_Chart <- ggplot(
+    MWC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Mountain West Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  MWC_VoA_Ranking_Chart
+  ggsave(
+    MWC_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  Pac12_VoA_Rating_Chart <- ggplot(
+    Pac12_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Pac 12 Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(Pac12_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(Pac12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(Pac12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(Pac12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  Pac12_VoA_Rating_Chart
+  ggsave(
+    Pac12_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  Pac12_VoA_Ranking_Chart <- ggplot(
+    Pac12_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Pac 12 Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  Pac12_VoA_Ranking_Chart
+  ggsave(
+    Pac12_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  SEC_VoA_Rating_Chart <- ggplot(
+    SEC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("SEC Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(SEC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(SEC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(SEC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(SEC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  SEC_VoA_Rating_Chart
+  ggsave(
+    SEC_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  SEC_VoA_Ranking_Chart <- ggplot(
+    SEC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("SEC Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  SEC_VoA_Ranking_Chart
+  ggsave(
+    SEC_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  ### geom_cfb_logos used to just throw the NCAA logo in place of the App State logo since for some reason cfb_plotR hasn't been updated in a while and doesn't keep up with the cfbfastR/cfbdata team names
+  ## this stopped working so I've had to make this frankly easy fix that I should've just always done so that App shows up as App instead of the NCAA
+  SunBelt_Ratings_Rks <- SunBelt_Ratings_Rks |>
+    mutate(
+      team = case_when(team == "App State" ~ "Appalachian State", TRUE ~ team)
+    )
+  SunBelt_VoA_Rating_Chart <- ggplot(
+    SunBelt_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Sun Belt Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(SunBelt_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(SunBelt_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(SunBelt_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(SunBelt_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  SunBelt_VoA_Rating_Chart
+  ggsave(
+    SunBelt_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  SunBelt_VoA_Ranking_Chart <- ggplot(
+    SunBelt_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Sun Belt Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  SunBelt_VoA_Ranking_Chart
+  ggsave(
+    SunBelt_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+} else {
+  print("No charts until Week 3!")
+}
+
+### Creating Histograms of VoA Output for all teams, and separate plots for power 5 and group of 5 teams subsetted out
+## plots will be made for each week, not just after week 2 like Unintelligble Charts will
+### subsetting teams
+Power5_VoA <- VoAVariables |>
+  filter(
+    conference == "ACC" |
+      conference == "Big 12" |
+      conference == "Big Ten" |
+      conference == "FBS Independents" |
+      conference == "Pac-12" |
+      conference == "SEC"
+  ) |>
+  filter(team != "Connecticut" & team != "UMass")
+
+Group5_VoA <- VoAVariables |>
+  filter(
+    conference == "American Athletic" |
+      conference == "Conference USA" |
+      conference == "FBS Independents" |
+      conference == "Mid-American" |
+      conference == "Mountain West" |
+      conference == "Sun Belt"
+  ) |>
+  filter(team != "Notre Dame")
+
+### making histogram of ratings for all FBS teams
+FBS_Rating_histogram <- ggplot(VoAVariables, aes(VoA_Rating_Ovr)) +
+  theme_bw() +
+  geom_histogram(binwidth = 5, col = "black", fill = "orange") +
+  scale_x_continuous(breaks = seq(-50, 40, 5)) +
+  scale_y_continuous(breaks = seq(0, 50, 5)) +
+  ggtitle(FBS_hist_title) +
+  xlab("VoA Rating") +
+  ylab("Frequency") +
+  labs(
+    caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+  ) +
+  theme(
+    plot.title = element_text(size = 35, hjust = 0.5),
+    axis.text.x = element_text(size = 20),
+    axis.text.y = element_text(size = 20),
+    axis.title.x = element_text(size = 22),
+    axis.title.y = element_text(size = 22),
+    legend.text = element_text(size = 20)
+  )
+FBS_Rating_histogram
+ggsave(
+  FBS_hist_filename,
+  path = output_dir,
+  width = 50,
+  height = 40,
+  units = 'cm'
+)
+
+### histogram of ratings for Power 5 (power 4?) teams
+Power5_Rating_histogram <- ggplot(Power5_VoA, aes(VoA_Rating_Ovr)) +
+  theme_bw() +
+  geom_histogram(binwidth = 5, col = "black", fill = "blue") +
+  scale_x_continuous(breaks = seq(-50, 40, 5)) +
+  scale_y_continuous(breaks = seq(0, 50, 5)) +
+  ggtitle(Power5_hist_title) +
+  xlab("VoA Rating") +
+  ylab("Frequency") +
+  labs(
+    caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+  ) +
+  theme(
+    plot.title = element_text(size = 35, hjust = 0.5),
+    axis.text.x = element_text(size = 20),
+    axis.text.y = element_text(size = 20),
+    axis.title.x = element_text(size = 22),
+    axis.title.y = element_text(size = 22),
+    legend.text = element_text(size = 20)
+  )
+Power5_Rating_histogram
+ggsave(
+  Power5_hist_filename,
+  path = output_dir,
+  width = 50,
+  height = 40,
+  units = 'cm'
+)
+
+### histogram of VoA ratings for G5 teams
+Group5_Rating_histogram <- ggplot(Group5_VoA, aes(VoA_Rating_Ovr)) +
+  theme_bw() +
+  geom_histogram(binwidth = 5, col = "black", fill = "pink") +
+  scale_x_continuous(breaks = seq(-50, 40, 5)) +
+  scale_y_continuous(breaks = seq(0, 50, 5)) +
+  ggtitle(Group5_hist_title) +
+  xlab("VoA Rating") +
+  ylab("Frequency") +
+  labs(
+    caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+  ) +
+  theme(
+    plot.title = element_text(size = 35, hjust = 0.5),
+    axis.text.x = element_text(size = 20),
+    axis.text.y = element_text(size = 20),
+    axis.title.x = element_text(size = 22),
+    axis.title.y = element_text(size = 22),
+    legend.text = element_text(size = 20)
+  )
+Group5_Rating_histogram
+ggsave(
+  Group5_hist_filename,
+  path = output_dir,
+  width = 50,
+  height = 40,
+  units = 'cm'
+)
+
+### repeating App St geom_cfb_logos() plot fix
+VoAVariables_plot <- VoAVariables |>
+  mutate(
+    school = case_when(
+      school == "App State" ~ "Appalachian State",
+      TRUE ~ school
+    )
+  )
+### Creating Scatterplot of VoA_Output vs VoA_Rating
+VoA_Output_Rating_plot <- ggplot(
+  VoAVariables_plot,
+  aes(x = VoA_Output, y = VoA_Rating_Ovr)
+) +
+  theme_bw() +
+  # geom_point(size = 2) +
+  geom_smooth() +
+  geom_cfb_logos(aes(team = school), width = 0.035) +
+  scale_x_continuous(breaks = seq(0, 135, 10)) +
+  scale_y_continuous(breaks = seq(-50, 40, 5)) +
+  ggtitle(Output_Rating_Plot_title) +
+  xlab("VoA Output") +
+  ylab("VoA Overall Rating") +
+  labs(
+    caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+  ) +
+  theme(
+    plot.title = element_text(size = 35, hjust = 0.5),
+    axis.text.x = element_text(size = 20),
+    axis.text.y = element_text(size = 20),
+    axis.title.x = element_text(size = 22),
+    axis.title.y = element_text(size = 22),
+    legend.text = element_text(size = 20)
+  )
+VoA_Output_Rating_plot
+ggsave(
+  Output_Rating_Plot_filename,
+  path = output_dir,
+  width = 50,
+  height = 40,
+  units = 'cm'
+)
+
+## Creating Scatterplot of VoA Offensive Rating vs VoA Defensive Rating
+VoA_OffDef_Rating_plot <- ggplot(
+  VoAVariables_plot,
+  aes(x = OffVoA_MeanRating, y = DefVoA_MeanRating)
+) +
+  theme_bw() +
+  # geom_point(size = 2) +
+  # geom_smooth() +
+  scale_y_reverse() +
+  geom_cfb_logos(aes(team = school), width = 0.035) +
+  geom_hline(yintercept = mean(VoAVariables$DefVoA_MeanRating)) +
+  geom_vline(xintercept = mean(VoAVariables$OffVoA_MeanRating)) +
+  # scale_x_continuous(breaks = seq(0,135,10)) +
+  # scale_y_continuous(breaks = seq(-50,40,5)) +
+  ggtitle(OffDef_Rating_Plot_title) +
+  xlab("VoA Offensive Rating") +
+  ylab("VoA Defensive Rating") +
+  labs(
+    caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+  ) +
+  theme(
+    plot.title = element_text(size = 35, hjust = 0.5),
+    axis.text.x = element_text(size = 20),
+    axis.text.y = element_text(size = 20),
+    axis.title.x = element_text(size = 22),
+    axis.title.y = element_text(size = 22),
+    legend.text = element_text(size = 20)
+  )
+VoA_OffDef_Rating_plot
+ggsave(
+  OffDef_Rating_Plot_filename,
+  path = output_dir,
+  width = 50,
+  height = 40,
+  units = 'cm'
+)
+
+### plot for adjusted off/def EPA
+if (as.integer(cfb_week) <= 8) {
+  VoA_OffDef_EPA_plot <- ggplot(
+    VoAVariables_plot,
+    aes(x = weighted_adj_off_epa, y = weighted_adj_def_epa)
+  ) +
+    theme_bw() +
+    # geom_point(size = 2) +
+    # geom_smooth() +
+    scale_y_reverse() +
+    geom_cfb_logos(aes(team = school), width = 0.035) +
+    geom_hline(yintercept = mean(VoAVariables$weighted_adj_def_epa)) +
+    geom_vline(xintercept = mean(VoAVariables$weighted_adj_off_epa)) +
+    # scale_x_continuous(breaks = seq(0,135,10)) +
+    # scale_y_continuous(breaks = seq(-50,40,5)) +
+    ggtitle(OffDef_EPA_Plot_title) +
+    xlab("Offense Opponent-Adjusted EPA") +
+    ylab("Defense Opponent-Adjusted EPA") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+} else {
+  VoA_OffDef_EPA_plot <- ggplot(
+    VoAVariables_plot,
+    aes(x = adj_off_epa, y = adj_def_epa)
+  ) +
+    theme_bw() +
+    # geom_point(size = 2) +
+    # geom_smooth() +
+    scale_y_reverse() +
+    geom_cfb_logos(aes(team = school), width = 0.035) +
+    geom_hline(yintercept = mean(VoAVariables$adj_def_epa)) +
+    geom_vline(xintercept = mean(VoAVariables$adj_off_epa)) +
+    # scale_x_continuous(breaks = seq(0,135,10)) +
+    # scale_y_continuous(breaks = seq(-50,40,5)) +
+    ggtitle(OffDef_EPA_Plot_title) +
+    xlab("Offense Opponent-Adjusted EPA") +
+    ylab("Defense Opponent-Adjusted EPA") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+}
+VoA_OffDef_EPA_plot
+ggsave(
+  OffDef_EPA_Plot_filename,
+  path = output_dir,
+  width = 50,
+  height = 40,
+  units = 'cm'
+)
+
+
+##### End of Script #####
+cfbd_api_key_info()
+end_time <- Sys.time()
+end_time - start_time

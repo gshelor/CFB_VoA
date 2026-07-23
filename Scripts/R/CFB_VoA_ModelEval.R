@@ -2,7 +2,8 @@
 ## Analyzing how far off I was compared to the spread provided in collegefootballdata.com's prediction contest for the 2021-22 season and investigating possible patterns and/or trends related to it
 ### Load Packages
 library(pacman)
-pacman::p_load(tidyverse, matrixStats, grid, gridExtra, gt, gtExtras, viridis, webshot2, cfbfastR, here, ggsci, RColorBrewer, ggpubr, Metrics, ModelMetrics)
+# fmt: skip
+pacman::p_load(tidyverse, matrixStats, grid, gridExtra, gt, gtExtras, viridis, webshot2, cfbfastR, here, ggsci, RColorBrewer, ggpubr, Metrics, ModelMetrics, data.table, arrow)
 
 ### identifying season and week of season
 season <- readline("What season is it? ")
@@ -14,82 +15,149 @@ VoP_text <- "VoP"
 week_text <- "Week"
 
 ### Reading in VoA to filter games to only be between FBS teams since VoA only rates/ranks FBS teams
-PrevWeekVoA <- read_csv(here("Data", paste0("VoA", season), paste0(season, week_text, as.character(as.numeric(cfb_week) - 1), "_VoA.csv")))
+PrevWeekVoA <- read_csv(here(
+  "Data",
+  paste0("VoA", season),
+  paste0(season, week_text, as.character(as.numeric(cfb_week) - 1), "_VoA.csv")
+))
 
 
 ### reading in completed games
-if (as.numeric(cfb_week) >= 17){
+if (as.numeric(cfb_week) >= 17) {
   ### reading in most recent week's projections
-  PrevWeekVoP <- read_csv(here("Data", paste0("VoA", season), "Projections", paste0(season, VoP_text, week_text, cfb_week, "Games.csv"))) |>
+  PrevWeekVoP <- read_csv(here(
+    "Data",
+    paste0("VoA", season),
+    "Projections",
+    paste0(season, VoP_text, week_text, cfb_week, "Games.csv")
+  )) |>
     filter(home %in% PrevWeekVoA$team & away %in% PrevWeekVoA$team) |>
     select(id, predicted)
   colnames(PrevWeekVoP) <- c("game_id", "proj_margin")
-  
-  LastWeekGames <- cfbd_game_info(as.numeric(season), season_type = "postseason") |>
+
+  LastWeekGames <- cfbd_game_info(
+    as.numeric(season),
+    season_type = "postseason"
+  ) |>
     filter(completed == TRUE) |>
     filter(game_id %in% PrevWeekVoP$game_id) |>
-    select(game_id, season, week, completed, home_team, home_points, away_team, away_points) |>
-    mutate(result = away_points - home_points,
-           winner = case_when(result > 0 ~ away_team,
-                              TRUE ~ home_team))
-  
-  LastWeekSpreads_temp <- cfbd_betting_lines(year = as.numeric(season), season_type = "postseason") |>
+    select(
+      game_id,
+      season,
+      week,
+      completed,
+      home_team,
+      home_points,
+      away_team,
+      away_points
+    ) |>
+    mutate(
+      result = away_points - home_points,
+      winner = case_when(result > 0 ~ away_team, TRUE ~ home_team)
+    )
+
+  LastWeekSpreads_temp <- cfbd_betting_lines(
+    year = as.numeric(season),
+    season_type = "postseason"
+  ) |>
     filter(game_id %in% PrevWeekVoP$game_id) |>
-    select(game_id, spread)
-} else if (as.numeric(cfb_week) == 16){
+    select(game_id, spread, home_moneyline, away_moneyline)
+} else if (as.numeric(cfb_week) == 16) {
   ### reading in most recent week's projections
-  PrevWeekVoP <- read_csv(here("Data", paste0("VoA", season), "Projections", paste0(season, VoP_text, week_text, cfb_week, "Games.csv"))) |>
+  PrevWeekVoP <- read_csv(here(
+    "Data",
+    paste0("VoA", season),
+    "Projections",
+    paste0(season, VoP_text, week_text, cfb_week, "Games.csv")
+  )) |>
     filter(home %in% PrevWeekVoA$team & away %in% PrevWeekVoA$team) |>
     select(id, predicted)
   colnames(PrevWeekVoP) <- c("game_id", "proj_margin")
-  
+
   ### reading in completed games from previous week
   ## in week 16, this should just be Army-Navy, with any completed bowl games being read in separately below
   LastWeekGames <- cfbd_game_info(as.numeric(season)) |>
     filter(completed == TRUE) |>
     filter(week == as.numeric(cfb_week)) |>
     filter(game_id %in% PrevWeekVoP$game_id) |>
-    select(game_id, season, week, completed, home_team, home_points, away_team, away_points) |>
-    mutate(result = away_points - home_points,
-           winner = case_when(result > 0 ~ away_team,
-                              TRUE ~ home_team))
+    select(
+      game_id,
+      season,
+      week,
+      completed,
+      home_team,
+      home_points,
+      away_team,
+      away_points
+    ) |>
+    mutate(
+      result = away_points - home_points,
+      winner = case_when(result > 0 ~ away_team, TRUE ~ home_team)
+    )
   ### because of conference realignment and CFP expansion, bowl games now happen on the same weekend as the Army-Navy game because we as a society insist on constantly creating new personal affronts to god
-  LastWeekBowlGames <- cfbd_game_info(as.numeric(season), season_type = "postseason") |>
+  LastWeekBowlGames <- cfbd_game_info(
+    as.numeric(season),
+    season_type = "postseason"
+  ) |>
     filter(completed == TRUE) |>
     filter(game_id %in% PrevWeekVoP$game_id) |>
-    select(game_id, season, week, completed, home_team, home_points, away_team, away_points) |>
-    mutate(result = away_points - home_points,
-           winner = case_when(result > 0 ~ away_team,
-                              TRUE ~ home_team))
-  
+    select(
+      game_id,
+      season,
+      week,
+      completed,
+      home_team,
+      home_points,
+      away_team,
+      away_points
+    ) |>
+    mutate(
+      result = away_points - home_points,
+      winner = case_when(result > 0 ~ away_team, TRUE ~ home_team)
+    )
+
   ### binding regular season games and completed bowl games together for error calculation
   LastWeekGames <- rbind(LastWeekGames, LastWeekBowlGames)
   ### pulling spread lines to compare to VoA error
   LastWeekSpreads_temp <- cfbd_betting_lines(year = as.numeric(season)) |>
     filter(week == as.numeric(cfb_week)) |>
     filter(game_id %in% PrevWeekVoP$game_id) |>
-    select(game_id, spread)
-} else{
+    select(game_id, spread, home_moneyline, away_moneyline)
+} else {
   ### reading in most recent week's projections
-  PrevWeekVoP <- read_csv(here("Data", paste0("VoA", season), "Projections", paste0(season, VoP_text, week_text, cfb_week, "Games.csv"))) |>
+  PrevWeekVoP <- read_csv(here(
+    "Data",
+    paste0("VoA", season),
+    "Projections",
+    paste0(season, VoP_text, week_text, cfb_week, "Games.csv")
+  )) |>
     filter(home %in% PrevWeekVoA$team & away %in% PrevWeekVoA$team) |>
     select(id, predicted)
   colnames(PrevWeekVoP) <- c("game_id", "proj_margin")
-  
-  
+
   LastWeekGames <- cfbd_game_info(as.numeric(season)) |>
     filter(completed == TRUE) |>
     filter(week == as.numeric(cfb_week)) |>
     filter(game_id %in% PrevWeekVoP$game_id) |>
-    select(game_id, season, week, completed, home_team, home_points, away_team, away_points) |>
-    mutate(result = away_points - home_points,
-           winner = case_when(result > 0 ~ away_team,
-                              TRUE ~ home_team))
-  
+    select(
+      game_id,
+      season,
+      week,
+      completed,
+      home_team,
+      home_points,
+      away_team,
+      away_points
+    ) |>
+    mutate(
+      result = away_points - home_points,
+      winner = case_when(result > 0 ~ away_team, TRUE ~ home_team)
+    )
+
   LastWeekSpreads_temp <- cfbd_betting_lines(year = as.numeric(season)) |>
     filter(week == as.numeric(cfb_week)) |>
     filter(game_id %in% PrevWeekVoP$game_id) |>
-    select(game_id, spread)
+    select(game_id, spread, home_moneyline, away_moneyline)
 }
 ### converting spread to number (why isn't already a number???)
 LastWeekSpreads_temp$spread <- as.numeric(LastWeekSpreads_temp$spread)
@@ -109,88 +177,202 @@ LastWeekGames <- spread_games_list |>
   ### will also be useful if a game gets cancelled like AppSt/Liberty in 2024
   drop_na() |>
   ### calculating error metrics for both my projections and betting spreads
-  mutate(abs_error = Metrics::ae(result, proj_margin),
-         vegas_abs_error = Metrics::ae(result, mean_spread),
-         sqd_error = Metrics::se(result, proj_margin),
-         vegas_sqd_error = Metrics::se(result, mean_spread),
-         straight_up_win = case_when(result >= 0 & proj_margin >= 0 ~ 1,
-                                     result <= 0 & proj_margin <= 0 ~ 1,
-                                     TRUE ~ 0),
-         vegas_straight_up_win = case_when(result >= 0 & mean_spread >= 0 ~ 1,
-                                     result <= 0 & mean_spread <= 0 ~ 1,
-                                     TRUE ~ 0),
-         ATS_win = case_when(result > mean_spread & proj_margin > mean_spread ~ 1,
-                             result < mean_spread & proj_margin < mean_spread ~ 1,
-                             TRUE ~ 0),
-         AE_ATS_win = case_when(abs_error < vegas_abs_error ~ 1,
-                                TRUE ~ 0))
+  mutate(
+    abs_error = Metrics::ae(result, proj_margin),
+    vegas_abs_error = Metrics::ae(result, mean_spread),
+    sqd_error = Metrics::se(result, proj_margin),
+    vegas_sqd_error = Metrics::se(result, mean_spread),
+    straight_up_win = case_when(
+      result >= 0 & proj_margin >= 0 ~ 1,
+      result <= 0 & proj_margin <= 0 ~ 1,
+      TRUE ~ 0
+    ),
+    vegas_straight_up_win = case_when(
+      result >= 0 & mean_spread >= 0 ~ 1,
+      result <= 0 & mean_spread <= 0 ~ 1,
+      TRUE ~ 0
+    ),
+    ATS_win = case_when(
+      result > mean_spread & proj_margin > mean_spread ~ 1,
+      result < mean_spread & proj_margin < mean_spread ~ 1,
+      TRUE ~ 0
+    ),
+    AE_ATS_win = case_when(abs_error < vegas_abs_error ~ 1, TRUE ~ 0)
+  )
 
 ### calculating weekly average error metrics for games with spread info available
-WeekMeanAccuracyMetrics <- data.frame(week = as.numeric(cfb_week),
-                                      games = nrow(LastWeekGames),
-                                      mean_ae = mean(LastWeekGames$abs_error),
-                                      mean_vegas_ae = mean(LastWeekGames$vegas_abs_error),
-                                      mean_se = mean(LastWeekGames$sqd_error),
-                                      mean_vegas_se = mean(LastWeekGames$vegas_sqd_error),
-                                      RMSE = rmse(LastWeekGames$result, LastWeekGames$proj_margin),
-                                      vegas_RMSE = rmse(LastWeekGames$result, LastWeekGames$mean_spread),
-                                      straight_up_win_pct = sum(LastWeekGames$straight_up_win) / nrow(LastWeekGames),
-                                      vegas_straight_up_win_pct = sum(LastWeekGames$vegas_straight_up_win) / nrow(LastWeekGames),
-                                      ATS_win_pct = sum(LastWeekGames$ATS_win) / nrow(LastWeekGames),
-                                      AE_ATS_win_pct = sum(LastWeekGames$AE_ATS_win) / nrow(LastWeekGames))
+WeekMeanAccuracyMetrics <- data.frame(
+  week = as.numeric(cfb_week),
+  games = nrow(LastWeekGames),
+  mean_ae = mean(LastWeekGames$abs_error),
+  mean_vegas_ae = mean(LastWeekGames$vegas_abs_error),
+  mean_se = mean(LastWeekGames$sqd_error),
+  mean_vegas_se = mean(LastWeekGames$vegas_sqd_error),
+  RMSE = rmse(LastWeekGames$result, LastWeekGames$proj_margin),
+  vegas_RMSE = rmse(LastWeekGames$result, LastWeekGames$mean_spread),
+  straight_up_win_pct = sum(LastWeekGames$straight_up_win) /
+    nrow(LastWeekGames),
+  vegas_straight_up_win_pct = sum(LastWeekGames$vegas_straight_up_win) /
+    nrow(LastWeekGames),
+  ATS_win_pct = sum(LastWeekGames$ATS_win) / nrow(LastWeekGames),
+  AE_ATS_win_pct = sum(LastWeekGames$AE_ATS_win) / nrow(LastWeekGames)
+)
 
 
-if (as.numeric(cfb_week) == 1){
+if (as.numeric(cfb_week) == 1) {
   ### writing csv with individual games + accuracy metrics
-  write_csv(LastWeekGames, here("Data", paste0("VoA", season), "AccuracyMetrics", "Games", paste0("VoA", season, week_text, "1", week_text, cfb_week, "GameAccuracyMetrics.csv")))
-  
+  write_csv(
+    LastWeekGames,
+    here(
+      "Data",
+      paste0("VoA", season),
+      "AccuracyMetrics",
+      "Games",
+      paste0(
+        "VoA",
+        season,
+        week_text,
+        "1",
+        week_text,
+        cfb_week,
+        "GameAccuracyMetrics.csv"
+      )
+    )
+  )
+
   ### writing csv with just weekly average calculated for accuracy metrics
-  write_csv(WeekMeanAccuracyMetrics, here("Data", paste0("VoA", season), "AccuracyMetrics", paste0("VoA", season, week_text, "1", week_text, cfb_week, "WeekAccuracyMetrics.csv")))
-  
-} else if (as.numeric(cfb_week) >= 2){
-  ### reading in csv of previous games with error calculated, binding current week's games to that 
-  PrevWeekGameAccuracyMetrics <- read_csv(here("Data", paste0("VoA", season), "AccuracyMetrics", "Games", paste0("VoA", season, week_text, "1", week_text, as.character(as.numeric(cfb_week) - 1), "GameAccuracyMetrics.csv")))
+  write_csv(
+    WeekMeanAccuracyMetrics,
+    here(
+      "Data",
+      paste0("VoA", season),
+      "AccuracyMetrics",
+      paste0(
+        "VoA",
+        season,
+        week_text,
+        "1",
+        week_text,
+        cfb_week,
+        "WeekAccuracyMetrics.csv"
+      )
+    )
+  )
+} else if (as.numeric(cfb_week) >= 2) {
+  ### reading in csv of previous games with error calculated, binding current week's games to that
+  PrevWeekGameAccuracyMetrics <- read_csv(here(
+    "Data",
+    paste0("VoA", season),
+    "AccuracyMetrics",
+    "Games",
+    paste0(
+      "VoA",
+      season,
+      week_text,
+      "1",
+      week_text,
+      as.character(as.numeric(cfb_week) - 1),
+      "GameAccuracyMetrics.csv"
+    )
+  ))
   CompletedGames <- rbind(PrevWeekGameAccuracyMetrics, LastWeekGames)
-  
+
   ### writing csv with individual games + accuracy metrics
-  write_csv(CompletedGames, here("Data", paste0("VoA", season), "AccuracyMetrics", "Games", paste0("VoA", season, week_text, "1", week_text, cfb_week, "GameAccuracyMetrics.csv")))
-  
+  write_csv(
+    CompletedGames,
+    here(
+      "Data",
+      paste0("VoA", season),
+      "AccuracyMetrics",
+      "Games",
+      paste0(
+        "VoA",
+        season,
+        week_text,
+        "1",
+        week_text,
+        cfb_week,
+        "GameAccuracyMetrics.csv"
+      )
+    )
+  )
+
   ### reading in csv of weekly average, binding current week to it
-  PrevWeeklyAvgAccuracyMetrics <- read_csv(here("Data", paste0("VoA", season), "AccuracyMetrics", paste0("VoA", season, week_text, "1", week_text, as.character(as.numeric(cfb_week) - 1), "WeekAccuracyMetrics.csv")))
+  PrevWeeklyAvgAccuracyMetrics <- read_csv(here(
+    "Data",
+    paste0("VoA", season),
+    "AccuracyMetrics",
+    paste0(
+      "VoA",
+      season,
+      week_text,
+      "1",
+      week_text,
+      as.character(as.numeric(cfb_week) - 1),
+      "WeekAccuracyMetrics.csv"
+    )
+  ))
   CompletedWeeks <- rbind(PrevWeeklyAvgAccuracyMetrics, WeekMeanAccuracyMetrics)
-  
+
   ### writing csv with just weekly average calculated for accuracy metrics
-  write_csv(CompletedWeeks, here("Data", paste0("VoA", season), "AccuracyMetrics", paste0("VoA", season, week_text, "1", week_text, cfb_week, "WeekAccuracyMetrics.csv")))
-} else{
+  write_csv(
+    CompletedWeeks,
+    here(
+      "Data",
+      paste0("VoA", season),
+      "AccuracyMetrics",
+      paste0(
+        "VoA",
+        season,
+        week_text,
+        "1",
+        week_text,
+        cfb_week,
+        "WeekAccuracyMetrics.csv"
+      )
+    )
+  )
+} else {
   print("week not properly entered")
 }
 
 
-if (as.numeric(cfb_week) >= 5){
+if (as.numeric(cfb_week) >= 5) {
   SeasonMetrics <- CompletedGames |>
     group_by(season) |>
-    summarize(games = nrow(CompletedGames),
-              mean_ae = mean(abs_error),
-              mean_vegas_ae = mean(vegas_abs_error),
-              mean_se = mean(sqd_error),
-              mean_vegas_se = mean(vegas_sqd_error),
-              RMSE = rmse(result, proj_margin),
-              vegas_RMSE = rmse(result, mean_spread),
-              straight_up_win_pct = sum(straight_up_win) / nrow(CompletedGames),
-              vegas_straight_up_win_pct = sum(vegas_straight_up_win) / nrow(CompletedGames),
-              ATS_win_pct = sum(ATS_win) / nrow(CompletedGames),
-              AE_ATS_win_pct = sum(AE_ATS_win) / nrow(CompletedGames)) |>
+    summarize(
+      games = nrow(CompletedGames),
+      mean_ae = mean(abs_error),
+      mean_vegas_ae = mean(vegas_abs_error),
+      mean_se = mean(sqd_error),
+      mean_vegas_se = mean(vegas_sqd_error),
+      RMSE = rmse(result, proj_margin),
+      vegas_RMSE = rmse(result, mean_spread),
+      straight_up_win_pct = sum(straight_up_win) / nrow(CompletedGames),
+      vegas_straight_up_win_pct = sum(vegas_straight_up_win) /
+        nrow(CompletedGames),
+      ATS_win_pct = sum(ATS_win) / nrow(CompletedGames),
+      AE_ATS_win_pct = sum(AE_ATS_win) / nrow(CompletedGames)
+    ) |>
     drop_na()
-  
-  write_csv(SeasonMetrics, here("Data", paste0("VoA", season), "AccuracyMetrics", paste0("VoA", season, "SeasonAccuracyMetrics.csv")))
-} else{
+
+  write_csv(
+    SeasonMetrics,
+    here(
+      "Data",
+      paste0("VoA", season),
+      "AccuracyMetrics",
+      paste0("VoA", season, "SeasonAccuracyMetrics.csv")
+    )
+  )
+} else {
   print("season metrics not being calculated yet!")
 }
 
 
 ##### Making Plots of Error Throughout Season #####
 
-if (as.numeric(cfb_week) >= 4){
+if (as.numeric(cfb_week) >= 4) {
   WeeklyMAEPlot <- ggplot(CompletedWeeks, aes(x = week, y = mean_ae)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
@@ -199,10 +381,20 @@ if (as.numeric(cfb_week) >= 4){
     geom_point(mapping = aes(y = mean_vegas_ae), col = "blue", size = 5) +
     xlab("Week") +
     ylab("MAE") +
-    labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org"
+    ) +
     ggtitle(paste(season, "MAE by Week"), subtitle = "Vegas Metric in Blue") +
-    theme(plot.title = element_text(size = 35, hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
-  
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      plot.subtitle = element_text(hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+
   WeeklyRMSEPlot <- ggplot(CompletedWeeks, aes(x = week, y = RMSE)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
@@ -211,29 +403,229 @@ if (as.numeric(cfb_week) >= 4){
     geom_point(mapping = aes(y = vegas_RMSE), col = "blue", size = 5) +
     xlab("Week") +
     ylab("RMSE") +
-    labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org"
+    ) +
     ggtitle(paste(season, "RMSE by Week"), subtitle = "Vegas Metric in Blue") +
-    theme(plot.title = element_text(size = 35, hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
-  
-  WeeklyWinPctPlot <- ggplot(CompletedWeeks, aes(x = week, y = straight_up_win_pct)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      plot.subtitle = element_text(hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+
+  WeeklyWinPctPlot <- ggplot(
+    CompletedWeeks,
+    aes(x = week, y = straight_up_win_pct)
+  ) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
-    geom_line(mapping = aes(y = vegas_straight_up_win_pct), col = "blue", linewidth = 1.5) +
-    geom_point(mapping = aes(y = vegas_straight_up_win_pct), col = "blue", size = 5) +
+    geom_line(
+      mapping = aes(y = vegas_straight_up_win_pct),
+      col = "blue",
+      linewidth = 1.5
+    ) +
+    geom_point(
+      mapping = aes(y = vegas_straight_up_win_pct),
+      col = "blue",
+      size = 5
+    ) +
     xlab("Week") +
     ylab("Correct Winner Pred (%)") +
-    labs(caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org") +
-    ggtitle(paste(season, "Correct Predicted Winner (%) by Week"), subtitle = "Vegas Metric in Blue") +
-    theme(plot.title = element_text(size = 35, hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(size = 20), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 22), axis.title.y = element_text(size = 22), legend.text = element_text(size = 20))
-  
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR and stats.ncaa.org"
+    ) +
+    ggtitle(
+      paste(season, "Correct Predicted Winner (%) by Week"),
+      subtitle = "Vegas Metric in Blue"
+    ) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      plot.subtitle = element_text(hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+
   ### displaying plots
   WeeklyMAEPlot
   WeeklyRMSEPlot
   WeeklyWinPctPlot
-} else{
+} else {
   print("no plots of error/win pct by week until Week 4")
 }
 
 ### checking remaining API calls
 cfbd_api_key_info()
+
+# poopypants <- fread(here(
+#   "Data",
+#   "VoA2025",
+#   "AccuracyMetrics",
+#   "Games",
+#   "VoA2025Week1Week20GameAccuracyMetrics.csv"
+# ))
+# poopypants2 <- cfbd_betting_lines(year = 2025)
+# # poopypants3 <- poopypants2 |> select(game_id, home_moneyline, away_moneyline)
+# poopypants_dk <- poopypants2 |>
+#   filter(provider == "DraftKings") |>
+#   select(game_id, home_moneyline, away_moneyline)
+# poopypants_espn <- poopypants2 |>
+#   filter(provider == "ESPN Bet") |>
+#   select(game_id, home_moneyline, away_moneyline)
+# poopypants_bovada <- poopypants2 |>
+#   filter(provider == "Bovada") |>
+#   select(game_id, home_moneyline, away_moneyline)
+
+# poopypants_dk2 <- left_join(poopypants_dk, poopypants, by = "game_id") |>
+#   drop_na(
+#     straight_up_win,
+#     proj_margin,
+#     home_moneyline,
+#     away_moneyline
+#   ) |>
+#   mutate(
+#     profit = case_when(
+#       straight_up_win == 0 ~ -1,
+#       ### home wins
+#       proj_margin < 0 & home_moneyline < 0 ~ (1 *
+#         (100 / abs(home_moneyline))),
+#       proj_margin < 0 & home_moneyline > 0 ~ (1 *
+#         (home_moneyline / 100)),
+#       ### away wins
+#       proj_margin > 0 & away_moneyline < 0 ~ (1 *
+#         (100 / abs(away_moneyline))),
+#       proj_margin > 0 & away_moneyline > 0 ~ (1 *
+#         (away_moneyline / 100)),
+#     ),
+#     Stake5_profit = case_when(
+#       straight_up_win == 0 ~ -5,
+#       ### home wins
+#       proj_margin < 0 & home_moneyline < 0 ~ (5 *
+#         (100 / abs(home_moneyline))),
+#       proj_margin < 0 & home_moneyline > 0 ~ (5 *
+#         (home_moneyline / 100)),
+#       ### away wins
+#       proj_margin > 0 & away_moneyline < 0 ~ (5 *
+#         (100 / abs(away_moneyline))),
+#       proj_margin > 0 & away_moneyline > 0 ~ (5 *
+#         (away_moneyline / 100))
+#     )
+#   ) |>
+#   mutate(
+#     total_payout = case_when(straight_up_win == 0 ~ -1, TRUE ~ 1 + profit),
+#     Stake5_payout = case_when(straight_up_win == 0 ~ -5, TRUE ~ 5 + profit)
+#   )
+# poopypants_espn2 <- left_join(poopypants_espn, poopypants, by = "game_id") |>
+#   drop_na(
+#     straight_up_win,
+#     proj_margin,
+#     home_moneyline,
+#     away_moneyline
+#   ) |>
+#   mutate(
+#     profit = case_when(
+#       straight_up_win == 0 ~ -1,
+#       ### home wins
+#       proj_margin < 0 & home_moneyline < 0 ~ (1 *
+#         (100 / abs(home_moneyline))),
+#       proj_margin < 0 & home_moneyline > 0 ~ (1 *
+#         (home_moneyline / 100)),
+#       ### away wins
+#       proj_margin > 0 & away_moneyline < 0 ~ (1 *
+#         (100 / abs(away_moneyline))),
+#       proj_margin > 0 & away_moneyline > 0 ~ (1 *
+#         (away_moneyline / 100)),
+#     ),
+#     Stake5_profit = case_when(
+#       straight_up_win == 0 ~ -5,
+#       ### home wins
+#       proj_margin < 0 & home_moneyline < 0 ~ (5 *
+#         (100 / abs(home_moneyline))),
+#       proj_margin < 0 & home_moneyline > 0 ~ (5 *
+#         (home_moneyline / 100)),
+#       ### away wins
+#       proj_margin > 0 & away_moneyline < 0 ~ (5 *
+#         (100 / abs(away_moneyline))),
+#       proj_margin > 0 & away_moneyline > 0 ~ (5 *
+#         (away_moneyline / 100))
+#     )
+#   ) |>
+#   mutate(
+#     total_payout = case_when(straight_up_win == 0 ~ -1, TRUE ~ 1 + profit),
+#     Stake5_payout = case_when(straight_up_win == 0 ~ -5, TRUE ~ 5 + profit)
+#   )
+# poopypants_bovada2 <- left_join(
+#   poopypants_bovada,
+#   poopypants,
+#   by = "game_id"
+# ) |>
+#   drop_na(
+#     straight_up_win,
+#     proj_margin,
+#     home_moneyline,
+#     away_moneyline
+#   ) |>
+#   mutate(
+#     profit = case_when(
+#       straight_up_win == 0 ~ -1,
+#       ### home wins
+#       proj_margin < 0 & home_moneyline < 0 ~ (1 *
+#         (100 / abs(home_moneyline))),
+#       proj_margin < 0 & home_moneyline > 0 ~ (1 *
+#         (home_moneyline / 100)),
+#       ### away wins
+#       proj_margin > 0 & away_moneyline < 0 ~ (1 *
+#         (100 / abs(away_moneyline))),
+#       proj_margin > 0 & away_moneyline > 0 ~ (1 *
+#         (away_moneyline / 100)),
+#     ),
+#     Stake5_profit = case_when(
+#       straight_up_win == 0 ~ -5,
+#       ### home wins
+#       proj_margin < 0 & home_moneyline < 0 ~ (5 *
+#         (100 / abs(home_moneyline))),
+#       proj_margin < 0 & home_moneyline > 0 ~ (5 *
+#         (home_moneyline / 100)),
+#       ### away wins
+#       proj_margin > 0 & away_moneyline < 0 ~ (5 *
+#         (100 / abs(away_moneyline))),
+#       proj_margin > 0 & away_moneyline > 0 ~ (5 *
+#         (away_moneyline / 100))
+#     )
+#   ) |>
+#   mutate(
+#     total_payout = case_when(straight_up_win == 0 ~ -1, TRUE ~ 1 + profit),
+#     Stake5_payout = case_when(straight_up_win == 0 ~ -5, TRUE ~ 5 + profit)
+#   )
+
+# poopypants_all <- rbind(poopypants_dk2, poopypants_espn2, poopypants_bovada2)
+
+# poopypants4 <- left_join(poopypants, poopypants2, by = "game_id") |>
+#   drop_na(
+#     straight_up_win,
+#     proj_margin,
+#     mean_home_moneyline,
+#     mean_away_moneyline
+#   ) |>
+#   mutate(
+#     profit = case_when(
+#       straight_up_win == 0 ~ -1,
+#       ### home wins
+#       proj_margin < 0 & mean_home_moneyline < 0 ~ (1 *
+#         (100 / abs(mean_home_moneyline))),
+#       proj_margin < 0 & mean_home_moneyline > 0 ~ (1 *
+#         (mean_home_moneyline / 100)),
+#       ### away wins
+#       proj_margin > 0 & mean_away_moneyline < 0 ~ (1 *
+#         (100 / abs(mean_away_moneyline))),
+#       proj_margin > 0 & mean_away_moneyline > 0 ~ (1 *
+#         (mean_away_moneyline / 100)),
+#     )
+#   )
