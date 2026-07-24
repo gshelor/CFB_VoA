@@ -598,7 +598,17 @@ extract_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school")
+    left_join(def_adj, by = "school") #|>
+  # mutate(
+  #   adj_off_epa = case_when(
+  #     classification == "fcs" ~ adj_off_epa / 2,
+  #     TRUE ~ adj_off_epa
+  #   ),
+  #   adj_def_epa = case_when(
+  #     classification == "fcs" ~ adj_def_epa * 2,
+  #     TRUE ~ adj_def_epa
+  #   )
+  # )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(epa_mixed_model)
@@ -758,7 +768,17 @@ extract_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school")
+    left_join(def_adj, by = "school") #|>
+  # mutate(
+  #   adj_off_explosiveness = case_when(
+  #     classification == "fcs" ~ adj_off_explosiveness / 2,
+  #     TRUE ~ adj_off_explosiveness
+  #   ),
+  #   adj_def_explosiveness = case_when(
+  #     classification == "fcs" ~ adj_def_explosiveness * 2,
+  #     TRUE ~ adj_def_explosiveness
+  #   )
+  # )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(exp_mixed_model)
@@ -870,9 +890,27 @@ extract_pbp_stats <- function(
     left_join(off_adj, by = "school") |>
     left_join(def_adj, by = "school") |>
     mutate(
-      adj_off_ppg = adj_off_pts_per_play * mean(adj_off_plays_pg) * 1.5,
-      adj_def_ppg = adj_def_pts_per_play * mean(adj_def_plays_pg) * 1.5
-    )
+      adj_off_ppg = adj_off_pts_per_play * mean(adj_off_plays_pg) * 1.25,
+      adj_def_ppg = adj_def_pts_per_play * mean(adj_def_plays_pg) * 1.25
+    ) #|>
+  # mutate(
+  #   adj_off_ppg = case_when(
+  #     classification == "fcs" ~ adj_off_pts_per_play *
+  #       mean(adj_off_plays_pg) /
+  #       1.75,
+  #     TRUE ~ adj_off_pts_per_play *
+  #       mean(adj_off_plays_pg) *
+  #       1.25
+  #   ),
+  #   adj_def_ppg = case_when(
+  #     classification == "fcs" ~ adj_def_pts_per_play *
+  #       mean(adj_def_plays_pg) *
+  #       2,
+  #     TRUE ~ adj_def_pts_per_play *
+  #       mean(adj_def_plays_pg) *
+  #       1.05
+  #   )
+  # )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(ppg_mixed_model)
@@ -897,8 +935,8 @@ extract_pbp_stats <- function(
   #   left_join(off_adj, by = "school") |>
   #   left_join(def_adj, by = "school") |>
   #   mutate(
-  #     adj_off_ppg = adj_off_pts_per_play * mean(adj_off_plays_pg) * 1.5,
-  #     adj_def_ppg = adj_def_pts_per_play * mean(adj_def_plays_pg) * 1.5
+  #     adj_off_ppg = adj_off_pts_per_play * mean(adj_off_plays_pg) * 1.25,
+  #     adj_def_ppg = adj_def_pts_per_play * mean(adj_def_plays_pg) * 1.25
   #   )
 
   ### yards/play opponent adjustment
@@ -970,7 +1008,17 @@ extract_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school")
+    left_join(def_adj, by = "school") #|>
+  # mutate(
+  #   adj_off_ypp = case_when(
+  #     classification == "fcs" ~ adj_off_ypp / 2,
+  #     TRUE ~ adj_off_ypp
+  #   ),
+  #   adj_def_ypp = case_when(
+  #     classification == "fcs" ~ adj_def_ypp * 2,
+  #     TRUE ~ adj_def_ypp
+  #   )
+  # )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(ypp_mixed_model)
@@ -1151,19 +1199,7 @@ extract_pbp_stats <- function(
       real_pos_team = as.factor(real_pos_team),
       real_def_pos_team = as.factor(real_def_pos_team)
     ) |>
-    drop_na(
-      game_id,
-      home,
-      away,
-      real_pos_team,
-      pos_team_subdivision,
-      real_def_pos_team,
-      def_pos_team_subdivision,
-      play_pts_scored,
-      real_offense_conference,
-      real_defense_conference,
-      home_neutral
-    )
+    drop_na()
 
   ### fitting mixed effects model, treating posessing team and defensive team as random effects
   set.seed(802)
@@ -1294,6 +1330,19 @@ extract_preseason_pbp_stats <- function(
   # XPts_PY1,
   STPlays_PY1
 ) {
+  ### taking PY1 teams and filtering to get teams that were in FCS last year
+  ## going to use it to try to prevent FCS teams from ranking absurdly high in the preseason ratings
+  ## it'll be arbitrary but at this point I've tried anything statistical like ridge regression or mixed effects to do it automatically and it's just not working
+  ## some of that may be RAM related, but most of it is probably just that I tried things that didn't work and I'm out of ideas
+  ## anyway here's wonderwall
+  ### D1Teams_PY1 should already be in the environment from the data loading section so I'm hoping it'll just recognize it without me needing to make it a specific argument to the function
+  ## if not it'll probably be easy and fine
+  PY1_FCS <- D1Teams_PY1 |>
+    filter(classification == "fcs")
+  PY2_FCS <- D1Teams_PY2 |>
+    filter(classification == "fcs")
+  PY3_FCS <- D1Teams_PY3 |>
+    filter(classification == "fcs")
   ### PY3 stat collection
   ### offensive and defensive stats
   ### Metrics from rushpass_plays
@@ -2569,7 +2618,17 @@ extract_preseason_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school")
+    left_join(def_adj, by = "school") |>
+    mutate(
+      adj_off_epa_PY3 = case_when(
+        school %in% PY3_FCS$school ~ adj_off_epa_PY3 / 2,
+        TRUE ~ adj_off_epa_PY3
+      ),
+      adj_def_epa_PY3 = case_when(
+        school %in% PY3_FCS$school ~ adj_def_epa_PY3 * 2,
+        TRUE ~ adj_def_epa_PY3
+      )
+    )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(epa_mixed_model)
@@ -2729,7 +2788,17 @@ extract_preseason_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school")
+    left_join(def_adj, by = "school") |>
+    mutate(
+      adj_off_explosiveness_PY3 = case_when(
+        school %in% PY3_FCS$school ~ adj_off_explosiveness_PY3 / 2,
+        TRUE ~ adj_off_explosiveness_PY3
+      ),
+      adj_def_explosiveness_PY3 = case_when(
+        school %in% PY3_FCS$school ~ adj_def_explosiveness_PY3 * 2,
+        TRUE ~ adj_def_explosiveness_PY3
+      )
+    )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(exp_mixed_model)
@@ -2829,12 +2898,22 @@ extract_preseason_pbp_stats <- function(
     left_join(off_adj, by = "school") |>
     left_join(def_adj, by = "school") |>
     mutate(
-      adj_off_ppg_PY3 = adj_off_pts_per_play_PY3 *
-        mean(adj_off_plays_pg_PY3) *
-        1.5,
-      adj_def_ppg_PY3 = adj_def_pts_per_play_PY3 *
-        mean(adj_def_plays_pg_PY3) *
-        1.5
+      adj_off_ppg_PY3 = case_when(
+        school %in% PY3_FCS$school ~ adj_off_pts_per_play_PY3 *
+          mean(adj_off_plays_pg_PY3) /
+          2,
+        TRUE ~ adj_off_pts_per_play_PY3 *
+          mean(adj_off_plays_pg_PY3) *
+          1.15
+      ),
+      adj_def_ppg_PY3 = case_when(
+        school %in% PY3_FCS$school ~ adj_def_pts_per_play_PY3 *
+          mean(adj_def_plays_pg_PY3) *
+          2,
+        TRUE ~ adj_def_pts_per_play_PY3 *
+          mean(adj_def_plays_pg_PY3) *
+          1.15
+      )
     )
 
   ### Extract random effects (team adjustments)
@@ -2860,8 +2939,8 @@ extract_preseason_pbp_stats <- function(
   #   left_join(off_adj, by = "school") |>
   #   left_join(def_adj, by = "school") |>
   #   mutate(
-  #     adj_off_ppg = adj_off_pts_per_play * mean(adj_off_plays_pg) * 1.5,
-  #     adj_def_ppg = adj_def_pts_per_play * mean(adj_def_plays_pg) * 1.5
+  #     adj_off_ppg = adj_off_pts_per_play * mean(adj_off_plays_pg) * 1.25,
+  #     adj_def_ppg = adj_def_pts_per_play * mean(adj_def_plays_pg) * 1.25
   #   )
 
   ### yards/play opponent adjustment
@@ -2933,7 +3012,17 @@ extract_preseason_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school")
+    left_join(def_adj, by = "school") |>
+    mutate(
+      adj_off_ypp_PY3 = case_when(
+        school %in% PY3_FCS$school ~ adj_off_ypp_PY3 / 2,
+        TRUE ~ adj_off_ypp_PY3
+      ),
+      adj_def_ypp_PY3 = case_when(
+        school %in% PY3_FCS$school ~ adj_def_ypp_PY3 * 2,
+        TRUE ~ adj_def_ypp_PY3
+      )
+    )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(ypp_mixed_model)
@@ -3270,7 +3359,17 @@ extract_preseason_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school")
+    left_join(def_adj, by = "school") |>
+    mutate(
+      adj_off_epa_PY2 = case_when(
+        school %in% PY2_FCS$school ~ adj_off_epa_PY2 / 2,
+        TRUE ~ adj_off_epa_PY2
+      ),
+      adj_def_epa_PY2 = case_when(
+        school %in% PY2_FCS$school ~ adj_def_epa_PY2 * 2,
+        TRUE ~ adj_def_epa_PY2
+      )
+    )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(epa_mixed_model)
@@ -3430,7 +3529,17 @@ extract_preseason_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school")
+    left_join(def_adj, by = "school") |>
+    mutate(
+      adj_off_explosiveness_PY2 = case_when(
+        school %in% PY2_FCS$school ~ adj_off_explosiveness_PY2 / 2,
+        TRUE ~ adj_off_explosiveness_PY2
+      ),
+      adj_def_explosiveness_PY2 = case_when(
+        school %in% PY2_FCS$school ~ adj_def_explosiveness_PY2 * 2,
+        TRUE ~ adj_def_explosiveness_PY2
+      )
+    )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(exp_mixed_model)
@@ -3530,12 +3639,22 @@ extract_preseason_pbp_stats <- function(
     left_join(off_adj, by = "school") |>
     left_join(def_adj, by = "school") |>
     mutate(
-      adj_off_ppg_PY2 = adj_off_pts_per_play_PY2 *
-        mean(adj_off_plays_pg_PY2) *
-        1.5,
-      adj_def_ppg_PY2 = adj_def_pts_per_play_PY2 *
-        mean(adj_def_plays_pg_PY2) *
-        1.5
+      adj_off_ppg_PY2 = case_when(
+        school %in% PY2_FCS$school ~ adj_off_pts_per_play_PY2 *
+          mean(adj_off_plays_pg_PY2) /
+          1.75,
+        TRUE ~ adj_off_pts_per_play_PY2 *
+          mean(adj_off_plays_pg_PY2) *
+          1.25
+      ),
+      adj_def_ppg_PY2 = case_when(
+        school %in% PY2_FCS$school ~ adj_def_pts_per_play_PY2 *
+          mean(adj_def_plays_pg_PY2) *
+          1.75,
+        TRUE ~ adj_def_pts_per_play_PY2 *
+          mean(adj_def_plays_pg_PY2) *
+          1.15
+      )
     )
 
   ### Extract random effects (team adjustments)
@@ -3561,8 +3680,8 @@ extract_preseason_pbp_stats <- function(
   #   left_join(off_adj, by = "school") |>
   #   left_join(def_adj, by = "school") |>
   #   mutate(
-  #     adj_off_ppg = adj_off_pts_per_play * mean(adj_off_plays_pg) * 1.5,
-  #     adj_def_ppg = adj_def_pts_per_play * mean(adj_def_plays_pg) * 1.5
+  #     adj_off_ppg = adj_off_pts_per_play * mean(adj_off_plays_pg) * 1.25,
+  #     adj_def_ppg = adj_def_pts_per_play * mean(adj_def_plays_pg) * 1.25
   #   )
 
   ### yards/play opponent adjustment
@@ -3634,7 +3753,17 @@ extract_preseason_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school")
+    left_join(def_adj, by = "school") |>
+    mutate(
+      adj_off_ypp_PY2 = case_when(
+        school %in% PY2_FCS$school ~ adj_off_ypp_PY2 / 2,
+        TRUE ~ adj_off_ypp_PY2
+      ),
+      adj_def_ypp_PY2 = case_when(
+        school %in% PY2_FCS$school ~ adj_def_ypp_PY2 * 2,
+        TRUE ~ adj_def_ypp_PY2
+      )
+    )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(ypp_mixed_model)
@@ -3971,7 +4100,17 @@ extract_preseason_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school")
+    left_join(def_adj, by = "school") |>
+    mutate(
+      adj_off_epa_PY1 = case_when(
+        school %in% PY1_FCS$school ~ adj_off_epa_PY1 / 2,
+        TRUE ~ adj_off_epa_PY1
+      ),
+      adj_def_epa_PY1 = case_when(
+        school %in% PY1_FCS$school ~ adj_def_epa_PY1 * 2,
+        TRUE ~ adj_def_epa_PY1
+      )
+    )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(epa_mixed_model)
@@ -4131,7 +4270,17 @@ extract_preseason_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school")
+    left_join(def_adj, by = "school") |>
+    mutate(
+      adj_off_explosiveness_PY1 = case_when(
+        school %in% PY1_FCS$school ~ adj_off_explosiveness_PY1 / 2,
+        TRUE ~ adj_off_explosiveness_PY1
+      ),
+      adj_def_explosiveness_PY1 = case_when(
+        school %in% PY1_FCS$school ~ adj_def_explosiveness_PY1 * 2,
+        TRUE ~ adj_def_explosiveness_PY1
+      )
+    )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(exp_mixed_model)
@@ -4231,12 +4380,22 @@ extract_preseason_pbp_stats <- function(
     left_join(off_adj, by = "school") |>
     left_join(def_adj, by = "school") |>
     mutate(
-      adj_off_ppg_PY1 = adj_off_pts_per_play_PY1 *
-        mean(adj_off_plays_pg_PY1) *
-        1.5,
-      adj_def_ppg_PY1 = adj_def_pts_per_play_PY1 *
-        mean(adj_def_plays_pg_PY1) *
-        1.5
+      adj_off_ppg_PY1 = case_when(
+        school %in% PY1_FCS$school ~ adj_off_pts_per_play_PY1 *
+          mean(adj_off_plays_pg_PY1) /
+          1.75,
+        TRUE ~ adj_off_pts_per_play_PY1 *
+          mean(adj_off_plays_pg_PY1) *
+          1.25
+      ),
+      adj_def_ppg_PY1 = case_when(
+        school %in% PY1_FCS$school ~ adj_def_pts_per_play_PY1 *
+          mean(adj_def_plays_pg_PY1) *
+          2,
+        TRUE ~ adj_def_pts_per_play_PY1 *
+          mean(adj_def_plays_pg_PY1) *
+          1.05
+      )
     )
 
   ### Extract random effects (team adjustments)
@@ -4262,8 +4421,8 @@ extract_preseason_pbp_stats <- function(
   #   left_join(off_adj, by = "school") |>
   #   left_join(def_adj, by = "school") |>
   #   mutate(
-  #     adj_off_ppg = adj_off_pts_per_play * mean(adj_off_plays_pg) * 1.5,
-  #     adj_def_ppg = adj_def_pts_per_play * mean(adj_def_plays_pg) * 1.5
+  #     adj_off_ppg = adj_off_pts_per_play * mean(adj_off_plays_pg) * 1.25,
+  #     adj_def_ppg = adj_def_pts_per_play * mean(adj_def_plays_pg) * 1.25
   #   )
 
   ### yards/play opponent adjustment
@@ -4335,7 +4494,17 @@ extract_preseason_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school")
+    left_join(def_adj, by = "school") |>
+    mutate(
+      adj_off_ypp_PY1 = case_when(
+        school %in% PY1_FCS$school ~ adj_off_ypp_PY1 / 2,
+        TRUE ~ adj_off_ypp_PY1
+      ),
+      adj_def_ypp_PY1 = case_when(
+        school %in% PY1_FCS$school ~ adj_def_ypp_PY1 * 2,
+        TRUE ~ adj_def_ypp_PY1
+      )
+    )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(ypp_mixed_model)

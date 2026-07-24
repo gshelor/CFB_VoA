@@ -416,51 +416,45 @@ if (as.integer(cfb_week) == 0) {
   ### getting team info for last 4 years
   ## using 4 years to train the model is a pain in my ass from a time and RAM standpoint, so holding off on that for now
   ## filtering to make sure each dataframe only includes D1 teams
-  D1Teams <- cfbd_team_info(only_fbs = TRUE, year = as.integer(year)) |>
-    filter(classification == "fbs")
-  D1Teams_PY4 <- cfbd_team_info(
-    only_fbs = FALSE,
-    year = as.integer(year) - 4
-  ) |>
-    filter(school %in% D1Teams$school)
+  D1Teams <- cfbd_team_info(only_fbs = FALSE, year = as.integer(year)) |>
+    filter(classification == "fbs" | classification == "fcs")
+  # D1Teams_PY4 <- cfbd_team_info(
+  #   only_fbs = FALSE,
+  #   year = as.integer(year) - 4
+  # ) |>
+  #   filter(school %in% D1Teams$school)|>
+  # filter(classification == "fbs" | classification == "fcs")
   D1Teams_PY3 <- cfbd_team_info(
     only_fbs = FALSE,
     year = as.integer(year) - 3
   ) |>
-    filter(school %in% D1Teams$school)
+    filter(school %in% D1Teams$school) |>
+    filter(classification == "fbs" | classification == "fcs")
   D1Teams_PY2 <- cfbd_team_info(
     only_fbs = FALSE,
     year = as.integer(year) - 2
   ) |>
-    filter(school %in% D1Teams$school)
+    filter(school %in% D1Teams$school) |>
+    filter(classification == "fbs" | classification == "fcs")
   D1Teams_PY1 <- cfbd_team_info(
     only_fbs = FALSE,
     year = as.integer(year) - 1
   ) |>
-    filter(school %in% D1Teams$school)
+    filter(school %in% D1Teams$school) |>
+    filter(classification == "fbs" | classification == "fcs")
 
   # ### making sure the elevation column is numeric
   # VoAVariables$elevation <- as.numeric(VoAVariables$elevation)
 
-  ### storing names of FCS teams for when they need to be filtered out in PY stats grabs
-  # PY3Teams <- c("Delaware", "Missouri State", "Kennesaw State", "Sam Houston State", "Jacksonville State", "Sam Houston")
-  # PY2Teams <- c("Delaware", "Missouri State", "Kennesaw State")
-  # PY1Teams <- c("Delaware", "Missouri State")
-  ### reading in data for 3 previous years
-  ### reading in FCS data first, made with FCSCleanup.R
-  # FCS_PY3 <- read_parquet(here("Data", paste0("VoA", year), "FCSPrevYears", "FCS_PY3.parquet"))
-  # FCS_PY2 <- read_parquet(here("Data", paste0("VoA", year), "FCSPrevYears", "FCS_PY2.parquet"))
-  # FCS_PY1 <- read_parquet(here("Data", paste0("VoA", year), "FCSPrevYears", "FCS_PY1.parquet"))
-
   ### pulling in completed games as part of opponent-adjustment of stats later
   ### PY4 completed games
-  CompletedGames_PY4 <- cfbd_game_info(as.integer(year) - 4) |>
-    filter(completed == TRUE) |>
-    filter(
-      home_team %in% D1Teams_PY4$school | away_team %in% D1Teams_PY4$school
-    )
-  CompletedNeutralGames_PY4 <- CompletedGames_PY4 |>
-    filter(neutral_site == TRUE)
+  # CompletedGames_PY4 <- cfbd_game_info(as.integer(year) - 4) |>
+  #   filter(completed == TRUE) |>
+  #   filter(
+  #     home_team %in% D1Teams_PY4$school | away_team %in% D1Teams_PY4$school
+  #   )
+  # CompletedNeutralGames_PY4 <- CompletedGames_PY4 |>
+  #   filter(neutral_site == TRUE)
   ### PY3 completed games
   CompletedGames_PY3 <- cfbd_game_info(as.integer(year) - 3) |>
     filter(completed == TRUE) |>
@@ -487,8 +481,8 @@ if (as.integer(cfb_week) == 0) {
     filter(neutral_site == TRUE)
 
   ### loading in play-by-play data, creating VoA Variables dfs
-  PBP_PY4 <- load_cfb_pbp(seasons = as.integer(year) - 4) |>
-    filter(home %in% D1Teams_PY4$school | away %in% D1Teams_PY4$school) #|>
+  # PBP_PY4 <- load_cfb_pbp(seasons = as.integer(year) - 4) |>
+  #   filter(home %in% D1Teams_PY4$school | away %in% D1Teams_PY4$school) #|>
   # filter(
   #   home %in%
   #     CompletedGames_PY4$home_team &
@@ -496,12 +490,12 @@ if (as.integer(cfb_week) == 0) {
   #     away %in% CompletedGames_PY4$home_team &
   #     away %in% CompletedGames_PY4$away_team
   # )
-  PBP_PY4 <- fix_pbp_subdivision_nas(PBP_PY4, D1Teams_PY4) |>
-    mutate(epa_ppa_mean = rowMeans(select(PBP_PY4, c(EPA, ppa)), na.rm = TRUE))
-  VoATrain_PY4 <- create_voavarstrain_df(PY4, D1Teams_PY4, PBP_PY4)
+  # PBP_PY4 <- fix_pbp_subdivision_nas(PBP_PY4, D1Teams_PY4) |>
+  #   mutate(epa_ppa_mean = rowMeans(select(PBP_PY4, c(EPA, ppa)), na.rm = TRUE))
+  # VoATrain_PY4 <- create_voavarstrain_df(PY4, D1Teams_PY4, PBP_PY4)
 
   PBP_PY3 <- load_cfb_pbp(seasons = as.integer(year) - 3) |>
-    filter(home %in% D1Teams_PY3$school | away %in% D1Teams_PY3$school) #|>
+    filter(home %in% D1Teams_PY3$school & away %in% D1Teams_PY3$school) #|>
   # filter(
   #   home %in%
   #     CompletedGames_PY3$home_team &
@@ -514,7 +508,7 @@ if (as.integer(cfb_week) == 0) {
   VoATrain_PY3 <- create_voavarstrain_df(PY3, D1Teams_PY3, PBP_PY3)
 
   PBP_PY2 <- load_cfb_pbp(seasons = as.integer(year) - 2) |>
-    filter(home %in% D1Teams_PY2$school | away %in% D1Teams_PY2$school) #|>
+    filter(home %in% D1Teams_PY2$school & away %in% D1Teams_PY2$school) #|>
   # filter(
   #   home %in%
   #     CompletedGames_PY2$home_team &
@@ -527,7 +521,7 @@ if (as.integer(cfb_week) == 0) {
   VoATrain_PY2 <- create_voavarstrain_df(PY2, D1Teams_PY2, PBP_PY2)
 
   PBP_PY1 <- load_cfb_pbp(seasons = as.integer(year) - 1) |>
-    filter(home %in% D1Teams_PY1$school | away %in% D1Teams_PY1$school) #|>
+    filter(home %in% D1Teams_PY1$school & away %in% D1Teams_PY1$school) #|>
   # filter(
   #   home %in%
   #     CompletedGames_PY1$home_team &
@@ -543,182 +537,182 @@ if (as.integer(cfb_week) == 0) {
 
   ### pulling out relevant plays used to create/input variables later
   ## PY4
-  PBP_PY4_Yards <- PBP_PY4 |>
-    filter(
-      play_type == "Pass Incompletion" |
-        play_type == "Rush" |
-        play_type == "Sack" |
-        play_type == "Fumble Recovery (Own)" |
-        play_type == "Two Point Pass" |
-        play_type == "Two Point Rush" |
-        play_type == "Safety" |
-        play_type == "Pass Reception" |
-        play_type == "Pass Completion" |
-        play_type == "Fumble Recovery (Opponent)" |
-        play_type == "Pass" |
-        play_type == "2pt Conversion" |
-        play_type == "Defensive 2pt Conversion" |
-        play_type == "Passing Touchdown" |
-        play_type == "Rushing Touchdown"
-    ) |>
-    mutate(
-      new_drive_pts = case_when(
-        new_drive_pts < 0 ~ 0,
-        drive_pts == 8 ~ 8,
-        TRUE ~ new_drive_pts
-      ),
-      home_neutral = case_when(
-        game_id %in% CompletedNeutralGames_PY4$game_id ~ "Neutral",
-        TRUE ~ "Home"
-      )
-    ) |>
-    mutate(
-      play_pts_scored = case_when(scoring_play == 1 ~ new_drive_pts, TRUE ~ 0)
-    )
-
-  PBP_PY4_ScoringPlays <- PBP_PY4_Yards |>
-    filter(scoring_play == 1 & play_pts_scored != 3)
-
-  PBP_PY4_Turnovers <- PBP_PY4_Yards |>
-    filter(turnover == 1)
-
-  PBP_PY4_success_plays <- PBP_PY4_Yards |>
-    filter(
-      (down == 1 & (yards_gained >= (distance / 2))) |
-        (down == 2 & (yards_gained >= (distance * 0.7))) |
-        (down > 2 & (yards_gained >= distance))
-    )
-
-  PBP_PY4_3rdDowns <- PBP_PY4_Yards |>
-    filter(down == 3)
-
-  PBP_PY4_4thDowns <- PBP_PY4_Yards |>
-    filter(down == 4)
-
-  PBP_PY4_passplays <- PBP_PY4_Yards |>
-    filter(
-      play_type == "Pass" |
-        play_type == "Pass Incompletion" |
-        play_type == "Pass Reception" |
-        play_type == "Pass Completion" |
-        play_type == "Two Point Pass"
-    )
-
-  PBP_PY4_rushplays <- PBP_PY4_Yards |>
-    filter(play_type == "Rush" | play_type == "Two Point Rush")
-
-  PBP_PY4_scoringopp_plays <- PBP_PY4 |>
-    filter(scoring_opp == 1)
-
-  PBP_PY4_TDs <- PBP_PY4_Yards |>
-    filter(play_type == "Passing Touchdown" | play_type == "Rushing Touchdown")
-
-  # PBP_PY4_2PtConvs <- PBP_PY4 |>
+  # PBP_PY4_Yards <- PBP_PY4 |>
   #   filter(
-  #     play_type == "Two Point Rush" |
+  #     play_type == "Pass Incompletion" |
+  #       play_type == "Rush" |
+  #       play_type == "Sack" |
+  #       play_type == "Fumble Recovery (Own)" |
   #       play_type == "Two Point Pass" |
-  #       play_type == "2pt Conversion"
+  #       play_type == "Two Point Rush" |
+  #       play_type == "Safety" |
+  #       play_type == "Pass Reception" |
+  #       play_type == "Pass Completion" |
+  #       play_type == "Fumble Recovery (Opponent)" |
+  #       play_type == "Pass" |
+  #       play_type == "2pt Conversion" |
+  #       play_type == "Defensive 2pt Conversion" |
+  #       play_type == "Passing Touchdown" |
+  #       play_type == "Rushing Touchdown"
+  #   ) |>
+  #   mutate(
+  #     new_drive_pts = case_when(
+  #       new_drive_pts < 0 ~ 0,
+  #       drive_pts == 8 ~ 8,
+  #       TRUE ~ new_drive_pts
+  #     ),
+  #     home_neutral = case_when(
+  #       game_id %in% CompletedNeutralGames_PY4$game_id ~ "Neutral",
+  #       TRUE ~ "Home"
+  #     )
+  #   ) |>
+  #   mutate(
+  #     play_pts_scored = case_when(scoring_play == 1 ~ new_drive_pts, TRUE ~ 0)
   #   )
 
-  # PBP_PY4_2ptPlays <- PBP_PY4_TDs |>
-  #   filter(pos_score_pts == 8)
+  # PBP_PY4_ScoringPlays <- PBP_PY4_Yards |>
+  #   filter(scoring_play == 1 & play_pts_scored != 3)
 
-  # PBP_PY4_2ptPlays <- rbind(PBP_PY4_2ptPlays, PBP_PY4_2PtConvs)
+  # PBP_PY4_Turnovers <- PBP_PY4_Yards |>
+  #   filter(turnover == 1)
 
-  PBP_PY4_FGPlays <- PBP_PY4 |>
-    filter(play_type == "Field Goal Good" | play_type == "Field Goal Missed")
+  # PBP_PY4_success_plays <- PBP_PY4_Yards |>
+  #   filter(
+  #     (down == 1 & (yards_gained >= (distance / 2))) |
+  #       (down == 2 & (yards_gained >= (distance * 0.7))) |
+  #       (down > 2 & (yards_gained >= distance))
+  #   )
 
-  PBP_PY4_XPPlays <- PBP_PY4_TDs |>
-    filter(play_pts_scored == 7)
+  # PBP_PY4_3rdDowns <- PBP_PY4_Yards |>
+  #   filter(down == 3)
 
-  ### on ReturnTD plays, pos_team does the scoring (at least based on an admittedly quick glance)
-  ## except on punt return TDs
-  # fmt: skip
-  PBP_PY4_ReturnTDs <- PBP_PY4 |>
-    filter(play_type == "Kickoff Return Touchdown" | play_type == "Punt Return Touchdown" | play_type == "Blocked Punt Touchdown" | play_type == "Blocked Field Goal Touchdown" | play_type == "Missed Field Goal Touchdown")
+  # PBP_PY4_4thDowns <- PBP_PY4_Yards |>
+  #   filter(down == 4)
 
-  PBP_PY4_PuntReturnTD <- PBP_PY4 |>
-    filter(play_type == "Punt Return Touchdown")
+  # PBP_PY4_passplays <- PBP_PY4_Yards |>
+  #   filter(
+  #     play_type == "Pass" |
+  #       play_type == "Pass Incompletion" |
+  #       play_type == "Pass Reception" |
+  #       play_type == "Pass Completion" |
+  #       play_type == "Two Point Pass"
+  #   )
 
-  ### on KickReturnPlays, pos_team gains yards/does the returning
-  ## will use data from this subset to evaluate a predictor, kick/punt return yards allowed
-  PBP_PY4_KickReturn <- PBP_PY4 |>
-    filter(
-      play_type == "Kickoff Return Touchdown" |
-        play_type == "Kickoff Return (Offense)" |
-        play_type == "Kickoff"
-    )
+  # PBP_PY4_rushplays <- PBP_PY4_Yards |>
+  #   filter(play_type == "Rush" | play_type == "Two Point Rush")
 
-  ### on punt plays, pos_team does the punting, def_pos_team does the returning
-  PBP_PY4_Punts <- PBP_PY4 |>
-    filter(play_type == "Punt" | play_type == "Punt Return Touchdown")
+  # PBP_PY4_scoringopp_plays <- PBP_PY4 |>
+  #   filter(scoring_opp == 1)
 
-  ### Setting up PBP for adjusted special teams epa stats
-  PBP_STPlays_PY4 <- PBP_PY4 |>
-    filter(
-      play_type %in%
-        c(
-          "Punt",
-          "Punt Return Touchdown",
-          "Kickoff Return Touchdown",
-          "Kickoff Return (Offense)",
-          "Kickoff",
-          "Blocked Punt Touchdown",
-          "Blocked Field Goal Touchdown",
-          "Missed Field Goal Touchdown",
-          "Field Goal Good",
-          "Field Goal Missed"
-        ) |
-        (play_type %in%
-          c("Passing Touchdown", "Rushing Touchdown") &
-          new_drive_pts == 7)
-    ) |>
-    mutate(
-      new_drive_pts = case_when(
-        new_drive_pts < 0 ~ 0,
-        drive_pts == 8 ~ 8,
-        TRUE ~ new_drive_pts
-      )
-    ) |>
-    mutate(
-      play_pts_scored = case_when(
-        play_type %in% c("Passing Touchdown", "Rushing Touchdown") ~ 1,
-        scoring_play == 1 ~ new_drive_pts,
-        TRUE ~ 0
-      )
-    ) |>
-    mutate(
-      real_pos_team = case_when(
-        play_type %in%
-          c(
-            "Field Goal Good",
-            "Field Goal Missed",
-            "Kickoff Return Touchdown",
-            "Kickoff Return (Offense)",
-            "Kickoff"
-          ) |
-          play_pts_scored == 1 ~ pos_team,
-        TRUE ~ def_pos_team
-      ),
-      real_def_pos_team = case_when(
-        play_type %in%
-          c(
-            "Field Goal Good",
-            "Field Goal Missed",
-            "Kickoff Return Touchdown",
-            "Kickoff Return (Offense)",
-            "Kickoff"
-          ) ~ def_pos_team,
-        TRUE ~ pos_team
-      ),
-      home_neutral = case_when(
-        game_id %in% CompletedNeutralGames_PY4$game_id ~ "Neutral",
-        TRUE ~ "Home"
-      )
-    )
+  # PBP_PY4_TDs <- PBP_PY4_Yards |>
+  #   filter(play_type == "Passing Touchdown" | play_type == "Rushing Touchdown")
 
-  PBP_PY4_STScoringPlays <- PBP_STPlays_PY4 |>
-    filter(scoring_play == 1)
+  # # PBP_PY4_2PtConvs <- PBP_PY4 |>
+  # #   filter(
+  # #     play_type == "Two Point Rush" |
+  # #       play_type == "Two Point Pass" |
+  # #       play_type == "2pt Conversion"
+  # #   )
+
+  # # PBP_PY4_2ptPlays <- PBP_PY4_TDs |>
+  # #   filter(pos_score_pts == 8)
+
+  # # PBP_PY4_2ptPlays <- rbind(PBP_PY4_2ptPlays, PBP_PY4_2PtConvs)
+
+  # PBP_PY4_FGPlays <- PBP_PY4 |>
+  #   filter(play_type == "Field Goal Good" | play_type == "Field Goal Missed")
+
+  # PBP_PY4_XPPlays <- PBP_PY4_TDs |>
+  #   filter(play_pts_scored == 7)
+
+  # ### on ReturnTD plays, pos_team does the scoring (at least based on an admittedly quick glance)
+  # ## except on punt return TDs
+  # # fmt: skip
+  # PBP_PY4_ReturnTDs <- PBP_PY4 |>
+  #   filter(play_type == "Kickoff Return Touchdown" | play_type == "Punt Return Touchdown" | play_type == "Blocked Punt Touchdown" | play_type == "Blocked Field Goal Touchdown" | play_type == "Missed Field Goal Touchdown")
+
+  # PBP_PY4_PuntReturnTD <- PBP_PY4 |>
+  #   filter(play_type == "Punt Return Touchdown")
+
+  # ### on KickReturnPlays, pos_team gains yards/does the returning
+  # ## will use data from this subset to evaluate a predictor, kick/punt return yards allowed
+  # PBP_PY4_KickReturn <- PBP_PY4 |>
+  #   filter(
+  #     play_type == "Kickoff Return Touchdown" |
+  #       play_type == "Kickoff Return (Offense)" |
+  #       play_type == "Kickoff"
+  #   )
+
+  # ### on punt plays, pos_team does the punting, def_pos_team does the returning
+  # PBP_PY4_Punts <- PBP_PY4 |>
+  #   filter(play_type == "Punt" | play_type == "Punt Return Touchdown")
+
+  # ### Setting up PBP for adjusted special teams epa stats
+  # PBP_STPlays_PY4 <- PBP_PY4 |>
+  #   filter(
+  #     play_type %in%
+  #       c(
+  #         "Punt",
+  #         "Punt Return Touchdown",
+  #         "Kickoff Return Touchdown",
+  #         "Kickoff Return (Offense)",
+  #         "Kickoff",
+  #         "Blocked Punt Touchdown",
+  #         "Blocked Field Goal Touchdown",
+  #         "Missed Field Goal Touchdown",
+  #         "Field Goal Good",
+  #         "Field Goal Missed"
+  #       ) |
+  #       (play_type %in%
+  #         c("Passing Touchdown", "Rushing Touchdown") &
+  #         new_drive_pts == 7)
+  #   ) |>
+  #   mutate(
+  #     new_drive_pts = case_when(
+  #       new_drive_pts < 0 ~ 0,
+  #       drive_pts == 8 ~ 8,
+  #       TRUE ~ new_drive_pts
+  #     )
+  #   ) |>
+  #   mutate(
+  #     play_pts_scored = case_when(
+  #       play_type %in% c("Passing Touchdown", "Rushing Touchdown") ~ 1,
+  #       scoring_play == 1 ~ new_drive_pts,
+  #       TRUE ~ 0
+  #     )
+  #   ) |>
+  #   mutate(
+  #     real_pos_team = case_when(
+  #       play_type %in%
+  #         c(
+  #           "Field Goal Good",
+  #           "Field Goal Missed",
+  #           "Kickoff Return Touchdown",
+  #           "Kickoff Return (Offense)",
+  #           "Kickoff"
+  #         ) |
+  #         play_pts_scored == 1 ~ pos_team,
+  #       TRUE ~ def_pos_team
+  #     ),
+  #     real_def_pos_team = case_when(
+  #       play_type %in%
+  #         c(
+  #           "Field Goal Good",
+  #           "Field Goal Missed",
+  #           "Kickoff Return Touchdown",
+  #           "Kickoff Return (Offense)",
+  #           "Kickoff"
+  #         ) ~ def_pos_team,
+  #       TRUE ~ pos_team
+  #     ),
+  #     home_neutral = case_when(
+  #       game_id %in% CompletedNeutralGames_PY4$game_id ~ "Neutral",
+  #       TRUE ~ "Home"
+  #     )
+  #   )
+
+  # PBP_PY4_STScoringPlays <- PBP_STPlays_PY4 |>
+  #   filter(scoring_play == 1)
 
   ### PY3
   PBP_PY3_Yards <- PBP_PY3 |>
@@ -1994,23 +1988,23 @@ if (as.integer(cfb_week) == 0) {
     STPlays = PBP_STPlays_PY3
   )
   ### PY4
-  VoATrain_PY4 <- extract_pbp_stats(
-    VoA_df = VoATrain_PY4,
-    rushpass_plays = PBP_PY4_Yards,
-    success_plays = PBP_PY4_success_plays,
-    ThirdDowns = PBP_PY4_3rdDowns,
-    FourthDowns = PBP_PY4_4thDowns,
-    passplays = PBP_PY4_passplays,
-    rushplays = PBP_PY4_rushplays,
-    scoringopp_plays = PBP_PY4_scoringopp_plays,
-    turnovers = PBP_PY4_Turnovers,
-    scoringplays = PBP_PY4_ScoringPlays,
-    FGs = PBP_PY4_FGPlays,
-    # Punts = PBP_PY4_Punts,
-    # Kickoffs = PBP_PY4_KickReturn,
-    # XPts = PBP_PY4_XPPlays,
-    STPlays = PBP_STPlays_PY4
-  )
+  # VoATrain_PY4 <- extract_pbp_stats(
+  #   VoA_df = VoATrain_PY4,
+  #   rushpass_plays = PBP_PY4_Yards,
+  #   success_plays = PBP_PY4_success_plays,
+  #   ThirdDowns = PBP_PY4_3rdDowns,
+  #   FourthDowns = PBP_PY4_4thDowns,
+  #   passplays = PBP_PY4_passplays,
+  #   rushplays = PBP_PY4_rushplays,
+  #   scoringopp_plays = PBP_PY4_scoringopp_plays,
+  #   turnovers = PBP_PY4_Turnovers,
+  #   scoringplays = PBP_PY4_ScoringPlays,
+  #   FGs = PBP_PY4_FGPlays,
+  #   # Punts = PBP_PY4_Punts,
+  #   # Kickoffs = PBP_PY4_KickReturn,
+  #   # XPts = PBP_PY4_XPPlays,
+  #   STPlays = PBP_STPlays_PY4
+  # )
 
   ### Extracting PBP data and opponent-adjusted data for df to be used for inference/current season's ratings
   VoAVariables <- extract_preseason_pbp_stats(
@@ -2302,7 +2296,7 @@ if (as.integer(cfb_week) == 0) {
 }
 
 
-##### Eliminating NAs, fixing conferences, adding Week number to VoA Variables #####
+##### Adding Week number to VoA Variables, Eliminating NAs, fixing conferences #####
 ### eliminating NAs that may still exist
 ### leaving this outside an if statement because this could be an issue regardless of season or CFB_Week
 ### currently commented out because I added this fix to each individual stat pull in function
@@ -2372,7 +2366,7 @@ if (as.integer(cfb_week) == 0) {
   VoATrain_PY1 <- rank_voa_cols(VoATrain_PY1)
   VoATrain_PY2 <- rank_voa_cols(VoATrain_PY2)
   VoATrain_PY3 <- rank_voa_cols(VoATrain_PY3)
-  VoATrain_PY4 <- rank_voa_cols(VoATrain_PY4)
+  # VoATrain_PY4 <- rank_voa_cols(VoATrain_PY4)
   ### PY3 ranks added first
   # fmt: skip
   VoAVariables <- VoAVariables |>
@@ -3909,12 +3903,12 @@ if (as.integer(cfb_week) == 0) {
         VoATrain_Ncols:ncol(VoATrain_PY3)
       ]))
     )
-  VoATrain_PY4 <- VoATrain_PY4 |>
-    mutate(
-      VoA_Output = (rowMeans(VoATrain_PY4[,
-        VoATrain_Ncols:ncol(VoATrain_PY4)
-      ]))
-    )
+  # VoATrain_PY4 <- VoATrain_PY4 |>
+  #   mutate(
+  #     VoA_Output = (rowMeans(VoATrain_PY4[,
+  #       VoATrain_Ncols:ncol(VoATrain_PY4)
+  #     ]))
+  #   )
   VoAVariables <- VoAVariables |>
     mutate(
       VoA_Output = (rowMeans(VoAVariables[, VoA_Ncols:ncol(VoAVariables)]))
@@ -3939,7 +3933,7 @@ if (as.integer(cfb_week) == 0) {
   VoATrain_PY1 <- calc_output_conf_avg(VoATrain_PY1)
   VoATrain_PY2 <- calc_output_conf_avg(VoATrain_PY2)
   VoATrain_PY3 <- calc_output_conf_avg(VoATrain_PY3)
-  VoATrain_PY4 <- calc_output_conf_avg(VoATrain_PY4)
+  # VoATrain_PY4 <- calc_output_conf_avg(VoATrain_PY4)
   VoAVariables <- calc_output_conf_avg(VoAVariables)
 } else {
   VoAVariables <- calc_output_conf_avg(VoAVariables)
@@ -3968,28 +3962,36 @@ if (as.integer(cfb_week) == 0) {
         VoATrain_Ncols:ncol(VoATrain_PY3)
       ]))
     )
-  VoATrain_PY4 <- VoATrain_PY4 |>
-    mutate(
-      VoA_Output = (rowMeans(VoATrain_PY4[,
-        VoATrain_Ncols:ncol(VoATrain_PY4)
-      ]))
-    )
+  # VoATrain_PY4 <- VoATrain_PY4 |>
+  #   mutate(
+  #     VoA_Output = (rowMeans(VoATrain_PY4[,
+  #       VoATrain_Ncols:ncol(VoATrain_PY4)
+  #     ]))
+  #   )
   ### binding train dfs together since there are no more calculations to perform separately
-  VoATrain <- rbind(
-    VoATrain_PY1,
-    rbind(
-      VoATrain_PY2,
-      rbind(VoATrain_PY3, VoATrain_PY4)
-    )
-  )
   # VoATrain <- rbind(
   #   VoATrain_PY1,
-  #   rbind(VoATrain_PY2, VoATrain_PY3)
+  #   rbind(
+  #     VoATrain_PY2,
+  #     rbind(VoATrain_PY3, VoATrain_PY4)
+  #   )
   # )
+  VoATrain <- rbind(
+    VoATrain_PY1,
+    rbind(VoATrain_PY2, VoATrain_PY3)
+  )
+  write_parquet(
+    VoATrain,
+    here("Data", paste0("VoA", year), "ModelTraining", "VoATrain.parquet")
+  )
   VoAVariables <- VoAVariables |>
     mutate(
       VoA_Output = (rowMeans(VoAVariables[, VoA_Ncols:ncol(VoAVariables)]))
     )
+  # write_parquet(
+  #   VoAVariables,
+  #   here("Data", paste0("VoA", year), "ModelTraining", "VoAVariables.parquet")
+  # )
   ## Append column of VoA Final Rankings
   # VoAVariables <- VoAVariables |>
   #   mutate(VoA_Ranking = dense_rank(VoA_Output))
@@ -4101,6 +4103,13 @@ if (as.integer(cfb_week) == 0) {
   #     Off_VoA_Ratings[p, t] <- Off_VoA_Rating
   #   }
   # }
+
+  ##### POOPYPANTS TESTING #####
+  Off_VoA_pars <- read_parquet(here(
+    "Data",
+    "FittedModels",
+    "OffVoAParams.parquet"
+  ))
 
   ### Create the Design Matrix (Teams x Predictors)
   OffDesignMatrix <- as.matrix(cbind(
@@ -5290,13 +5299,13 @@ if (as.integer(cfb_week) > 11) {
       )
     ### extracting ratings of FBS opponents
     temp_teamFBSOpps <- VoAVariables |>
-      filter(team %in% temp_team$team_opp) |>
-      select(team, VoA_Rating_Ovr)
+      filter(school %in% temp_team$team_opp) |>
+      select(school, VoA_Rating_Ovr)
     ### extracting SRS ratings of FCS opponents
     temp_teamFCSOpps <- FCS |>
       filter(team %in% temp_team$team_opp) |>
       select(team, rating)
-    colnames(temp_teamFCSOpps) <- c("team", "VoA_Rating_Ovr")
+    colnames(temp_teamFCSOpps) <- c("school", "VoA_Rating_Ovr")
     temp_teamOpps <- rbind(temp_teamFBSOpps, temp_teamFCSOpps)
     colnames(temp_teamOpps) <- c("team_opp", "opp_VoA_rating")
 
@@ -5565,7 +5574,7 @@ if (as.integer(cfb_week) > 9) {
 ## Exporting final dataframe as parquet file
 write_parquet(VoAVariables, file_pathway)
 ### also writing out file represent the "current" VoA ratings so it can be more easily visualized on my website and/or a shiny app maybe
-write_csv(VoAVariables, here("Data", CurrentFBSVoA.csv))
+write_csv(VoAVariables, here("Data", "CurrentFBSVoA.csv"))
 
 ##### Setting up the Unintelligible Charts #####
 ### Tracks VoA Ratings and Rankings by week
@@ -5573,7 +5582,7 @@ write_csv(VoAVariables, here("Data", CurrentFBSVoA.csv))
 ### changing FinalTable to only be columns needed for Unintelligible Charts
 FinalTable <- FinalTable |>
   select(
-    team,
+    school,
     conference,
     CFB_Week,
     VoA_Output,
@@ -7127,7 +7136,7 @@ Power5_VoA <- VoAVariables |>
       conference == "Pac-12" |
       conference == "SEC"
   ) |>
-  filter(team != "Connecticut" & team != "UMass")
+  filter(school != "Connecticut" & school != "UMass")
 
 Group5_VoA <- VoAVariables |>
   filter(
@@ -7138,7 +7147,7 @@ Group5_VoA <- VoAVariables |>
       conference == "Mountain West" |
       conference == "Sun Belt"
   ) |>
-  filter(team != "Notre Dame")
+  filter(school != "Notre Dame")
 
 ### making histogram of ratings for all FBS teams
 FBS_Rating_histogram <- ggplot(VoAVariables, aes(VoA_Rating_Ovr)) +

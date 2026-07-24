@@ -5231,19 +5231,19 @@ break
 # VoAVariables[,6:ncol(VoAVariables)] <- VoAVariables[,6:ncol(VoAVariables)] |> mutate_if(is.character,as.numeric)
 #
 ## nas why
-nas_why <- data.frame(apply(VoAVariables, 2, anyNA))
-nas_sum <- data.frame(apply(VoAVariables, 2, is.na))
-nas_sum <- data.frame(apply(nas_sum, 2, sum))
-colnames(nas_why) <- c("containsNAs")
-colnames(nas_sum) <- c("NAsum")
-nas_sum <- nas_sum |>
-  filter(NAsum > 0)
-nas_why <- nas_why |>
-  filter(containsNAs == TRUE)
-nas_why_col <- VoAVariables |>
-  filter(is.na())
-# recruit_nas_teams <- anti_join(VoAVariables, recruit, by = "team")
+# nas_why <- data.frame(apply(VoAVariables, 2, anyNA))
+# nas_sum <- data.frame(apply(VoAVariables, 2, is.na))
+# nas_sum <- data.frame(apply(nas_sum, 2, sum))
+# colnames(nas_why) <- c("containsNAs")
+# colnames(nas_sum) <- c("NAsum")
+# nas_sum <- nas_sum |>
+#   filter(NAsum > 0 & NAsum < 200)
+# nas_why <- nas_why |>
+#   filter(containsNAs == TRUE)
+# nas_why_col <- VoAVariables |>
+#   filter(is.na(adj_off_epa_PY3))
+# # recruit_nas_teams <- anti_join(VoAVariables, recruit, by = "team")
 
-colnames(VoAVariables)[apply(VoAVariables, 2, anyNA)]
+# colnames(VoAVariables)[apply(VoAVariables, 2, anyNA)]
 
 ########## END OF DEBUGGING

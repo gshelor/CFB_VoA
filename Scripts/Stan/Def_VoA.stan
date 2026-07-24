@@ -62,6 +62,7 @@ model {
   beta_def_explosiveness ~ normal(0.5, 0.25);
   beta_def_third_conv_rate ~ normal(0.5, 10);
   beta_def_pts_per_opp ~ normal(1, 10);
+  beta_def_havoc_total ~ normal(1, 10);
   beta_def_plays_pg ~ normal(0.25, 0.25);
   beta_VoA_Output ~ normal(0, 10);
   beta_Conference_Strength ~ normal(0, 20);
