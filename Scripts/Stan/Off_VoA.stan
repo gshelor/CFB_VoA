@@ -18,6 +18,7 @@ data {
   vector[N] off_plays_pg; // weighted number of offensive plays per game
   // vector[N] off_error; // VoA's average offensive error based on previous week's ratings
   // vector[N] off_ppg_aboveavg; // weighted ppg scored by the offense above average offensive ppg
+  vector[N] recruit_pts; // recruiting pts from 24/7 composite ratings
   vector[N] VoA_Output; // weighted VoA output created by averaging rankings in a variety of stats
   vector[N] Conference_Strength; // weighted conference strength metric created using averaging of VoA Output by conference
   // int<lower=1> num_teams; // Number of unique teams
@@ -38,6 +39,7 @@ parameters {
   real beta_off_plays_pg; // coefficient for number of plays run by the offense
   // real beta_off_error; // coefficient for VoA's average offensive error based on previous week's ratings
   // real beta_off_ppg_aboveavg; // coefficient for offensive pts above avg
+  real beta_recruit_pts; // recruiting pts from 24/7 composite ratings
   real beta_VoA_Output; // coefficient for VoA Output
   real beta_Conference_Strength; // coefficient for conference strength
   // vector[num_teams] team_effects; // Random effects for each team
@@ -60,19 +62,20 @@ parameters {
 // with mean 'mu' equal to a linear deterministic function and SD 'sigma'.
 model {
   // priors
-  b0 ~ gamma(20, 1);
-  beta_off_epa ~ normal(3, 1);
-  beta_off_ypp ~ normal(1, 1);
-  beta_off_success_rate ~ normal(3, 1);
-  beta_off_explosiveness ~ normal(0.5, 0.25);
+  b0 ~ normal(20, 1);
+  beta_off_epa ~ normal(2, 5);
+  beta_off_ypp ~ normal(1, 5);
+  beta_off_success_rate ~ normal(2, 5);
+  beta_off_explosiveness ~ normal(1, 5);
   beta_third_conv_rate ~ normal(0.5, 10);
   beta_off_pts_per_opp ~ normal(1, 10);
-  beta_off_plays_pg ~ normal(0.25, 0.25);
-  beta_VoA_Output ~ normal(0, 10);
-  beta_Conference_Strength ~ normal(0, 20);
+  beta_off_plays_pg ~ normal(0.5, 0.5);
+  beta_recruit_pts ~ normal(1, 25);
+  beta_VoA_Output ~ normal(-5, 20);
+  beta_Conference_Strength ~ normal(-1, 20);
   sigma ~ gamma(10, 1);
   // Define linear predictor directly in the model block
-  off_ppg ~ normal(b0 + beta_off_epa * off_epa + beta_off_ypp * off_ypp + beta_off_success_rate * off_success_rate + beta_off_explosiveness * off_explosiveness + beta_third_conv_rate * third_conv_rate + beta_off_pts_per_opp * off_pts_per_opp + beta_off_plays_pg * off_plays_pg + beta_VoA_Output * VoA_Output + beta_Conference_Strength * Conference_Strength, sigma) T[0,];
+  off_ppg ~ normal(b0 + beta_off_epa * off_epa + beta_off_ypp * off_ypp + beta_off_success_rate * off_success_rate + beta_off_explosiveness * off_explosiveness + beta_third_conv_rate * third_conv_rate + beta_off_pts_per_opp * off_pts_per_opp + beta_off_plays_pg * off_plays_pg + beta_recruit_pts * recruit_pts + beta_VoA_Output * VoA_Output + beta_Conference_Strength * Conference_Strength, sigma) T[0,];
 }
 
 

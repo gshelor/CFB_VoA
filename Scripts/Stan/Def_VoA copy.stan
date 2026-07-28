@@ -57,19 +57,18 @@ parameters {
 // with mean 'mu' equal to a linear deterministic function and SD 'sigma'.
 model {
   // priors
-   // priors
-  b0 ~ normal(20, 1);
-  beta_def_epa ~ normal(3, 3);
-  beta_def_ypp ~ normal(1, 4);
-  beta_def_success_rate ~ normal(3, 3);
-  beta_def_explosiveness ~ normal(2, 5);
-  beta_def_third_conv_rate ~ normal(1, 10);
+  b0 ~ normal(15, 1);
+  beta_def_epa ~ normal(3, 1);
+  beta_def_ypp ~ normal(1, 2);
+  beta_def_success_rate ~ normal(3, 2);
+  beta_def_explosiveness ~ normal(0.5, 0.25);
+  beta_def_third_conv_rate ~ normal(0.5, 10);
   beta_def_pts_per_opp ~ normal(1, 10);
   beta_def_havoc_total ~ normal(1, 10);
-  beta_def_plays_pg ~ normal(0.5, 0.5);
-  beta_recruit_pts ~ normal(-10, 15);
-  beta_VoA_Output ~ normal(2, 10);
-  beta_Conference_Strength ~ normal(2, 10);
+  beta_def_plays_pg ~ normal(0.25, 0.25);
+  beta_recruit_pts ~ normal(-10, 10);
+  beta_VoA_Output ~ normal(2, 1);
+  beta_Conference_Strength ~ normal(2, 1);
   sigma ~ gamma(10, 1);
   // Define linear predictor directly in the model block
   def_ppg ~ normal(b0 + beta_def_epa * def_epa + beta_def_ypp * def_ypp + beta_def_success_rate * def_success_rate + beta_def_explosiveness * def_explosiveness + beta_def_third_conv_rate * def_third_conv_rate + beta_def_pts_per_opp * def_pts_per_opp + beta_def_havoc_total * def_havoc_total + beta_def_plays_pg * def_plays_pg + beta_recruit_pts * recruit_pts + beta_VoA_Output * VoA_Output + beta_Conference_Strength * Conference_Strength, sigma) T[0,];

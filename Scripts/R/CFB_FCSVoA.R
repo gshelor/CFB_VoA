@@ -1,8 +1,8 @@
-##### The Vortex of Accuracy, Version 5.1.1 #####
+##### The Vortex of Accuracy, Version 5.1.1, but this time for FCS #####
 ### Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy
 ### Created by Griffin Shelor
 ### installing packages
-# install.packages(c("devtools", "tidyverse", "gt", "viridis", "webshot", "cfbfastR", "here", "RColorBrewer", "remotes", "pacman", "gtExtras", "cfbplotR", "betareg", cmdstanr))
+# install.packages(c("devtools", "tidyverse", "gt", "viridis", "webshot", "cfbfastR", "here", "RColorBrewer", "remotes", "pacman", "gtExtras", "cfbplotR", "betareg", "cmdstanr", "parallel", "posterior", "data.table", "lme4", "arrow"))
 ##### Loading Packages #####
 start_time <- Sys.time()
 library(pacman)
@@ -18,6 +18,12 @@ cfbd_api_key_info()
 ## might switch the year one to use Sys.Date()
 year <- readline(prompt = "What year is it? (year that the season starts in) ")
 cfb_week <- readline(prompt = "What week just occurred? ")
+if (as.integer(cfb_week) == 0) {
+  PY4 <- as.integer(year) - 4
+  PY3 <- as.integer(year) - 3
+  PY2 <- as.integer(year) - 2
+  PY1 <- as.integer(year) - 1
+}
 
 ##### setting strings for table titles, file pathways, unintelligible charts #####
 `%nin%` <- Negate(`%in%`)
@@ -27,7 +33,7 @@ tracking_chart_dir <- here("Data", paste0("VoA", year), "TrackingChartCSVs")
 accuracy_data_dir <- here("Data", paste0("VoA", year), "AccuracyMetrics")
 PY_data_dir <- here("Data", paste0("VoA", year), "PYData")
 Projection_data_dir <- here("Data", paste0("VoA", year), "Projections")
-preseason_text <- "CFB FCS Preseason"
+preseason_text <- "FCS CFB Preseason"
 resume_text <- "FCS Resume"
 VoAString <- "FCSVoA.parquet"
 week_text <- "Week"
@@ -36,17 +42,17 @@ top25_png <- "FCSVoATop25.png"
 fulltable_png <- "FCSVoAFullTable.png"
 VoA_text <- "FCS Vortex of Accuracy"
 Postseason_text <- " CFB Postseason"
-AAC_text <- "AAC"
-ACC_text <- "ACC"
-Big12_text <- "Big12"
-Big10_text <- "Big10"
-CUSA_text <- "CUSA"
+# AAC_text <- "AAC"
+# ACC_text <- "ACC"
+# Big12_text <- "Big12"
+# Big10_text <- "Big10"
+# CUSA_text <- "CUSA"
 Indy_text <- "Independents"
-MAC_text <- "MAC"
-MWC_text <- "MWC"
-Pac2_text <- "Pac2"
-SEC_text <- "SEC"
-SunBelt_text <- "SunBelt"
+# MAC_text <- "MAC"
+# MWC_text <- "MWC"
+# Pac2_text <- "Pac2"
+# SEC_text <- "SEC"
+# SunBelt_text <- "SunBelt"
 FCS_text <- "FCS"
 Power_Five_text <- "Power 5"
 Group_Five_text <- "Group of 5"
@@ -411,29 +417,31 @@ if (as.integer(cfb_week) == 0) {
   ## using 4 years to train the model is a pain in my ass from a time and RAM standpoint, so holding off on that for now
   ## filtering to make sure each dataframe only includes D1 teams
   D1Teams <- cfbd_team_info(only_fbs = FALSE, year = as.integer(year)) |>
-    filter(classification == "fcs")
-  D1Teams_PY4 <- cfbd_team_info(
-    only_fbs = FALSE,
-    year = as.integer(year) - 4
-  ) |>
-    filter(classification == "fcs")
+    filter(classification == "fcs") # | classification == "fcs")
+  # D1Teams_PY4 <- cfbd_team_info(
+  #   only_fbs = FALSE,
+  #   year = as.integer(year) - 4
+  # ) |>
+  #   filter(school %in% D1Teams$school)|>
+  # filter(classification == "fbs" | classification == "fcs")
   D1Teams_PY3 <- cfbd_team_info(
     only_fbs = FALSE,
     year = as.integer(year) - 3
   ) |>
-    filter(classification == "fcs")
+    filter(school %in% D1Teams$school) |>
+    filter(classification == "fbs" | classification == "fcs")
   D1Teams_PY2 <- cfbd_team_info(
     only_fbs = FALSE,
     year = as.integer(year) - 2
   ) |>
-    filter(classification == "fcs")
+    filter(school %in% D1Teams$school) |>
+    filter(classification == "fbs" | classification == "fcs")
   D1Teams_PY1 <- cfbd_team_info(
     only_fbs = FALSE,
     year = as.integer(year) - 1
   ) |>
-    filter(classification == "fcs")
-  D1Teams <- cfbd_team_info(only_fbs = FALSE, year = as.integer(year)) |>
-    filter(classification == "fcs")
+    filter(school %in% D1Teams$school) |>
+    filter(classification == "fbs" | classification == "fcs")
 
   # ### making sure the elevation column is numeric
   # VoAVariables$elevation <- as.numeric(VoAVariables$elevation)
@@ -443,7 +451,7 @@ if (as.integer(cfb_week) == 0) {
   # CompletedGames_PY4 <- cfbd_game_info(as.integer(year) - 4) |>
   #   filter(completed == TRUE) |>
   #   filter(
-  #     home_team %in% D1Teams_PY4$school & away_team %in% D1Teams_PY4$school
+  #     home_team %in% D1Teams_PY4$school | away_team %in% D1Teams_PY4$school
   #   )
   # CompletedNeutralGames_PY4 <- CompletedGames_PY4 |>
   #   filter(neutral_site == TRUE)
@@ -1263,7 +1271,7 @@ if (as.integer(cfb_week) == 0) {
 
   ### TEMPORARY 2024 WEEK 1 FIX SINCE BALL STATE DID NOT PLAY A GAME IN WEEK 0 OR 1 and also CMU and ULM are having data issues
   # BallStCMUULM <- PY1_df |>
-  #   filter(school == "Ball State" | team == "Central Michigan" | team == "Louisiana Monroe") |>
+  #   filter(team == "Ball State" | team == "Central Michigan" | team == "Louisiana Monroe") |>
   #   mutate(season = as.integer(year), .before = 1) |>
   #   mutate(conference = case_when(team == "Ball State" | team == "Central Michigan" ~ "Mid-American",
   #                                 TRUE ~ "Sun Belt"), .before = 3)
@@ -1925,7 +1933,7 @@ if (as.integer(cfb_week) == 0) {
 
 ##### Extracting Stats from PBP Data #####
 if (as.integer(cfb_week) == 0) {
-  ##### WEEK 0 DF Merge #####
+  ##### WEEK 0 Stat Collection #####
   VoATrain_PY1 <- extract_pbp_stats(
     VoA_df = VoATrain_PY1,
     rushpass_plays = PBP_PY1_Yards,
@@ -1992,9 +2000,9 @@ if (as.integer(cfb_week) == 0) {
   #   turnovers = PBP_PY4_Turnovers,
   #   scoringplays = PBP_PY4_ScoringPlays,
   #   FGs = PBP_PY4_FGPlays,
-  #   Punts = PBP_PY4_Punts,
-  #   Kickoffs = PBP_PY4_KickReturn,
-  #   XPts = PBP_PY4_XPPlays,
+  #   # Punts = PBP_PY4_Punts,
+  #   # Kickoffs = PBP_PY4_KickReturn,
+  #   # XPts = PBP_PY4_XPPlays,
   #   STPlays = PBP_STPlays_PY4
   # )
 
@@ -2186,101 +2194,255 @@ if (as.integer(cfb_week) == 0) {
 }
 if (as.integer(cfb_week) == 0) {
   ##### Preseason Weighted Variables #####
-  # fmt: skip
   VoAVariables <- VoAVariables |>
-    mutate(weighted_off_ppg_mean = (adj_off_ppg_PY1 * py1weight) + (adj_off_ppg_PY2 * py2weight) + (adj_off_ppg_PY3 * py3weight),
-           weighted_def_ppg_mean = (adj_def_ppg_PY1 * py1weight) + (adj_def_ppg_PY2 * py2weight) + (adj_def_ppg_PY3 * py3weight),
-           weighted_net_st_ppg_mean = (net_adj_st_ppg_PY1 * py1weight) + (net_adj_st_ppg_PY2 * py2weight) + (net_adj_st_ppg_PY3 * py3weight),
-           off_ppg_aboveavg = weighted_off_ppg_mean - mean(weighted_off_ppg_mean),
-           def_ppg_aboveavg = weighted_def_ppg_mean - mean(weighted_def_ppg_mean),
-           weighted_off_epa = (adj_off_epa_PY3 * py3weight) + (adj_off_epa_PY2 * py2weight) + (adj_off_epa_PY1 * py1weight),
-           weighted_off_ypp = (adj_off_ypp_PY3 * py3weight) + (adj_off_ypp_PY2 * py2weight) + (adj_off_ypp_PY1 * py1weight),
-           weighted_off_success_rate = (off_success_rate_PY3 * py3weight) + (off_success_rate_PY2 * py2weight) + (off_success_rate_PY1 * py1weight),
-           weighted_off_explosiveness = (adj_off_explosiveness_PY3 * py3weight) + (adj_off_explosiveness_PY2 * py2weight) + (adj_off_explosiveness_PY1 * py1weight),
-           weighted_off_third_conv_rate = (off_third_conv_rate_PY3 * py3weight) + (off_third_conv_rate_PY2 * py2weight) + (off_third_conv_rate_PY1 * py1weight),
-           weighted_off_pts_per_opp = (off_pts_per_opp_PY3 * py3weight) + (off_pts_per_opp_PY2 * py2weight) + (off_pts_per_opp_PY1 * py1weight),
-           weighted_off_plays_pg = (adj_off_plays_pg_PY3 * py3weight) + (adj_off_plays_pg_PY2 * py2weight) + (adj_off_plays_pg_PY1 * py1weight),
-           weighted_def_plays_pg = (adj_def_plays_pg_PY3 * py3weight) + (adj_def_plays_pg_PY2 * py2weight) + (adj_def_plays_pg_PY1 * py1weight),
-           weighted_def_epa = (adj_def_epa_PY3 * py3weight) + (adj_def_epa_PY2 * py2weight) + (adj_def_epa_PY1 * py1weight),
-           weighted_def_ypp = (adj_def_ypp_PY3 * py3weight) + (adj_def_ypp_PY2 * py2weight) + (adj_def_ypp_PY1 * py1weight),
-           weighted_def_success_rate = (def_success_rate_PY3 * py3weight) + (def_success_rate_PY2 * py2weight) + (def_success_rate_PY1 * py1weight),
-           weighted_def_explosiveness = (adj_def_explosiveness_PY3 * py3weight) + (adj_def_explosiveness_PY2 * py2weight) + (adj_def_explosiveness_PY1 * py1weight),
-           weighted_def_third_conv_rate = (def_third_conv_rate_PY3 * py3weight) + (def_third_conv_rate_PY2 * py2weight) + (def_third_conv_rate_PY1 * py1weight),
-           weighted_def_pts_per_opp = (def_pts_per_opp_PY3 * py3weight) + (def_pts_per_opp_PY2 * py2weight) + (def_pts_per_opp_PY1 * py1weight),
-           weighted_def_havoc_total = (def_havoc_total_PY3 * py3weight) + (def_havoc_total_PY2 * py2weight) + (def_havoc_total_PY1 * py1weight),
-           weighted_net_kick_return_yds = ((kick_return_yds_PY3 - kick_return_yds_allowed_PY3) * py3weight) + ((kick_return_yds_PY2 - kick_return_yds_allowed_PY2) * py2weight) + ((kick_return_yds_PY1 - kick_return_yds_allowed_PY1) * py1weight),
-           weighted_net_punt_return_yds = ((punt_return_yds_PY3 - punt_return_yds_allowed_PY3) * py3weight) + ((punt_return_yds_PY2 - punt_return_yds_allowed_PY2) * py2weight) + ((punt_return_yds_PY1 - punt_return_yds_allowed_PY1) * py1weight),
-           weighted_net_fg_rate = ((fg_rate_PY3 - fg_rate_allowed_PY3) * py3weight) + ((fg_rate_PY2 - fg_rate_allowed_PY2) * py2weight) + ((fg_rate_PY1 - fg_rate_allowed_PY1) * py1weight),
-           weighted_net_fg_made_pg = ((fg_made_pg_PY3 - fg_made_pg_allowed_PY3) * py3weight) + ((fg_made_pg_PY2 - fg_made_pg_allowed_PY2) * py2weight) + ((fg_made_pg_PY1 - fg_made_pg_allowed_PY1) * py1weight),
-          #  weighted_net_xpts_pg = ((xpts_pg_PY3 - xpts_allowed_pg_PY3) * py3weight) + ((xpts_pg_PY2 - xpts_allowed_pg_PY2) * py2weight) + ((xpts_pg_PY1 - xpts_allowed_pg_PY1) * py1weight),
-           weighted_net_adj_st_epa = (net_adj_st_epa_PY3 * py3weight) + (net_adj_st_epa_PY2 * py2weight) + (net_adj_st_epa_PY1 * py1weight)) #,
+    mutate(
+      weighted_recruit_pts = (recruit_pts_PY1 * py1weight) +
+        (recruit_pts_PY2 * py2weight) +
+        (recruit_pts_PY3 * py3weight),
+      weighted_off_ppg_mean = (adj_off_ppg_PY1 * py1weight) +
+        (adj_off_ppg_PY2 * py2weight) +
+        (adj_off_ppg_PY3 * py3weight),
+      weighted_def_ppg_mean = (adj_def_ppg_PY1 * py1weight) +
+        (adj_def_ppg_PY2 * py2weight) +
+        (adj_def_ppg_PY3 * py3weight),
+      weighted_net_st_ppg_mean = (net_adj_st_ppg_PY1 * py1weight) +
+        (net_adj_st_ppg_PY2 * py2weight) +
+        (net_adj_st_ppg_PY3 * py3weight),
+      off_ppg_aboveavg = weighted_off_ppg_mean - mean(weighted_off_ppg_mean),
+      def_ppg_aboveavg = weighted_def_ppg_mean - mean(weighted_def_ppg_mean),
+      weighted_off_epa = (adj_off_epa_PY3 * py3weight) +
+        (adj_off_epa_PY2 * py2weight) +
+        (adj_off_epa_PY1 * py1weight),
+      weighted_off_ypp = (adj_off_ypp_PY3 * py3weight) +
+        (adj_off_ypp_PY2 * py2weight) +
+        (adj_off_ypp_PY1 * py1weight),
+      weighted_off_success_rate = (off_success_rate_PY3 * py3weight) +
+        (off_success_rate_PY2 * py2weight) +
+        (off_success_rate_PY1 * py1weight),
+      weighted_off_explosiveness = (adj_off_explosiveness_PY3 * py3weight) +
+        (adj_off_explosiveness_PY2 * py2weight) +
+        (adj_off_explosiveness_PY1 * py1weight),
+      weighted_off_third_conv_rate = (off_third_conv_rate_PY3 * py3weight) +
+        (off_third_conv_rate_PY2 * py2weight) +
+        (off_third_conv_rate_PY1 * py1weight),
+      weighted_off_pts_per_opp = (off_pts_per_opp_PY3 * py3weight) +
+        (off_pts_per_opp_PY2 * py2weight) +
+        (off_pts_per_opp_PY1 * py1weight),
+      weighted_off_plays_pg = (adj_off_plays_pg_PY3 * py3weight) +
+        (adj_off_plays_pg_PY2 * py2weight) +
+        (adj_off_plays_pg_PY1 * py1weight),
+      weighted_def_plays_pg = (adj_def_plays_pg_PY3 * py3weight) +
+        (adj_def_plays_pg_PY2 * py2weight) +
+        (adj_def_plays_pg_PY1 * py1weight),
+      weighted_def_epa = (adj_def_epa_PY3 * py3weight) +
+        (adj_def_epa_PY2 * py2weight) +
+        (adj_def_epa_PY1 * py1weight),
+      weighted_def_ypp = (adj_def_ypp_PY3 * py3weight) +
+        (adj_def_ypp_PY2 * py2weight) +
+        (adj_def_ypp_PY1 * py1weight),
+      weighted_def_success_rate = (def_success_rate_PY3 * py3weight) +
+        (def_success_rate_PY2 * py2weight) +
+        (def_success_rate_PY1 * py1weight),
+      weighted_def_explosiveness = (adj_def_explosiveness_PY3 * py3weight) +
+        (adj_def_explosiveness_PY2 * py2weight) +
+        (adj_def_explosiveness_PY1 * py1weight),
+      weighted_def_third_conv_rate = (def_third_conv_rate_PY3 * py3weight) +
+        (def_third_conv_rate_PY2 * py2weight) +
+        (def_third_conv_rate_PY1 * py1weight),
+      weighted_def_pts_per_opp = (def_pts_per_opp_PY3 * py3weight) +
+        (def_pts_per_opp_PY2 * py2weight) +
+        (def_pts_per_opp_PY1 * py1weight),
+      weighted_def_havoc_total = (def_havoc_total_PY3 * py3weight) +
+        (def_havoc_total_PY2 * py2weight) +
+        (def_havoc_total_PY1 * py1weight),
+      weighted_net_kick_return_yds = ((kick_return_yds_PY3 -
+        kick_return_yds_allowed_PY3) *
+        py3weight) +
+        ((kick_return_yds_PY2 - kick_return_yds_allowed_PY2) * py2weight) +
+        ((kick_return_yds_PY1 - kick_return_yds_allowed_PY1) * py1weight),
+      weighted_net_punt_return_yds = ((punt_return_yds_PY3 -
+        punt_return_yds_allowed_PY3) *
+        py3weight) +
+        ((punt_return_yds_PY2 - punt_return_yds_allowed_PY2) * py2weight) +
+        ((punt_return_yds_PY1 - punt_return_yds_allowed_PY1) * py1weight),
+      weighted_net_fg_rate = ((fg_rate_PY3 - fg_rate_allowed_PY3) * py3weight) +
+        ((fg_rate_PY2 - fg_rate_allowed_PY2) * py2weight) +
+        ((fg_rate_PY1 - fg_rate_allowed_PY1) * py1weight),
+      weighted_net_fg_made_pg = ((fg_made_pg_PY3 - fg_made_pg_allowed_PY3) *
+        py3weight) +
+        ((fg_made_pg_PY2 - fg_made_pg_allowed_PY2) * py2weight) +
+        ((fg_made_pg_PY1 - fg_made_pg_allowed_PY1) * py1weight),
+      #  weighted_net_xpts_pg = ((xpts_pg_PY3 - xpts_allowed_pg_PY3) * py3weight) + ((xpts_pg_PY2 - xpts_allowed_pg_PY2) * py2weight) + ((xpts_pg_PY1 - xpts_allowed_pg_PY1) * py1weight),
+      weighted_net_adj_st_epa = (net_adj_st_epa_PY3 * py3weight) +
+        (net_adj_st_epa_PY2 * py2weight) +
+        (net_adj_st_epa_PY1 * py1weight)
+    ) #,
   #  weighted_mean_oppdef_epa = ((oppdef_epa_PY3 * py3weight) + (oppdef_epa_PY2 * py2weight) + (oppdef_epa_PY1 * py1weight)),
   #  weighted_mean_oppoff_epa = (oppoff_epa_PY3 * py3weight) + (oppoff_epa_PY2 * py2weight) + (oppoff_epa_PY1 * py1weight))
 } else if (as.integer(cfb_week) <= 5) {
   ##### Week 1-5 Weighted Variables #####
   ### PY 1-2, 1 week of current season
-  # fmt: skip
   VoAVariables <- VoAVariables |>
-    mutate(weighted_off_ppg_mean = (adj_off_ppg * cyweight) + (adj_off_ppg_PY1 * py1weight) + (adj_off_ppg_PY2 * py2weight),
-           weighted_def_ppg_mean = (adj_def_ppg * cyweight) + (adj_def_ppg_PY1 * py1weight) + (adj_def_ppg_PY2 * py2weight),
-           weighted_net_st_ppg_mean = (net_adj_st_ppg * cyweight) + (net_adj_st_ppg_PY1 * py1weight) + (net_adj_st_ppg_PY2 * py2weight),
-           off_ppg_aboveavg = weighted_off_ppg_mean - mean(weighted_off_ppg_mean),
-           def_ppg_aboveavg = weighted_def_ppg_mean - mean(weighted_def_ppg_mean),
-           weighted_off_epa = (adj_off_epa_PY2 * py2weight) + (adj_off_epa_PY1 * py1weight) + (adj_off_epa * cyweight),
-           weighted_off_ypp = (adj_off_ypp_PY2 * py2weight) + (adj_off_ypp_PY1 * py1weight) + (adj_off_ypp * cyweight),
-           weighted_off_success_rate = (off_success_rate_PY2 * py2weight) + (off_success_rate_PY1 * py1weight) + (off_success_rate * cyweight),
-           weighted_off_explosiveness = (adj_off_explosiveness_PY2 * py2weight) + (adj_off_explosiveness_PY1 * py1weight) + (adj_off_explosiveness * cyweight),
-           weighted_off_third_conv_rate = (off_third_conv_rate_PY2 * py2weight) + (off_third_conv_rate_PY1 * py1weight) + (off_third_conv_rate * cyweight),
-           weighted_off_pts_per_opp = (off_pts_per_opp_PY3 * py3weight) + (off_pts_per_opp_PY2 * py2weight) + (off_pts_per_opp_PY1 * py1weight) + (off_pts_per_opp * cyweight),
-           weighted_off_plays_pg = (off_plays_pg_PY2 * py2weight) + (off_plays_pg_PY1 * py1weight) + (off_plays_pg * cyweight),
-           weighted_def_plays_pg = (def_plays_pg_PY3 * py3weight) + (def_plays_pg_PY2 * py2weight) + (def_plays_pg_PY1 * py1weight) + (def_plays_pg * cyweight),
-           weighted_def_epa = (adj_def_epa_PY3 * py3weight) + (adj_def_epa_PY2 * py2weight) + (adj_def_epa_PY1 * py1weight) + (adj_def_epa * cyweight),
-           weighted_def_ypp = (adj_def_ypp_PY3 * py3weight) + (adj_def_ypp_PY2 * py2weight) + (adj_def_ypp_PY1 * py1weight) + (adj_def_ypp * cyweight),
-           weighted_def_success_rate = (def_success_rate_PY3 * py3weight) + (def_success_rate_PY2 * py2weight) + (def_success_rate_PY1 * py1weight) + (def_success_rate * cyweight),
-           weighted_def_explosiveness = (adj_def_explosiveness_PY3 * py3weight) + (adj_def_explosiveness_PY2 * py2weight) + (adj_def_explosiveness_PY1 * py1weight) + (adj_def_explosiveness * cyweight),
-           weighted_def_third_conv_rate = (def_third_conv_rate_PY3 * py3weight) + (def_third_conv_rate_PY2 * py2weight) + (def_third_conv_rate_PY1 * py1weight) + (def_third_conv_rate * cyweight),
-           weighted_def_pts_per_opp = (def_pts_per_opp_PY3 * py3weight) + (def_pts_per_opp_PY2 * py2weight) + (def_pts_per_opp_PY1 * py1weight) + (def_pts_per_opp * cyweight),
-           weighted_def_havoc_total = (def_havoc_total_PY3 * py3weight) + (def_havoc_total_PY2 * py2weight) + (def_havoc_total_PY1 * py1weight) + (def_havoc_total * cyweight),
-           weighted_net_kick_return_yds = ((kick_return_yds_PY3 - kick_return_yds_allowed_PY3) * py3weight) + ((kick_return_yds_PY2 - kick_return_yds_allowed_PY2) * py2weight) + ((kick_return_yds_PY1 - kick_return_yds_allowed_PY1) * py1weight) + ((kick_return_yds - kick_return_yds_allowed) * cyweight),
-           weighted_net_punt_return_yds = ((punt_return_yds_PY3 - punt_return_yds_allowed_PY3) * py3weight) + ((punt_return_yds_PY2 - punt_return_yds_allowed_PY2) * py2weight) + ((punt_return_yds_PY1 - punt_return_yds_allowed_PY1) * py1weight) + ((punt_return_yds - punt_return_yds_allowed) * cyweight),
-           weighted_net_fg_rate = ((fg_rate_PY3 - fg_rate_allowed_PY3) * py3weight) + ((fg_rate_PY2 - fg_rate_allowed_PY2) * py2weight) + ((fg_rate_PY1 - fg_rate_allowed_PY1) * py1weight) + ((fg_rate - fg_rate_allowed) * cyweight),
-           weighted_net_fg_made_pg = ((fg_made_pg_PY3 - fg_made_pg_allowed_PY3) * py3weight) + ((fg_made_pg_PY2 - fg_made_pg_allowed_PY2) * py2weight) + ((fg_made_pg_PY1 - fg_made_pg_allowed_PY1) * py1weight) + ((fg_made_pg - fg_made_pg_allowed) * cyweight),
-          #  weighted_net_xpts_pg = ((xpts_pg_PY3 - xpts_allowed_pg_PY3) * py3weight) + ((xpts_pg_PY2 - xpts_allowed_pg_PY2) * py2weight) + ((xpts_pg_PY1 - xpts_allowed_pg_PY1) * py1weight) + ((xpts_pg - xpts_allowed_pg) * cyweight),
-           weighted_net_adj_st_epa = (net_adj_st_epa_PY3 * py3weight) + (net_adj_st_epa_PY2 * py2weight) + (net_adj_st_epa_PY1 * py1weight) + (net_adj_st_epa * cyweight)) #,
+    mutate(
+      weighted_recruit_pts = (recruit_pts_PY1 * py1weight) +
+        (recruit_pts_PY2 * (py2weight + cyweight)),
+      weighted_off_ppg_mean = (adj_off_ppg * cyweight) +
+        (adj_off_ppg_PY1 * py1weight) +
+        (adj_off_ppg_PY2 * py2weight),
+      weighted_def_ppg_mean = (adj_def_ppg * cyweight) +
+        (adj_def_ppg_PY1 * py1weight) +
+        (adj_def_ppg_PY2 * py2weight),
+      weighted_net_st_ppg_mean = (net_adj_st_ppg * cyweight) +
+        (net_adj_st_ppg_PY1 * py1weight) +
+        (net_adj_st_ppg_PY2 * py2weight),
+      off_ppg_aboveavg = weighted_off_ppg_mean - mean(weighted_off_ppg_mean),
+      def_ppg_aboveavg = weighted_def_ppg_mean - mean(weighted_def_ppg_mean),
+      weighted_off_epa = (adj_off_epa_PY2 * py2weight) +
+        (adj_off_epa_PY1 * py1weight) +
+        (adj_off_epa * cyweight),
+      weighted_off_ypp = (adj_off_ypp_PY2 * py2weight) +
+        (adj_off_ypp_PY1 * py1weight) +
+        (adj_off_ypp * cyweight),
+      weighted_off_success_rate = (off_success_rate_PY2 * py2weight) +
+        (off_success_rate_PY1 * py1weight) +
+        (off_success_rate * cyweight),
+      weighted_off_explosiveness = (adj_off_explosiveness_PY2 * py2weight) +
+        (adj_off_explosiveness_PY1 * py1weight) +
+        (adj_off_explosiveness * cyweight),
+      weighted_off_third_conv_rate = (off_third_conv_rate_PY2 * py2weight) +
+        (off_third_conv_rate_PY1 * py1weight) +
+        (off_third_conv_rate * cyweight),
+      weighted_off_pts_per_opp = (off_pts_per_opp_PY3 * py3weight) +
+        (off_pts_per_opp_PY2 * py2weight) +
+        (off_pts_per_opp_PY1 * py1weight) +
+        (off_pts_per_opp * cyweight),
+      weighted_off_plays_pg = (off_plays_pg_PY2 * py2weight) +
+        (off_plays_pg_PY1 * py1weight) +
+        (off_plays_pg * cyweight),
+      weighted_def_plays_pg = (def_plays_pg_PY3 * py3weight) +
+        (def_plays_pg_PY2 * py2weight) +
+        (def_plays_pg_PY1 * py1weight) +
+        (def_plays_pg * cyweight),
+      weighted_def_epa = (adj_def_epa_PY3 * py3weight) +
+        (adj_def_epa_PY2 * py2weight) +
+        (adj_def_epa_PY1 * py1weight) +
+        (adj_def_epa * cyweight),
+      weighted_def_ypp = (adj_def_ypp_PY3 * py3weight) +
+        (adj_def_ypp_PY2 * py2weight) +
+        (adj_def_ypp_PY1 * py1weight) +
+        (adj_def_ypp * cyweight),
+      weighted_def_success_rate = (def_success_rate_PY3 * py3weight) +
+        (def_success_rate_PY2 * py2weight) +
+        (def_success_rate_PY1 * py1weight) +
+        (def_success_rate * cyweight),
+      weighted_def_explosiveness = (adj_def_explosiveness_PY3 * py3weight) +
+        (adj_def_explosiveness_PY2 * py2weight) +
+        (adj_def_explosiveness_PY1 * py1weight) +
+        (adj_def_explosiveness * cyweight),
+      weighted_def_third_conv_rate = (def_third_conv_rate_PY3 * py3weight) +
+        (def_third_conv_rate_PY2 * py2weight) +
+        (def_third_conv_rate_PY1 * py1weight) +
+        (def_third_conv_rate * cyweight),
+      weighted_def_pts_per_opp = (def_pts_per_opp_PY3 * py3weight) +
+        (def_pts_per_opp_PY2 * py2weight) +
+        (def_pts_per_opp_PY1 * py1weight) +
+        (def_pts_per_opp * cyweight),
+      weighted_def_havoc_total = (def_havoc_total_PY3 * py3weight) +
+        (def_havoc_total_PY2 * py2weight) +
+        (def_havoc_total_PY1 * py1weight) +
+        (def_havoc_total * cyweight),
+      weighted_net_kick_return_yds = ((kick_return_yds_PY3 -
+        kick_return_yds_allowed_PY3) *
+        py3weight) +
+        ((kick_return_yds_PY2 - kick_return_yds_allowed_PY2) * py2weight) +
+        ((kick_return_yds_PY1 - kick_return_yds_allowed_PY1) * py1weight) +
+        ((kick_return_yds - kick_return_yds_allowed) * cyweight),
+      weighted_net_punt_return_yds = ((punt_return_yds_PY3 -
+        punt_return_yds_allowed_PY3) *
+        py3weight) +
+        ((punt_return_yds_PY2 - punt_return_yds_allowed_PY2) * py2weight) +
+        ((punt_return_yds_PY1 - punt_return_yds_allowed_PY1) * py1weight) +
+        ((punt_return_yds - punt_return_yds_allowed) * cyweight),
+      weighted_net_fg_rate = ((fg_rate_PY3 - fg_rate_allowed_PY3) * py3weight) +
+        ((fg_rate_PY2 - fg_rate_allowed_PY2) * py2weight) +
+        ((fg_rate_PY1 - fg_rate_allowed_PY1) * py1weight) +
+        ((fg_rate - fg_rate_allowed) * cyweight),
+      weighted_net_fg_made_pg = ((fg_made_pg_PY3 - fg_made_pg_allowed_PY3) *
+        py3weight) +
+        ((fg_made_pg_PY2 - fg_made_pg_allowed_PY2) * py2weight) +
+        ((fg_made_pg_PY1 - fg_made_pg_allowed_PY1) * py1weight) +
+        ((fg_made_pg - fg_made_pg_allowed) * cyweight),
+      #  weighted_net_xpts_pg = ((xpts_pg_PY3 - xpts_allowed_pg_PY3) * py3weight) + ((xpts_pg_PY2 - xpts_allowed_pg_PY2) * py2weight) + ((xpts_pg_PY1 - xpts_allowed_pg_PY1) * py1weight) + ((xpts_pg - xpts_allowed_pg) * cyweight),
+      weighted_net_adj_st_epa = (net_adj_st_epa_PY3 * py3weight) +
+        (net_adj_st_epa_PY2 * py2weight) +
+        (net_adj_st_epa_PY1 * py1weight) +
+        (net_adj_st_epa * cyweight)
+    ) #,
   #  weighted_mean_oppdef_epa = (oppdef_epa_PY3 * py3weight) + (oppdef_epa_PY2 * py2weight) + (oppdef_epa_PY1 * py1weight) + (oppdef_epa * cyweight),
   #  weighted_mean_oppoff_epa = (oppoff_epa_PY3 * py3weight) + (oppoff_epa_PY2 * py2weight) + (oppoff_epa_PY1 * py1weight) + (oppoff_epa * cyweight))
 } else if (as.integer(cfb_week) <= 9) {
   ##### Week 6-9 Weighted Variables #####
   ### only PY1 and current data
   ### adding weighted variables
-  # fmt: skip
   VoAVariables <- VoAVariables |>
-    mutate(weighted_off_ppg_mean = (adj_off_ppg_PY1 * py1weight) + (adj_off_ppg * cyweight),
-           weighted_def_ppg_mean = (adj_def_ppg_PY1 * py1weight) + (adj_def_ppg * cyweight),
-           weighted_net_st_ppg_mean = (net_st_ppg_PY1 * py1weight) + (net_st_ppg * cyweight),
-           off_ppg_aboveavg = weighted_off_ppg_mean - mean(weighted_off_ppg_mean),
-           def_ppg_aboveavg = weighted_def_ppg_mean - mean(weighted_def_ppg_mean),
-           weighted_off_epa = (adj_off_epa_PY1 * py1weight) + (adj_off_epa * cyweight),
-           weighted_off_ypp = (adj_off_ypp_PY1 * py1weight) + (adj_off_ypp * cyweight),
-           weighted_off_success_rate = (off_success_rate_PY1 * py1weight) + (off_success_rate * cyweight),
-           weighted_off_explosiveness = (adj_off_explosiveness_PY1 * py1weight) + (adj_off_explosiveness * cyweight),
-           weighted_off_third_conv_rate = (off_third_conv_rate_PY1 * py1weight) + (off_third_conv_rate * cyweight),
-           weighted_off_pts_per_opp = (off_pts_per_opp_PY1 * py1weight) + (off_pts_per_opp * cyweight),
-           weighted_off_plays_pg = (off_plays_pg_PY1 * py1weight) + (off_plays_pg * cyweight),
-           weighted_def_plays_pg = (def_plays_pg_PY1 * py1weight) + (def_plays_pg * cyweight),
-           weighted_def_epa = (adj_def_epa_PY1 * py1weight) + (adj_def_epa * cyweight),
-           weighted_def_ypp = (adj_def_ypp_PY1 * py1weight) + (adj_def_ypp * cyweight),
-           weighted_def_success_rate = (def_success_rate_PY1 * py1weight) + (def_success_rate * cyweight),
-           weighted_def_explosiveness = (adj_def_explosiveness_PY1 * py1weight) + (adj_def_explosiveness * cyweight),
-           weighted_def_third_conv_rate = (def_third_conv_rate_PY1 * py1weight) + (def_third_conv_rate * cyweight),
-           weighted_def_pts_per_opp = (def_pts_per_opp_PY1 * py1weight) + (def_pts_per_opp * cyweight),
-           weighted_def_havoc_total = (def_havoc_total_PY1 * py1weight) + (def_havoc_total * cyweight),
-           weighted_net_kick_return_yds = ((kick_return_yds_PY1 - kick_return_yds_allowed_PY1) * py1weight) + ((kick_return_yds - kick_return_yds_allowed) * cyweight),
-           weighted_net_punt_return_yds = ((punt_return_yds_PY1 - punt_return_yds_allowed_PY1) * py1weight) + ((punt_return_yds - punt_return_yds_allowed) * cyweight),
-           weighted_net_fg_rate = ((fg_rate_PY1 - fg_rate_allowed_PY1) * py1weight) + ((fg_rate - fg_rate_allowed) * cyweight),
-           weighted_net_fg_made_pg = ((fg_made_pg_PY1 - fg_made_pg_allowed_PY1) * py1weight) + ((fg_made_pg - fg_made_pg_allowed) * cyweight),
-          #  weighted_net_xpts_pg = ((xpts_pg_PY1 - xpts_allowed_pg_PY1) * py1weight) + ((xpts_pg - xpts_allowed_pg) * cyweight),
-           weighted_net_adj_st_epa = (net_adj_st_epa_PY1 * py1weight) + (net_adj_st_epa * cyweight)) #,
+    mutate(
+      weighted_recruit_pts = (recruit_pts_PY1 * cyweight) +
+        (recruit_pts_PY2 * py1weight),
+      weighted_off_ppg_mean = (adj_off_ppg_PY1 * py1weight) +
+        (adj_off_ppg * cyweight),
+      weighted_def_ppg_mean = (adj_def_ppg_PY1 * py1weight) +
+        (adj_def_ppg * cyweight),
+      weighted_net_st_ppg_mean = (net_st_ppg_PY1 * py1weight) +
+        (net_st_ppg * cyweight),
+      off_ppg_aboveavg = weighted_off_ppg_mean - mean(weighted_off_ppg_mean),
+      def_ppg_aboveavg = weighted_def_ppg_mean - mean(weighted_def_ppg_mean),
+      weighted_off_epa = (adj_off_epa_PY1 * py1weight) +
+        (adj_off_epa * cyweight),
+      weighted_off_ypp = (adj_off_ypp_PY1 * py1weight) +
+        (adj_off_ypp * cyweight),
+      weighted_off_success_rate = (off_success_rate_PY1 * py1weight) +
+        (off_success_rate * cyweight),
+      weighted_off_explosiveness = (adj_off_explosiveness_PY1 * py1weight) +
+        (adj_off_explosiveness * cyweight),
+      weighted_off_third_conv_rate = (off_third_conv_rate_PY1 * py1weight) +
+        (off_third_conv_rate * cyweight),
+      weighted_off_pts_per_opp = (off_pts_per_opp_PY1 * py1weight) +
+        (off_pts_per_opp * cyweight),
+      weighted_off_plays_pg = (off_plays_pg_PY1 * py1weight) +
+        (off_plays_pg * cyweight),
+      weighted_def_plays_pg = (def_plays_pg_PY1 * py1weight) +
+        (def_plays_pg * cyweight),
+      weighted_def_epa = (adj_def_epa_PY1 * py1weight) +
+        (adj_def_epa * cyweight),
+      weighted_def_ypp = (adj_def_ypp_PY1 * py1weight) +
+        (adj_def_ypp * cyweight),
+      weighted_def_success_rate = (def_success_rate_PY1 * py1weight) +
+        (def_success_rate * cyweight),
+      weighted_def_explosiveness = (adj_def_explosiveness_PY1 * py1weight) +
+        (adj_def_explosiveness * cyweight),
+      weighted_def_third_conv_rate = (def_third_conv_rate_PY1 * py1weight) +
+        (def_third_conv_rate * cyweight),
+      weighted_def_pts_per_opp = (def_pts_per_opp_PY1 * py1weight) +
+        (def_pts_per_opp * cyweight),
+      weighted_def_havoc_total = (def_havoc_total_PY1 * py1weight) +
+        (def_havoc_total * cyweight),
+      weighted_net_kick_return_yds = ((kick_return_yds_PY1 -
+        kick_return_yds_allowed_PY1) *
+        py1weight) +
+        ((kick_return_yds - kick_return_yds_allowed) * cyweight),
+      weighted_net_punt_return_yds = ((punt_return_yds_PY1 -
+        punt_return_yds_allowed_PY1) *
+        py1weight) +
+        ((punt_return_yds - punt_return_yds_allowed) * cyweight),
+      weighted_net_fg_rate = ((fg_rate_PY1 - fg_rate_allowed_PY1) * py1weight) +
+        ((fg_rate - fg_rate_allowed) * cyweight),
+      weighted_net_fg_made_pg = ((fg_made_pg_PY1 - fg_made_pg_allowed_PY1) *
+        py1weight) +
+        ((fg_made_pg - fg_made_pg_allowed) * cyweight),
+      #  weighted_net_xpts_pg = ((xpts_pg_PY1 - xpts_allowed_pg_PY1) * py1weight) + ((xpts_pg - xpts_allowed_pg) * cyweight),
+      weighted_net_adj_st_epa = (net_adj_st_epa_PY1 * py1weight) +
+        (net_adj_st_epa * cyweight)
+    ) #,
   #  weighted_mean_oppdef_epa = (oppdef_epa_PY1 * py1weight) + (oppdef_epa * cyweight),
   #  weighted_mean_oppoff_epa = (oppoff_epa_PY1 * py1weight) + (oppoff_epa * cyweight))
 } else {
@@ -2288,7 +2450,7 @@ if (as.integer(cfb_week) == 0) {
 }
 
 
-##### Eliminating NAs, fixing conferences, adding Week number to VoA Variables #####
+##### Adding Week number to VoA Variables, Eliminating NAs, fixing conferences #####
 ### eliminating NAs that may still exist
 ### leaving this outside an if statement because this could be an issue regardless of season or CFB_Week
 ### currently commented out because I added this fix to each individual stat pull in function
@@ -2407,7 +2569,7 @@ if (as.integer(cfb_week) == 0) {
            Rank_Def_Pass_Play_EPA_PY3 = dense_rank(def_pass_epa_PY3),
            Rank_Def_Pass_Play_Success_Rt_PY3 = dense_rank(def_pass_success_rate_PY3),
            Rank_Def_Pass_Play_Explosiveness_PY3 = dense_rank(def_pass_explosiveness_PY3),
-           # Rank_recruit_Pts_PY3 = dense_rank(desc(recruit_pts_PY3)),
+           Rank_recruit_Pts_PY3 = dense_rank(desc(recruit_pts_PY3)),
            Rank_EPA_diff_PY3 = dense_rank(desc(EPA_diff_PY3)),
            Rank_SuccessRt_diff_PY3 = dense_rank(desc(SuccessRt_diff_PY3)),
            Rank_HavocRt_diff_PY3 = dense_rank(desc(HavocRt_diff_PY3)),
@@ -2479,13 +2641,13 @@ if (as.integer(cfb_week) == 0) {
            Rank_Def_Pass_Play_EPA_PY2 = dense_rank(def_pass_epa_PY2),
            Rank_Def_Pass_Play_Success_Rt_PY2 = dense_rank(def_pass_success_rate_PY2),
            Rank_Def_Pass_Play_Explosiveness_PY2 = dense_rank(def_pass_explosiveness_PY2),
-           # Rank_recruit_Pts_PY2 = dense_rank(desc(recruit_pts_PY2)),
+           Rank_recruit_Pts_PY2 = dense_rank(desc(recruit_pts_PY2)),
            Rank_EPA_diff_PY2 = dense_rank(desc(EPA_diff_PY2)),
            Rank_SuccessRt_diff_PY2 = dense_rank(desc(SuccessRt_diff_PY2)),
            Rank_HavocRt_diff_PY2 = dense_rank(desc(HavocRt_diff_PY2)),
            Rank_Explosiveness_diff_PY2 = dense_rank(desc(Explosiveness_diff_PY2)),
            ## PY2 weighted twice
-           # Rank_recruit_Pts_PY2_col2 = dense_rank(desc(recruit_pts_PY2)),
+           Rank_recruit_Pts_PY2_col2 = dense_rank(desc(recruit_pts_PY2)),
            ## PY1 ranks
            Rank_Comp_Pct_PY1 = dense_rank(desc(off_comp_pct_PY1)),
            Rank_off_pass_ypa_PY1 = dense_rank(desc(off_pass_ypa_PY1)),
@@ -2557,7 +2719,7 @@ if (as.integer(cfb_week) == 0) {
            Rank_SuccessRt_diff_PY1 = dense_rank(desc(SuccessRt_diff_PY1)),
            Rank_HavocRt_diff_PY1 = dense_rank(desc(HavocRt_diff_PY1)),
            Rank_Explosiveness_diff_PY1 = dense_rank(desc(Explosiveness_diff_PY1)),
-           # Rank_recruit_Pts_PY1 = dense_rank(desc(recruit_pts_PY1)),
+           Rank_recruit_Pts_PY1 = dense_rank(desc(recruit_pts_PY1)),
            ## PY1 weighted 3 times
            Rank_Comp_Pct_PY1_col2 = dense_rank(desc(off_comp_pct_PY1)),
            Rank_off_pass_ypa_PY1_col2 = dense_rank(desc(off_pass_ypa_PY1)),
@@ -2765,7 +2927,7 @@ if (as.integer(cfb_week) == 0) {
            Rank_SuccessRt_diff_PY2_col2 = dense_rank(desc(SuccessRt_diff_PY2)),
            Rank_HavocRt_diff_PY2_col2 = dense_rank(desc(HavocRt_diff_PY2)),
            Rank_Explosiveness_diff_PY2_col2 = dense_rank(desc(Explosiveness_diff_PY2)),
-           # Rank_recruit_Pts_PY2_col2 = dense_rank(desc(recruit_pts_PY2)),
+           Rank_recruit_Pts_PY2_col2 = dense_rank(desc(recruit_pts_PY2)),
            ### PY1 ranks
            Rank_Comp_Pct_PY1 = dense_rank(desc(off_comp_pct_PY1)),
            Rank_off_pass_ypa_PY1 = dense_rank(desc(off_pass_ypa_PY1)),
@@ -2837,7 +2999,7 @@ if (as.integer(cfb_week) == 0) {
            Rank_SuccessRt_diff_PY1 = dense_rank(desc(SuccessRt_diff_PY1)),
            Rank_HavocRt_diff_PY1 = dense_rank(desc(HavocRt_diff_PY1)),
            Rank_Explosiveness_diff_PY1 = dense_rank(desc(Explosiveness_diff_PY1)),
-           # Rank_recruit_Pts_PY1 = dense_rank(desc(recruit_pts_PY1)),
+           Rank_recruit_Pts_PY1 = dense_rank(desc(recruit_pts_PY1)),
            ## PY1 weighted 3 times
            Rank_Comp_Pct_PY1_col2 = dense_rank(desc(off_comp_pct_PY1)),
            Rank_off_pass_ypa_PY1_col2 = dense_rank(desc(off_pass_ypa_PY1)),
@@ -2906,9 +3068,7 @@ if (as.integer(cfb_week) == 0) {
            Rank_SuccessRt_diff_PY1_col2 = dense_rank(desc(SuccessRt_diff_PY1)),
            Rank_HavocRt_diff_PY1_col2 = dense_rank(desc(HavocRt_diff_PY1)),
            Rank_Explosiveness_diff_PY1_col2 = dense_rank(desc(Explosiveness_diff_PY1)),
-           # Rank_recruit_Pts_PY1_col2 = dense_rank(desc(recruit_pts_PY1)),
-           ### incoming recruiting class, weighted once
-           # Rank_recruit_Pts = dense_rank(desc(recruit_pts)),
+           Rank_recruit_Pts_PY1_col2 = dense_rank(desc(recruit_pts_PY1)),
            ### Ranking current stats
            Rank_Comp_Pct = dense_rank(desc(off_comp_pct)),
            Rank_off_pass_ypa = dense_rank(desc(off_pass_ypa)),
@@ -3105,7 +3265,7 @@ if (as.integer(cfb_week) == 0) {
            Rank_SuccessRt_diff_PY2 = dense_rank(desc(SuccessRt_diff_PY2)),
            Rank_HavocRt_diff_PY2 = dense_rank(desc(HavocRt_diff_PY2)),
            Rank_Explosiveness_diff_PY2 = dense_rank(desc(Explosiveness_diff_PY2)),
-           # Rank_recruit_Pts_PY2 = dense_rank(desc(recruit_pts_PY2)),
+           Rank_recruit_Pts_PY2 = dense_rank(desc(recruit_pts_PY2)),
            ## PY1 ranks
            Rank_Comp_Pct_PY1 = dense_rank(desc(off_comp_pct_PY1)),
            Rank_off_pass_ypa_PY1 = dense_rank(desc(off_pass_ypa_PY1)),
@@ -3177,7 +3337,7 @@ if (as.integer(cfb_week) == 0) {
            Rank_SuccessRt_diff_PY1 = dense_rank(desc(SuccessRt_diff_PY1)),
            Rank_HavocRt_diff_PY1 = dense_rank(desc(HavocRt_diff_PY1)),
            Rank_Explosiveness_diff_PY1 = dense_rank(desc(Explosiveness_diff_PY1)),
-           # Rank_recruit_Pts_PY1 = dense_rank(desc(recruit_pts_PY1)),
+           Rank_recruit_Pts_PY1 = dense_rank(desc(recruit_pts_PY1)),
            ## PY1 weighted 3 times
            Rank_Comp_Pct_PY1_col2 = dense_rank(desc(off_comp_pct_PY1)),
            Rank_off_pass_ypa_PY1_col2 = dense_rank(desc(off_pass_ypa_PY1)),
@@ -3246,7 +3406,7 @@ if (as.integer(cfb_week) == 0) {
            Rank_SuccessRt_diff_PY1_col2 = dense_rank(desc(SuccessRt_diff_PY1)),
            Rank_HavocRt_diff_PY1_col2 = dense_rank(desc(HavocRt_diff_PY1)),
            Rank_Explosiveness_diff_PY1_col2 = dense_rank(desc(Explosiveness_diff_PY1)),
-           # Rank_recruit_Pts_PY1_col2 = dense_rank(desc(recruit_pts_PY1)),
+           Rank_recruit_Pts_PY1_col2 = dense_rank(desc(recruit_pts_PY1)),
            ### ranking current season stats now
            Rank_Comp_Pct = dense_rank(desc(off_comp_pct)),
            Rank_off_pass_ypa = dense_rank(desc(off_pass_ypa)),
@@ -3731,7 +3891,7 @@ if (as.integer(cfb_week) == 0) {
            Rank_SuccessRt_diff_PY1 = dense_rank(desc(SuccessRt_diff_PY1)),
            Rank_HavocRt_diff_PY1 = dense_rank(desc(HavocRt_diff_PY1)),
            Rank_Explosiveness_diff_PY1 = dense_rank(desc(Explosiveness_diff_PY1)),
-           # Rank_recruit_Pts_PY1 = dense_rank(desc(recruit_pts_PY1)),
+           Rank_recruit_Pts_PY1 = dense_rank(desc(recruit_pts_PY1)),
            ## Ranking current stats
            Rank_Comp_Pct = dense_rank(desc(off_comp_pct)),
            Rank_off_pass_ypa = dense_rank(desc(off_pass_ypa)),
@@ -3972,10 +4132,18 @@ if (as.integer(cfb_week) == 0) {
     VoATrain_PY1,
     rbind(VoATrain_PY2, VoATrain_PY3)
   )
+  write_parquet(
+    VoATrain,
+    here("Data", paste0("VoA", year), "ModelTraining", "VoATrain.parquet")
+  )
   VoAVariables <- VoAVariables |>
     mutate(
       VoA_Output = (rowMeans(VoAVariables[, VoA_Ncols:ncol(VoAVariables)]))
     )
+  # write_parquet(
+  #   VoAVariables,
+  #   here("Data", paste0("VoA", year), "ModelTraining", "VoAVariables.parquet")
+  # )
   ## Append column of VoA Final Rankings
   # VoAVariables <- VoAVariables |>
   #   mutate(VoA_Ranking = dense_rank(VoA_Output))
@@ -3992,7 +4160,7 @@ if (as.integer(cfb_week) == 0) {
 ### End of if statement
 
 ## using Stan function to create FPI/SP+ like metric
-# includes EPA, success rate, explosiveness, VoA_Output, VoA's Conference_Strength, and pts_per_opp (offense and defense where applicable)
+# includes EPA, success rate, explosiveness, VoA_Output, VoA's Conf_Rk, and pts_per_opp (offense and defense where applicable)
 # set.seed(802)
 
 ##### using Stan to create FPI/SP+ like metrics #####
@@ -4010,8 +4178,9 @@ if (as.integer(cfb_week) == 0) {
     third_conv_rate = VoATrain$off_third_conv_rate,
     off_pts_per_opp = VoATrain$off_pts_per_opp,
     off_plays_pg = VoATrain$adj_off_plays_pg,
-    VoA_Output = 1 / VoATrain$VoA_Output,
-    Conference_Strength = 1 / VoATrain$Conf_Rk
+    recruit_pts = VoATrain$recruit_pts,
+    VoA_Output = VoATrain$VoA_Output,
+    Conference_Strength = VoATrain$Conf_Rk
   )
 
   ### compile the stan model
@@ -4033,11 +4202,13 @@ if (as.integer(cfb_week) == 0) {
   print(Off_VoA_fit$cmdstan_diagnose())
 
   ### saving fitted model object so I don't have to refit the model ever again
-  write_rds(
-    Off_VoA_fit,
-    file = here("Data", "FittedModels", "OffVoAStanFit.rds"),
-    compress = "gz"
-  )
+  ## annoyingly when I read this object back in I can't do anything with it which is frankly fucking infuriating
+  ## fuck you you incessant snobs at mcmc stan
+  # write_rds(
+  #   Off_VoA_fit,
+  #   file = here("Data", "FittedModels", "OffVoAStanFit.rds"),
+  #   compress = "gz"
+  # )
 
   ### Extracting Parameters
   Off_VoA_pars <- Off_VoA_fit$draws(
@@ -4050,11 +4221,18 @@ if (as.integer(cfb_week) == 0) {
       "beta_third_conv_rate",
       "beta_off_pts_per_opp",
       "beta_off_plays_pg",
+      "beta_recruit_pts",
       "beta_VoA_Output",
       "beta_Conference_Strength",
       "sigma"
     ),
     format = "draws_df"
+  )
+
+  ### writing parameter draws as tabular file since saving the fit as an rds file doesn't work because of stupid bullshit
+  write_parquet(
+    Off_VoA_pars,
+    here("Data", "FittedModels", "OffVoAParams.parquet")
   )
 
   ### creating matrix to hold ratings
@@ -4080,7 +4258,7 @@ if (as.integer(cfb_week) == 0) {
   #         Off_VoA_pars$beta_off_plays_pg[p] *
   #           VoAVariables$weighted_off_plays_pg[t] +
   #         Off_VoA_pars$beta_VoA_Output[p] * (1 / VoAVariables$VoA_Output[t]) +
-  #         Off_VoA_pars$beta_Conference_Strength[p] *
+  #         Off_VoA_pars$beta_Conf_Rk[p] *
   #           (1 / VoAVariables$Conf_Rk[t]),
   #       sd = Off_VoA_pars$sigma[p]
   #     )
@@ -4098,8 +4276,9 @@ if (as.integer(cfb_week) == 0) {
     beta_third_conv_rate = VoAVariables$weighted_off_third_conv_rate,
     beta_off_pts_per_opp = VoAVariables$weighted_off_pts_per_opp,
     beta_off_plays_pg = VoAVariables$weighted_off_plays_pg,
-    beta_VoA_Output = 1 / VoAVariables$VoA_Output,
-    beta_Conference_Strength = 1 / VoAVariables$Conf_Rk
+    beta_recruit_pts = VoAVariables$weighted_recruit_pts,
+    beta_VoA_Output = VoAVariables$VoA_Output,
+    beta_Conference_Strength = VoAVariables$Conf_Rk
   ))
 
   #### Parameter Matrix (Posterior samples x Predictors)
@@ -4119,6 +4298,13 @@ if (as.integer(cfb_week) == 0) {
     rnorm(P * T_num, mean = OffMeans_matrix, sd = Off_VoA_pars$sigma),
     nrow = P,
     ncol = T_num
+  )
+
+  ### fixing any values in the posterior sample that are below 0, since that is not possible for this metric
+  Off_VoA_Ratings <- ifelse(
+    Off_VoA_Ratings <= 0,
+    abs(rnorm(1, 0, sd(Off_VoA_Ratings))) / 5,
+    Off_VoA_Ratings
   )
 
   ### generating median and mean and quantile ratings
@@ -4145,6 +4331,7 @@ if (as.integer(cfb_week) == 0) {
     def_pts_per_opp = VoATrain$def_pts_per_opp,
     def_havoc_total = VoATrain$def_havoc_total,
     def_plays_pg = VoATrain$adj_def_plays_pg,
+    recruit_pts = VoATrain$recruit_pts,
     VoA_Output = VoATrain$VoA_Output,
     Conference_Strength = VoATrain$Conf_Rk
   )
@@ -4167,11 +4354,11 @@ if (as.integer(cfb_week) == 0) {
   ### Print the diagnostics
   print(Def_VoA_fit$cmdstan_diagnose())
   ### saving the moel so I don't have to refit or recompile in later weeks, and also to keep initial coefficients stable
-  write_rds(
-    Def_VoA_fit,
-    file = here("Data", "FittedModels", "DefVoAStanFit.rds"),
-    compress = "gz"
-  )
+  # write_rds(
+  #   Def_VoA_fit,
+  #   file = here("Data", "FittedModels", "DefVoAStanFit.rds"),
+  #   compress = "gz"
+  # )
 
   ### Extracting Parameters
   Def_VoA_pars <- Def_VoA_fit$draws(
@@ -4185,11 +4372,18 @@ if (as.integer(cfb_week) == 0) {
       "beta_def_pts_per_opp",
       "beta_def_havoc_total",
       "beta_def_plays_pg",
+      "beta_recruit_pts",
       "beta_VoA_Output",
       "beta_Conference_Strength",
       "sigma"
     ),
     format = "draws_df"
+  )
+
+  ### writing out posterior samples as parquet file so I don't have to refit the model again
+  write_parquet(
+    Def_VoA_pars,
+    here("Data", "FittedModels", "DefVoAParams.parquet")
   )
 
   ### creating matrix to hold ratings
@@ -4217,8 +4411,8 @@ if (as.integer(cfb_week) == 0) {
   #         Def_VoA_pars$beta_def_plays_pg[p] *
   #           VoAVariables$weighted_def_plays_pg[t] +
   #         Def_VoA_pars$beta_VoA_Output[p] * VoAVariables$VoA_Output[t] +
-  #         Def_VoA_pars$beta_Conference_Strength[p] *
-  #           VoAVariables$Conference_Strength[t],
+  #         Def_VoA_pars$beta_Conf_Rk[p] *
+  #           VoAVariables$Conf_Rk[t],
   #       sd = Def_VoA_pars$sigma[p]
   #     )
   #     Def_VoA_Ratings[p, t] <- Def_VoA_Rating
@@ -4236,6 +4430,7 @@ if (as.integer(cfb_week) == 0) {
     beta_def_pts_per_opp = VoAVariables$weighted_def_pts_per_opp,
     beta_def_havoc_total = VoAVariables$weighted_def_havoc_total,
     beta_def_plays_pg = VoAVariables$weighted_def_plays_pg,
+    beta_recruit_pts = VoAVariables$weighted_recruit_pts,
     beta_VoA_Output = VoAVariables$VoA_Output,
     beta_Conference_Strength = VoAVariables$Conf_Rk
   ))
@@ -4259,6 +4454,16 @@ if (as.integer(cfb_week) == 0) {
     ncol = T_num
   )
 
+  ### def voa ratings has a bunch of negative values in it which is not possible for what the value represents (pts conceded against hypothetical avg team on a neutral field)
+  ## a better fix is probably to tinker with the priors some more but what if I don't want to because I'm tired of dealing with stan being weird and annoying
+  ## on reflection the priors probably don't change much, I'd need to fix the opponent-adjustment process more than anything else so low numbers aren't so frequent
+  ## but I'm honestly not sure how to do that
+  Def_VoA_Ratings <- ifelse(
+    Def_VoA_Ratings <= 0,
+    abs(rnorm(1, 0, sd(Def_VoA_Ratings))) / 5,
+    Def_VoA_Ratings
+  )
+
   ### generating median and mean and quantile ratings
   MeanPred <- apply(Def_VoA_Ratings, 2, mean)
   MedianPred <- apply(Def_VoA_Ratings, 2, median)
@@ -4275,8 +4480,8 @@ if (as.integer(cfb_week) == 0) {
   ST_VoA_datalist <- list(
     N = nrow(VoATrain),
     net_st_ppg = VoATrain$net_adj_st_ppg,
-    net_kick_return_avg = VoATrain$net_kick_return_yds,
-    net_punt_return_avg = VoATrain$net_punt_return_yds,
+    net_kick_return_yds = VoATrain$net_kick_return_yds,
+    net_punt_return_yds = VoATrain$net_punt_return_yds,
     net_fg_rate = VoATrain$net_fg_rate,
     net_st_epa = VoATrain$net_adj_st_epa
     # net_st_epa = VoATrain$st_net_epa
@@ -4300,23 +4505,30 @@ if (as.integer(cfb_week) == 0) {
   ### Print the diagnostics
   print(ST_VoA_fit$cmdstan_diagnose())
 
-  write_rds(
-    ST_VoA_fit,
-    file = here("Data", "FittedModels", "STVoAStanFit.rds"),
-    compress = "gz"
-  )
+  ### saving model object as rds file
+  # write_rds(
+  #   ST_VoA_fit,
+  #   file = here("Data", "FittedModels", "STVoAStanFit.rds"),
+  #   compress = "gz"
+  # )
 
   ### extracting parameters
   ST_VoA_pars <- ST_VoA_fit$draws(
     variables = c(
       "b0",
-      "beta_net_kick_return_avg",
-      "beta_net_punt_return_avg",
+      "beta_net_kick_return_yds",
+      "beta_net_punt_return_yds",
       "beta_net_fg_rate",
       "beta_net_st_epa",
       "sigma"
     ),
     format = "draws_df"
+  )
+
+  ### writing out posterior samples as parquet file so I don't have to refit the model again
+  write_parquet(
+    ST_VoA_pars,
+    here("Data", "FittedModels", "STVoAParams.parquet")
   )
 
   ### creating matrix to store special teams VoA_Ratings
@@ -4350,8 +4562,8 @@ if (as.integer(cfb_week) == 0) {
   ### Create the Design Matrix (Teams x Predictors)
   STDesignMatrix <- as.matrix(cbind(
     b0 = 1,
-    beta_net_kick_return_avg = VoAVariables$weighted_net_kick_return_yds,
-    beta_net_punt_return_avg = VoAVariables$weighted_net_punt_return_yds,
+    beta_net_kick_return_yds = VoAVariables$weighted_net_kick_return_yds,
+    beta_net_punt_return_yds = VoAVariables$weighted_net_punt_return_yds,
     beta_net_fg_rate = VoAVariables$weighted_net_fg_rate,
     beta_net_st_epa = VoAVariables$weighted_net_adj_st_epa
   ))
@@ -4400,7 +4612,7 @@ if (as.integer(cfb_week) == 0) {
   #   off_pts_per_opp = VoAVariables$off_pts_per_opp,
   #   off_plays_pg = VoAVariables$off_plays_pg,
   #   VoA_Output = 1 / VoAVariables$VoA_Output,
-  #   Conference_Strength = 1 / VoAVariables$Conference_Strength
+  #   Conference_Strength = 1 / VoAVariables$Conf_Rk
   # )
 
   # ### compile the stan model
@@ -4419,28 +4631,34 @@ if (as.integer(cfb_week) == 0) {
   # Off_VoA_fit
 
   ### loading offensive Stan model
-  Off_VoA_fit <- read_rds(here("Data", "FittedModels", "OffVoAStanFit.rds"))
+  # Off_VoA_fit <- read_rds(here("Data", "FittedModels", "OffVoAStanFit.rds"))
 
   ### Print the diagnostics
-  print(Off_VoA_fit$cmdstan_diagnose())
+  # print(Off_VoA_fit$cmdstan_diagnose())
 
   ### Extracting Parameters
-  Off_VoA_pars <- Off_VoA_fit$draws(
-    variables = c(
-      "b0",
-      "beta_off_epa",
-      "beta_off_ypp",
-      "beta_off_success_rate",
-      "beta_off_explosiveness",
-      "beta_third_conv_rate",
-      "beta_off_pts_per_opp",
-      "beta_off_plays_pg",
-      "beta_VoA_Output",
-      "beta_Conference_Strength",
-      "sigma"
-    ),
-    format = "draws_df"
-  )
+  # Off_VoA_pars <- Off_VoA_fit$draws(
+  #   variables = c(
+  #     "b0",
+  #     "beta_off_epa",
+  #     "beta_off_ypp",
+  #     "beta_off_success_rate",
+  #     "beta_off_explosiveness",
+  #     "beta_third_conv_rate",
+  #     "beta_off_pts_per_opp",
+  #     "beta_off_plays_pg",
+  #     "beta_recruit_pts",
+  #     "beta_VoA_Output",
+  #     "beta_Conference_Strength",
+  #     "sigma"
+  #   ),
+  #   format = "draws_df"
+  # )
+  Off_VoA_pars <- read_parquet(here(
+    "Data",
+    "FittedModels",
+    "OffVoAParams.parquet"
+  ))
 
   ### creating matrix to hold ratings
   # Off_VoA_Ratings <- matrix(NA, length(Off_VoA_pars$b0), nrow(VoAVariables))
@@ -4456,6 +4674,7 @@ if (as.integer(cfb_week) == 0) {
     beta_third_conv_rate = VoAVariables$weighted_off_third_conv_rate,
     beta_off_pts_per_opp = VoAVariables$weighted_off_pts_per_opp,
     beta_off_plays_pg = VoAVariables$weighted_off_plays_pg,
+    beta_recruit_pts = VoAVariables$weighted_recruit_pts,
     beta_VoA_Output = 1 / VoAVariables$VoA_Output,
     beta_Conference_Strength = 1 / VoAVariables$Conf_Rk
   ))
@@ -4504,7 +4723,7 @@ if (as.integer(cfb_week) == 0) {
   #   def_havoc_total = VoAVariables$def_havoc_total,
   #   def_plays_pg = VoAVariables$def_plays_pg,
   #   VoA_Output = VoAVariables$VoA_Output,
-  #   Conference_Strength = VoAVariables$Conference_Strength
+  #   Conference_Strength = VoAVariables$Conf_Rk
   # )
 
   ### compile the stan model
@@ -4523,7 +4742,11 @@ if (as.integer(cfb_week) == 0) {
   # Def_VoA_fit
 
   ### loading defensive Stan model
-  Def_VoA_fit <- read_rds(here("Data", "FittedModels", "DefVoAStanFit.rds"))
+  Def_VoA_fit <- read_rds(here(
+    "Data",
+    "FittedModels_GoodFCSmodels",
+    "DefVoAStanFit.rds"
+  ))
 
   ### Print the diagnostics
   print(Def_VoA_fit$cmdstan_diagnose())
@@ -4540,6 +4763,7 @@ if (as.integer(cfb_week) == 0) {
       "beta_def_pts_per_opp",
       "beta_def_havoc_total",
       "beta_def_plays_pg",
+      "beta_recruit_pts",
       "beta_VoA_Output",
       "beta_Conference_Strength",
       "sigma"
@@ -4563,6 +4787,7 @@ if (as.integer(cfb_week) == 0) {
     beta_def_pts_per_opp = VoAVariables$weighted_def_pts_per_opp,
     beta_def_havoc_total = VoAVariables$weighted_def_havoc_total,
     beta_def_plays_pg = VoAVariables$weighted_def_plays_pg,
+    beta_recruit_pts = VoAVariables$weighted_recruit_pts,
     beta_VoA_Output = VoAVariables$VoA_Output,
     beta_Conference_Strength = VoAVariables$Conf_Rk
   ))
@@ -4624,7 +4849,7 @@ if (as.integer(cfb_week) == 0) {
   # ST_VoA_fit
 
   ### loading special teams Stan model
-  ST_VoA_fit <- read_rds(here("Data", "FittedModels", "STVoAStanFit.rds"))
+  # ST_VoA_fit <- read_rds(here("Data", "FittedModels", "STVoAStanFit.rds"))
 
   ### Print the diagnostics
   print(ST_VoA_fit$cmdstan_diagnose())
@@ -4696,7 +4921,7 @@ if (as.integer(cfb_week) == 0) {
   #   off_pts_per_opp = VoAVariables$off_pts_per_opp,
   #   off_plays_pg = VoAVariables$off_plays_pg,
   #   VoA_Output = 1 / VoAVariables$VoA_Output,
-  #   Conference_Strength = 1 / VoAVariables$Conference_Strength
+  #   Conference_Strength = 1 / VoAVariables$Conf_Rk
   # )
 
   # ### compile the stan model
@@ -4714,8 +4939,8 @@ if (as.integer(cfb_week) == 0) {
   # )
   # Off_VoA_fit
 
-  ### loading offensive Stan model
-  Off_VoA_fit <- read_rds(here("Data", "FittedModels", "OffVoAStanFit.rds"))
+  ### loading offensive Stan model posterior samples
+  # Off_VoA_fit <- read_rds(here("Data", "FittedModels", "OffVoAStanFit.rds"))
 
   ### Print the diagnostics
   print(Off_VoA_fit$cmdstan_diagnose())
@@ -4731,6 +4956,7 @@ if (as.integer(cfb_week) == 0) {
       "beta_third_conv_rate",
       "beta_off_pts_per_opp",
       "beta_off_plays_pg",
+      "beta_recruit_pts",
       "beta_VoA_Output",
       "beta_Conference_Strength",
       "sigma"
@@ -4752,6 +4978,7 @@ if (as.integer(cfb_week) == 0) {
     beta_third_conv_rate = VoAVariables$off_third_conv_rate,
     beta_off_pts_per_opp = VoAVariables$off_pts_per_opp,
     beta_off_plays_pg = VoAVariables$adj_off_plays_pg,
+    beta_recruit_pts = VoAVariables$recruit_pts_PY1,
     beta_VoA_Output = 1 / VoAVariables$VoA_Output,
     beta_Conference_Strength = 1 / VoAVariables$Conf_Rk
   ))
@@ -4800,7 +5027,7 @@ if (as.integer(cfb_week) == 0) {
   #   def_havoc_total = VoAVariables$def_havoc_total,
   #   def_plays_pg = VoAVariables$def_plays_pg,
   #   VoA_Output = VoAVariables$VoA_Output,
-  #   Conference_Strength = VoAVariables$Conference_Strength
+  #   Conf_Rk = VoAVariables$Conf_Rk
   # )
 
   ### compile the stan model
@@ -4836,6 +5063,7 @@ if (as.integer(cfb_week) == 0) {
       "beta_def_pts_per_opp",
       "beta_def_havoc_total",
       "beta_def_plays_pg",
+      "beta_recruit_pts",
       "beta_VoA_Output",
       "beta_Conference_Strength",
       "sigma"
@@ -4859,6 +5087,7 @@ if (as.integer(cfb_week) == 0) {
     beta_def_pts_per_opp = VoAVariables$def_pts_per_opp,
     beta_def_havoc_total = VoAVariables$def_havoc_total,
     beta_def_plays_pg = VoAVariables$adj_def_plays_pg,
+    beta_recruit_pts = VoAVariables$recruit_pts_PY1,
     beta_VoA_Output = VoAVariables$VoA_Output,
     beta_Conference_Strength = VoAVariables$Conf_Rk
   ))
@@ -4990,7 +5219,7 @@ VoAVariables <- VoAVariables |>
 ### creating data frame with just team, VoA ratings, VoA Rankings, and VoA output
 FinalTable <- VoAVariables |>
   select(
-    team,
+    school,
     classification,
     conference,
     CFB_Week,
@@ -5003,7 +5232,7 @@ FinalTable <- VoAVariables |>
     DefVoA_Ranking,
     STVoA_MeanRating,
     STVoA_Ranking,
-    Conference_Strength
+    Conf_Rk
   ) |>
   arrange(VoA_Ranking_Ovr)
 ### separating out top 25
@@ -5044,7 +5273,7 @@ VoATop25Table <- FinalVoATop25 |>
   ) |>
   fmt_number(
     # Another column (also numeric data)
-    columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$VoA_Ranking
+    columns = c(VoA_Ranking_Ovr), # What column variable? FinalVoATop25$V oA_Ranking
     decimals = 0 # I want this column to have zero decimal places
   ) |>
   data_color(
@@ -5103,7 +5332,7 @@ VoATop25Table <- FinalVoATop25 |>
     conference,
     CFB_Week,
     VoA_Output,
-    Conference_Strength
+    Conf_Rk
   )) |>
   tab_footnote(
     footnote = "Table by @gshelor, data from CFB Data API via cfbfastR"
@@ -5201,7 +5430,7 @@ VoA_Full_Table <- FinalTable |>
     conference,
     CFB_Week,
     VoA_Output,
-    Conference_Strength
+    Conf_Rk
   )) |>
   tab_footnote(
     footnote = "Table by @gshelor, data from CFB Data API via cfbfastR"
@@ -5221,7 +5450,13 @@ if (as.integer(cfb_week) > 11) {
   ### calculating top 12 average since 12 teams make the playoff
   Top12 <- VoAVariables |>
     filter(VoA_Ranking_Ovr <= 12) |>
-    select(season, team, OffVoA_MeanRating, DefVoA_MeanRating, STVoA_MeanRating)
+    select(
+      season,
+      school,
+      OffVoA_MeanRating,
+      DefVoA_MeanRating,
+      STVoA_MeanRating
+    )
   Top12_off_mean <- mean(Top12$OffVoA_MeanRating)
   Top12_def_mean <- mean(Top12$DefVoA_MeanRating)
   Top12_st_mean <- mean(Top12$STVoA_MeanRating)
@@ -5276,7 +5511,7 @@ if (as.integer(cfb_week) > 11) {
     temp_teamFCSOpps <- FCS |>
       filter(team %in% temp_team$team_opp) |>
       select(team, rating)
-    colnames(temp_teamFCSOpps) <- c("team", "VoA_Rating_Ovr")
+    colnames(temp_teamFCSOpps) <- c("school", "VoA_Rating_Ovr")
     temp_teamOpps <- rbind(temp_teamFCSOpps, temp_teamFCSOpps)
     colnames(temp_teamOpps) <- c("team_opp", "opp_VoA_rating")
 
@@ -5322,13 +5557,13 @@ if (as.integer(cfb_week) > 11) {
 
   ### filtering resume top 25 out for table
   ResumeVoATop25 <- VoAVariables |>
-    select(school, Resume_VoA, Resume_VoA_Rank) |>
+    select(team, Resume_VoA, Resume_VoA_Rank) |>
     filter(Resume_VoA_Rank < 26) |>
     arrange(Resume_VoA_Rank)
 
   ### full resume VoA, simplified for table
   FinalResumeTable <- VoAVariables |>
-    select(school, Resume_VoA, Resume_VoA_Rank) |>
+    select(team, Resume_VoA, Resume_VoA_Rank) |>
     arrange(Resume_VoA_Rank)
 } else {
   print("no Resume VoA until Week 12!")
@@ -5500,9 +5735,44 @@ if (as.integer(cfb_week) > 11) {
       footnote = "Table by @gshelor, data from CFB Data API via cfbfastR"
     )
 } else {
-  print("No Resume VoA until Week 10!")
+  print("No Resume VoA until Week 12!")
 }
 
+# poopypants <- lm(
+#   adj_off_ppg ~ adj_off_epa +
+#     adj_off_ypp +
+#     off_success_rate +
+#     adj_off_explosiveness +
+#     off_third_conv_rate +
+#     off_pts_per_opp +
+#     adj_off_plays_pg +
+#     recruit_pts +
+#     VoA_Output +
+#     Conf_Rk,
+#   data = VoATrain
+# )
+
+# poopypantsVoA <- VoAVariables |>
+#   mutate(
+#     adj_off_epa = weighted_off_epa,
+#     adj_off_ypp = weighted_off_ypp,
+#     off_success_rate = weighted_off_success_rate,
+#     adj_off_explosiveness = weighted_off_explosiveness,
+#     off_third_conv_rate = weighted_off_third_conv_rate,
+#     off_pts_per_opp = weighted_off_pts_per_opp,
+#     adj_off_plays_pg = weighted_off_plays_pg,
+#     recruit_pts = weighted_recruit_pts
+#   )
+# poopypantsVoA <- poopypantsVoA |>
+#   mutate(lm_off_preds = predict(poopypants, poopypantsVoA))
+
+# poopypantsVoA_gt <- poopypantsVoA |>
+#   select(school, lm_off_preds) |>
+#   arrange(desc(lm_off_preds)) |>
+#   gt()
+# poopypantsVoA_gt
+
+# poopy = predict(poopypants, poopypantsVoA)
 
 ##### Saving tables and final VoAVariables csv #####
 ### viewing and saving the gt tables outside the if statement so that I can see them in the RStudio viewer
@@ -5545,7 +5815,7 @@ if (as.integer(cfb_week) > 9) {
 ## Exporting final dataframe as parquet file
 write_parquet(VoAVariables, file_pathway)
 ### also writing out file represent the "current" VoA ratings so it can be more easily visualized on my website and/or a shiny app maybe
-write_csv(VoAVariables, here("Data", CurrentFCSVoA.csv))
+write_csv(VoAVariables, here("Data", "CurrentFCSVoA.csv"))
 
 ##### Setting up the Unintelligible Charts #####
 ### Tracks VoA Ratings and Rankings by week
@@ -5553,7 +5823,7 @@ write_csv(VoAVariables, here("Data", CurrentFCSVoA.csv))
 ### changing FinalTable to only be columns needed for Unintelligible Charts
 FinalTable <- FinalTable |>
   select(
-    team,
+    school,
     conference,
     CFB_Week,
     VoA_Output,
@@ -7104,14 +7374,14 @@ Power5_VoA <- VoAVariables |>
       conference == "Big 12" |
       conference == "Big Ten" |
       conference == "FCS Independents" |
-      conference == "Pac-12" |
       conference == "SEC"
   ) |>
-  filter(school != "Connecticut" & team != "UMass")
+  filter(school != "Connecticut" & school != "UMass")
 
 Group5_VoA <- VoAVariables |>
   filter(
-    conference == "American Athletic" |
+    conference == "Pac-12" |
+      conference == "American Athletic" |
       conference == "Conference USA" |
       conference == "FCS Independents" |
       conference == "Mid-American" |
@@ -7287,18 +7557,21 @@ ggsave(
 )
 
 ### plot for adjusted off/def EPA
-if (as.integer(cfb_week) <= 8) {
+if (as.integer(cfb_week) <= 9) {
   VoA_OffDef_EPA_plot <- ggplot(
     VoAVariables_plot,
-    aes(x = weighted_adj_off_epa, y = weighted_adj_def_epa)
+    aes(
+      x = weighted_off_epa,
+      y = weighted_def_epa
+    )
   ) +
     theme_bw() +
     # geom_point(size = 2) +
     # geom_smooth() +
     scale_y_reverse() +
     geom_cfb_logos(aes(team = school), width = 0.035) +
-    geom_hline(yintercept = mean(VoAVariables$weighted_adj_def_epa)) +
-    geom_vline(xintercept = mean(VoAVariables$weighted_adj_off_epa)) +
+    geom_hline(yintercept = mean(VoAVariables$weighted_def_epa)) +
+    geom_vline(xintercept = mean(VoAVariables$weighted_off_epa)) +
     # scale_x_continuous(breaks = seq(0,135,10)) +
     # scale_y_continuous(breaks = seq(-50,40,5)) +
     ggtitle(OffDef_EPA_Plot_title) +
@@ -7321,10 +7594,10 @@ if (as.integer(cfb_week) <= 8) {
     aes(x = adj_off_epa, y = adj_def_epa)
   ) +
     theme_bw() +
-    # geom_point(size = 2) +
+    geom_point(size = 2) +
     # geom_smooth() +
     scale_y_reverse() +
-    geom_cfb_logos(aes(team = school), width = 0.035) +
+    # geom_cfb_logos(aes(team = school), width = 0.035) +
     geom_hline(yintercept = mean(VoAVariables$adj_def_epa)) +
     geom_vline(xintercept = mean(VoAVariables$adj_off_epa)) +
     # scale_x_continuous(breaks = seq(0,135,10)) +

@@ -1,4 +1,6 @@
 ##### Stan is failing in R, so I'm going to specify the same model in python using PyMC and see if it works #####
+### update: this did not work. couldn't figure out how to get the model to make inference on unseen data and I somehow got offensive ratings of 100? and they shouldn't really be above 40, especially not for FCS teams
+### someone who is good at the economy please help me model this, football championship subdivision is dying
 
 
 import os

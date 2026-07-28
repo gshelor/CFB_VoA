@@ -17,16 +17,26 @@ create_voavarstrain_df <- function(PY, teams_df, pbp_df) {
       longitude,
       elevation
     ) |>
-    mutate(season = as.integer(PY), .before = 1) |>
-    ### adding columns which will be filled in later using pbp data
-    mutate(
-      # first_downs_pg = 0,
-      # xpts_pg = 0,
-      # xpts_allowed_pg = 0,
-      # st_ppg = 0,
-      # st_ppg_allowed = 0,
-    )
+    mutate(season = as.integer(PY), .before = 1) #|>
+  ### adding columns which will be filled in later using pbp data
+  # mutate(
+  #   first_downs_pg = 0,
+  #   xpts_pg = 0,
+  #   xpts_allowed_pg = 0,
+  #   st_ppg = 0,
+  #   st_ppg_allowed = 0,
+  # )
   ### returning VoA Variables df, which have stat values filled in for each team later
+  ### gathering recruiting info
+  Recruit <- cfbd_recruiting_team(as.integer(PY) + 1) |>
+    rename(school = team, recruit_pts = points) |>
+    select(school, recruit_pts) |>
+    mutate(recruit_pts = case_when(is.na(recruit_pts) ~ 0, TRUE ~ recruit_pts))
+
+  ### joining recruit pts to VoAVariables
+  VoAVars <- VoAVars |>
+    left_join(Recruit, by = "school") |>
+    mutate(recruit_pts = case_when(is.na(recruit_pts) ~ 0, TRUE ~ recruit_pts))
   return(VoAVars)
 }
 
@@ -72,6 +82,56 @@ create_voavars_df <- function(year, week_num) {
     #   penalty_yds_pg_PY1 = 0,
     #   yards_per_penalty_PY1 = 0,
     # )
+
+    ### gathering recruiting info
+    Recruit_PY1 <- cfbd_recruiting_team(as.integer(year)) |>
+      rename(school = team, recruit_pts_PY1 = points) |>
+      select(school, recruit_pts_PY1) |>
+      mutate(
+        recruit_pts_PY1 = case_when(
+          is.na(recruit_pts_PY1) ~ 0,
+          TRUE ~ recruit_pts_PY1
+        )
+      )
+
+    Recruit_PY2 <- cfbd_recruiting_team(as.integer(year) - 1) |>
+      rename(school = team, recruit_pts_PY2 = points) |>
+      select(school, recruit_pts_PY2) |>
+      mutate(
+        recruit_pts_PY2 = case_when(
+          is.na(recruit_pts_PY2) ~ 0,
+          TRUE ~ recruit_pts_PY2
+        )
+      )
+    Recruit_PY3 <- cfbd_recruiting_team(as.integer(year) - 2) |>
+      rename(school = team, recruit_pts_PY3 = points) |>
+      select(school, recruit_pts_PY3) |>
+      mutate(
+        recruit_pts_PY3 = case_when(
+          is.na(recruit_pts_PY3) ~ 0,
+          TRUE ~ recruit_pts_PY3
+        )
+      )
+
+    ### joining recruit pts to VoAVariables
+    VoA_df <- VoA_df |>
+      left_join(Recruit_PY1, by = "school") |>
+      left_join(Recruit_PY2, by = "school") |>
+      left_join(Recruit_PY3, by = "school") |>
+      mutate(
+        recruit_pts_PY1 = case_when(
+          is.na(recruit_pts_PY1) ~ 0,
+          TRUE ~ recruit_pts_PY1
+        ),
+        recruit_pts_PY2 = case_when(
+          is.na(recruit_pts_PY2) ~ 0,
+          TRUE ~ recruit_pts_PY2
+        ),
+        recruit_pts_PY3 = case_when(
+          is.na(recruit_pts_PY3) ~ 0,
+          TRUE ~ recruit_pts_PY3
+        )
+      )
   } else {
     VoA_df <- D1Teams |>
       filter(school %in% PrevWeek_VoA$school) |>
@@ -96,7 +156,45 @@ create_voavars_df <- function(year, week_num) {
     #   xpts_pg = 0,
     #   xpts_allowed_pg = 0,
     # )
+
+    ### gathering recruiting info
+    Recruit_PY1 <- cfbd_recruiting_team(as.integer(year)) |>
+      rename(school = team, recruit_pts_PY1 = points) |>
+      select(school, recruit_pts_PY1) |>
+      mutate(
+        recruit_pts_PY1 = case_when(
+          is.na(recruit_pts_PY1) ~ 0,
+          TRUE ~ recruit_pts_PY1
+        )
+      )
+
+    Recruit_PY2 <- cfbd_recruiting_team(as.integer(year) - 1) |>
+      rename(school = team, recruit_pts_PY2 = points) |>
+      select(school, recruit_pts_PY2) |>
+      mutate(
+        recruit_pts_PY2 = case_when(
+          is.na(recruit_pts_PY2) ~ 0,
+          TRUE ~ recruit_pts_PY2
+        )
+      )
+
+    ### joining recruit pts to VoAVariables
+    VoA_df <- VoA_df |>
+      left_join(Recruit_PY1, by = "school") |>
+      left_join(Recruit_PY2, by = "school") |>
+      mutate(
+        recruit_pts_PY1 = case_when(
+          is.na(recruit_pts_PY1) ~ 0,
+          TRUE ~ recruit_pts_PY1
+        ),
+        recruit_pts_PY2 = case_when(
+          is.na(recruit_pts_PY2) ~ 0,
+          TRUE ~ recruit_pts_PY2
+        )
+      )
   }
+
+  return(VoA_df)
 }
 
 ### function to take main PBP dataset for a year and create the subsets that I use to calculate stats and opponent-adjusted stats
@@ -563,12 +661,14 @@ extract_pbp_stats <- function(
   set.seed(802)
   epa_mixed_model <- lmer(
     epa_ppa_mean ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / offense_conference) +
-      (1 | def_pos_team_subdivision / defense_conference) +
-      (1 | offense_conference) +
-      (1 | defense_conference) +
+      # (1 | pos_team_subdivision / pos_team_recruit_pts) +
+      # (1 | def_pos_team_subdivision / def_team_recruit_pts) +
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / offense_conference) +
+      # (1 | def_pos_team_subdivision / defense_conference) +
+      # (1 | offense_conference) +
+      # (1 | defense_conference) +
       (1 | offense_conference / pos_team) +
       (1 | defense_conference / def_pos_team),
     # (1 | pos_team) +
@@ -601,11 +701,11 @@ extract_pbp_stats <- function(
     left_join(def_adj, by = "school") #|>
   # mutate(
   #   adj_off_epa = case_when(
-  #     classification == "fcs" ~ adj_off_epa / 2,
+  #     classification == "fcs" ~ adj_off_epa - (abs(adj_off_epa) / 2),
   #     TRUE ~ adj_off_epa
   #   ),
   #   adj_def_epa = case_when(
-  #     classification == "fcs" ~ adj_def_epa * 2,
+  #     classification == "fcs" ~ adj_def_epa + abs(adj_def_epa),
   #     TRUE ~ adj_def_epa
   #   )
   # )
@@ -741,15 +841,18 @@ extract_pbp_stats <- function(
   set.seed(802)
   exp_mixed_model <- lmer(
     epa_ppa_mean ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / offense_conference) +
-      (1 | def_pos_team_subdivision / defense_conference) +
-      (1 | offense_conference) +
-      (1 | defense_conference) +
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / offense_conference) +
+      # (1 | def_pos_team_subdivision / defense_conference) +
+      # (1 | offense_conference) +
+      # (1 | defense_conference) +
       (1 | offense_conference / pos_team) +
       (1 | defense_conference / def_pos_team),
-    # (1 | pos_team) + (1 | def_pos_team),
+    # (1 | pos_team) +
+    # (1 | def_pos_team),
+    # (1 | pos_team_subdivision / pos_team) +
+    # (1 | def_pos_team_subdivision / def_pos_team),
     data = PBP_ExpAdjustment
   )
 
@@ -771,11 +874,13 @@ extract_pbp_stats <- function(
     left_join(def_adj, by = "school") #|>
   # mutate(
   #   adj_off_explosiveness = case_when(
-  #     classification == "fcs" ~ adj_off_explosiveness / 2,
+  #     classification == "fcs" ~ adj_off_explosiveness -
+  #       (abs(adj_off_explosiveness) / 2),
   #     TRUE ~ adj_off_explosiveness
   #   ),
   #   adj_def_explosiveness = case_when(
-  #     classification == "fcs" ~ adj_def_explosiveness * 2,
+  #     classification == "fcs" ~ adj_def_explosiveness +
+  #       abs(adj_def_explosiveness),
   #     TRUE ~ adj_def_explosiveness
   #   )
   # )
@@ -843,33 +948,26 @@ extract_pbp_stats <- function(
       pos_team = as.factor(pos_team),
       def_pos_team = as.factor(def_pos_team)
     ) |>
-    drop_na(
-      game_id,
-      home,
-      away,
-      pos_team,
-      pos_team_subdivision,
-      def_pos_team_subdivision,
-      def_pos_team,
-      play_pts_scored,
-      offense_conference,
-      defense_conference,
-      home_neutral
-    )
+    drop_na()
 
   ### fitting mixed effects model, treating posessing team and defensive team as random effects
   set.seed(802)
   ppg_mixed_model <- lmer(
     play_pts_scored ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / offense_conference) +
-      (1 | def_pos_team_subdivision / defense_conference) +
-      (1 | offense_conference) +
-      (1 | defense_conference) +
+      # (1 | pos_team_subdivision / pos_team_recruit_pts) +
+      # (1 | def_pos_team_subdivision / def_team_recruit_pts) +
+      # # (1 | pos_team_subdivision) +
+      # # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / offense_conference) +
+      # (1 | def_pos_team_subdivision / defense_conference) +
+      # # (1 | offense_conference) +
+      # # (1 | defense_conference) +
       (1 | offense_conference / pos_team) +
-      (1 | defense_conference / def_pos_team),
-    # (1 | pos_team) + (1 | def_pos_team),
+      (1 | defense_conference / def_pos_team), #+
+    # (1 | pos_team) +
+    # (1 | def_pos_team),
+    # (1 | pos_team_subdivision / pos_team) +
+    # (1 | def_pos_team_subdivision / def_pos_team),
     data = PBP_PPGAdjustment
   )
 
@@ -890,25 +988,23 @@ extract_pbp_stats <- function(
     left_join(off_adj, by = "school") |>
     left_join(def_adj, by = "school") |>
     mutate(
-      adj_off_ppg = adj_off_pts_per_play * mean(adj_off_plays_pg) * 1.25,
-      adj_def_ppg = adj_def_pts_per_play * mean(adj_def_plays_pg) * 1.25
+      adj_off_ppg = adj_off_pts_per_play * mean(adj_off_plays_pg),
+      adj_def_ppg = adj_def_pts_per_play * mean(adj_def_plays_pg)
     ) #|>
   # mutate(
   #   adj_off_ppg = case_when(
   #     classification == "fcs" ~ adj_off_pts_per_play *
   #       mean(adj_off_plays_pg) /
-  #       1.75,
+  #       2,
   #     TRUE ~ adj_off_pts_per_play *
-  #       mean(adj_off_plays_pg) *
-  #       1.25
+  #       mean(adj_off_plays_pg)
   #   ),
   #   adj_def_ppg = case_when(
   #     classification == "fcs" ~ adj_def_pts_per_play *
   #       mean(adj_def_plays_pg) *
-  #       2,
+  #       1.5,
   #     TRUE ~ adj_def_pts_per_play *
-  #       mean(adj_def_plays_pg) *
-  #       1.05
+  #       mean(adj_def_plays_pg)
   #   )
   # )
 
@@ -982,15 +1078,18 @@ extract_pbp_stats <- function(
   set.seed(802)
   ypp_mixed_model <- lmer(
     yards_gained ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / offense_conference) +
-      (1 | def_pos_team_subdivision / defense_conference) +
-      (1 | offense_conference) +
-      (1 | defense_conference) +
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / offense_conference) +
+      # (1 | def_pos_team_subdivision / defense_conference) +
+      # (1 | offense_conference) +
+      # (1 | defense_conference) +
       (1 | offense_conference / pos_team) +
       (1 | defense_conference / def_pos_team),
-    # (1 | pos_team) + (1 | def_pos_team),
+    # (1 | pos_team) +
+    # (1 | def_pos_team),
+    # (1 | pos_team_subdivision / pos_team) +
+    # (1 | def_pos_team_subdivision / def_pos_team),
     data = PBP_YPPAdjustment
   )
 
@@ -1015,7 +1114,7 @@ extract_pbp_stats <- function(
   #     TRUE ~ adj_off_ypp
   #   ),
   #   adj_def_ypp = case_when(
-  #     classification == "fcs" ~ adj_def_ypp * 2,
+  #     classification == "fcs" ~ adj_def_ypp * 1.5,
   #     TRUE ~ adj_def_ypp
   #   )
   # )
@@ -1095,15 +1194,18 @@ extract_pbp_stats <- function(
   set.seed(802)
   STepa_mixed_model <- lmer(
     epa_ppa_mean ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / real_offense_conference) +
-      (1 | def_pos_team_subdivision / real_defense_conference) +
-      (1 | real_offense_conference) +
-      (1 | real_defense_conference) +
-      (1 | real_offense_conference / real_pos_team) +
-      (1 | real_defense_conference / real_def_pos_team),
-    # (1 | real_pos_team) + (1 | real_def_pos_team),
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / real_offense_conference) +
+      # (1 | def_pos_team_subdivision / real_defense_conference) +
+      # (1 | real_offense_conference) +
+      # (1 | real_defense_conference) +
+      # (1 | real_offense_conference / real_pos_team) +
+      # (1 | real_defense_conference / real_def_pos_team),
+      (1 | real_pos_team) +
+      (1 | real_def_pos_team),
+    # (1 | pos_team_subdivision / real_pos_team) +
+    # (1 | def_pos_team_subdivision / real_def_pos_team),
     data = PBP_STEPAAdjustment
   )
 
@@ -1205,15 +1307,18 @@ extract_pbp_stats <- function(
   set.seed(802)
   STppg_mixed_model <- lmer(
     play_pts_scored ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / real_offense_conference) +
-      (1 | def_pos_team_subdivision / real_defense_conference) +
-      (1 | real_offense_conference) +
-      (1 | real_defense_conference) +
-      (1 | real_offense_conference / real_pos_team) +
-      (1 | real_defense_conference / real_def_pos_team),
-    # (1 | real_pos_team) + (1 | real_def_pos_team),
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / real_offense_conference) +
+      # (1 | def_pos_team_subdivision / real_defense_conference) +
+      # (1 | real_offense_conference) +
+      # (1 | real_defense_conference) +
+      # (1 | real_offense_conference / real_pos_team) +
+      # (1 | real_defense_conference / real_def_pos_team),
+      (1 | real_pos_team) +
+      (1 | real_def_pos_team),
+    # (1 | pos_team_subdivision / real_pos_team) +
+    # (1 | def_pos_team_subdivision / real_def_pos_team),
     data = PBP_STPPGAdjustment
   )
 
@@ -2583,12 +2688,12 @@ extract_preseason_pbp_stats <- function(
   set.seed(802)
   epa_mixed_model <- lmer(
     epa_ppa_mean ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / offense_conference) +
-      (1 | def_pos_team_subdivision / defense_conference) +
-      (1 | offense_conference) +
-      (1 | defense_conference) +
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / offense_conference) +
+      # (1 | def_pos_team_subdivision / defense_conference) +
+      # (1 | offense_conference) +
+      # (1 | defense_conference) +
       (1 | offense_conference / pos_team) +
       (1 | defense_conference / def_pos_team),
     # (1 | pos_team) +
@@ -2618,17 +2723,19 @@ extract_preseason_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school") |>
-    mutate(
-      adj_off_epa_PY3 = case_when(
-        school %in% PY3_FCS$school ~ adj_off_epa_PY3 / 2,
-        TRUE ~ adj_off_epa_PY3
-      ),
-      adj_def_epa_PY3 = case_when(
-        school %in% PY3_FCS$school ~ adj_def_epa_PY3 * 2,
-        TRUE ~ adj_def_epa_PY3
-      )
-    )
+    left_join(def_adj, by = "school") #|>
+  # mutate(
+  #   adj_off_epa_PY3 = case_when(
+  #     school %in% PY3_FCS$school ~ adj_off_epa_PY3 -
+  #       (abs(adj_off_epa_PY3) / 2),
+  #     TRUE ~ adj_off_epa_PY3
+  #   ),
+  #   adj_def_epa_PY3 = case_when(
+  #     school %in% PY3_FCS$school ~ adj_def_epa_PY3 +
+  #       (abs(adj_def_epa_PY3) / 2),
+  #     TRUE ~ adj_def_epa_PY3
+  #   )
+  # )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(epa_mixed_model)
@@ -2761,15 +2868,18 @@ extract_preseason_pbp_stats <- function(
   set.seed(802)
   exp_mixed_model <- lmer(
     epa_ppa_mean ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / offense_conference) +
-      (1 | def_pos_team_subdivision / defense_conference) +
-      (1 | offense_conference) +
-      (1 | defense_conference) +
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / offense_conference) +
+      # (1 | def_pos_team_subdivision / defense_conference) +
+      # (1 | offense_conference) +
+      # (1 | defense_conference) +
       (1 | offense_conference / pos_team) +
       (1 | defense_conference / def_pos_team),
-    # (1 | pos_team) + (1 | def_pos_team),
+    # (1 | pos_team) +
+    # (1 | def_pos_team),
+    # (1 | pos_team_subdivision / pos_team) +
+    # (1 | def_pos_team_subdivision / def_pos_team),
     data = PBP_ExpAdjustment
   )
 
@@ -2788,17 +2898,17 @@ extract_preseason_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school") |>
-    mutate(
-      adj_off_explosiveness_PY3 = case_when(
-        school %in% PY3_FCS$school ~ adj_off_explosiveness_PY3 / 2,
-        TRUE ~ adj_off_explosiveness_PY3
-      ),
-      adj_def_explosiveness_PY3 = case_when(
-        school %in% PY3_FCS$school ~ adj_def_explosiveness_PY3 * 2,
-        TRUE ~ adj_def_explosiveness_PY3
-      )
-    )
+    left_join(def_adj, by = "school") #|>
+  # mutate(
+  #   adj_off_explosiveness_PY3 = case_when(
+  #     school %in% PY3_FCS$school ~ adj_off_explosiveness_PY3 / 2,
+  #     TRUE ~ adj_off_explosiveness_PY3
+  #   ),
+  #   adj_def_explosiveness_PY3 = case_when(
+  #     school %in% PY3_FCS$school ~ adj_def_explosiveness_PY3 * 1.5,
+  #     TRUE ~ adj_def_explosiveness_PY3
+  #   )
+  # )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(exp_mixed_model)
@@ -2869,15 +2979,18 @@ extract_preseason_pbp_stats <- function(
   set.seed(802)
   ppg_mixed_model <- lmer(
     play_pts_scored ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / offense_conference) +
-      (1 | def_pos_team_subdivision / defense_conference) +
-      (1 | offense_conference) +
-      (1 | defense_conference) +
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / offense_conference) +
+      # (1 | def_pos_team_subdivision / defense_conference) +
+      # (1 | offense_conference) +
+      # (1 | defense_conference) +
       (1 | offense_conference / pos_team) +
       (1 | defense_conference / def_pos_team),
-    # (1 | pos_team) + (1 | def_pos_team),
+    # (1 | pos_team) +
+    # (1 | def_pos_team),
+    # (1 | pos_team_subdivision / pos_team) +
+    # (1 | def_pos_team_subdivision / def_pos_team),
     data = PBP_PPGAdjustment
   )
 
@@ -2898,23 +3011,25 @@ extract_preseason_pbp_stats <- function(
     left_join(off_adj, by = "school") |>
     left_join(def_adj, by = "school") |>
     mutate(
-      adj_off_ppg_PY3 = case_when(
-        school %in% PY3_FCS$school ~ adj_off_pts_per_play_PY3 *
-          mean(adj_off_plays_pg_PY3) /
-          2,
-        TRUE ~ adj_off_pts_per_play_PY3 *
-          mean(adj_off_plays_pg_PY3) *
-          1.15
-      ),
-      adj_def_ppg_PY3 = case_when(
-        school %in% PY3_FCS$school ~ adj_def_pts_per_play_PY3 *
-          mean(adj_def_plays_pg_PY3) *
-          2,
-        TRUE ~ adj_def_pts_per_play_PY3 *
-          mean(adj_def_plays_pg_PY3) *
-          1.15
-      )
+      adj_off_ppg_PY3 = adj_off_pts_per_play_PY3 * mean(adj_off_plays_pg_PY3),
+      adj_def_ppg_PY3 = adj_def_pts_per_play_PY3 * mean(adj_def_plays_pg_PY3)
     )
+  # mutate(
+  #   adj_off_ppg_PY3 = case_when(
+  #     school %in% PY3_FCS$school ~ adj_off_pts_per_play_PY3 *
+  #       mean(adj_off_plays_pg_PY3) /
+  #       2,
+  #     TRUE ~ adj_off_pts_per_play_PY3 *
+  #       mean(adj_off_plays_pg_PY3)
+  #   ),
+  #   adj_def_ppg_PY3 = case_when(
+  #     school %in% PY3_FCS$school ~ adj_def_pts_per_play_PY3 *
+  #       mean(adj_def_plays_pg_PY3) *
+  #       1.5,
+  #     TRUE ~ adj_def_pts_per_play_PY3 *
+  #       mean(adj_def_plays_pg_PY3)
+  #   )
+  # )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(ppg_mixed_model)
@@ -2986,15 +3101,18 @@ extract_preseason_pbp_stats <- function(
   set.seed(802)
   ypp_mixed_model <- lmer(
     yards_gained ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / offense_conference) +
-      (1 | def_pos_team_subdivision / defense_conference) +
-      (1 | offense_conference) +
-      (1 | defense_conference) +
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / offense_conference) +
+      # (1 | def_pos_team_subdivision / defense_conference) +
+      # (1 | offense_conference) +
+      # (1 | defense_conference) +
       (1 | offense_conference / pos_team) +
       (1 | defense_conference / def_pos_team),
-    # (1 | pos_team) + (1 | def_pos_team),
+    # (1 | pos_team) +
+    # (1 | def_pos_team),
+    # (1 | pos_team_subdivision / pos_team) +
+    # (1 | def_pos_team_subdivision / def_pos_team),
     data = PBP_YPPAdjustment
   )
 
@@ -3012,17 +3130,17 @@ extract_preseason_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school") |>
-    mutate(
-      adj_off_ypp_PY3 = case_when(
-        school %in% PY3_FCS$school ~ adj_off_ypp_PY3 / 2,
-        TRUE ~ adj_off_ypp_PY3
-      ),
-      adj_def_ypp_PY3 = case_when(
-        school %in% PY3_FCS$school ~ adj_def_ypp_PY3 * 2,
-        TRUE ~ adj_def_ypp_PY3
-      )
-    )
+    left_join(def_adj, by = "school") #|>
+  # mutate(
+  #   adj_off_ypp_PY3 = case_when(
+  #     school %in% PY3_FCS$school ~ adj_off_ypp_PY3 / 2,
+  #     TRUE ~ adj_off_ypp_PY3
+  #   ),
+  #   adj_def_ypp_PY3 = case_when(
+  #     school %in% PY3_FCS$school ~ adj_def_ypp_PY3 * 1.5,
+  #     TRUE ~ adj_def_ypp_PY3
+  #   )
+  # )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(ypp_mixed_model)
@@ -3099,15 +3217,18 @@ extract_preseason_pbp_stats <- function(
   set.seed(802)
   STepa_mixed_model <- lmer(
     epa_ppa_mean ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / real_offense_conference) +
-      (1 | def_pos_team_subdivision / real_defense_conference) +
-      (1 | real_offense_conference) +
-      (1 | real_defense_conference) +
-      (1 | real_offense_conference / real_pos_team) +
-      (1 | real_defense_conference / real_def_pos_team),
-    # (1 | real_pos_team) + (1 | real_def_pos_team),
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / real_offense_conference) +
+      # (1 | def_pos_team_subdivision / real_defense_conference) +
+      # (1 | real_offense_conference) +
+      # (1 | real_defense_conference) +
+      # (1 | real_offense_conference / real_pos_team) +
+      # (1 | real_defense_conference / real_def_pos_team),
+      (1 | real_pos_team) +
+      (1 | real_def_pos_team),
+    # (1 | pos_team_subdivision / real_pos_team) +
+    # (1 | def_pos_team_subdivision / real_def_pos_team),
     data = PBP_STEPAAdjustment
   )
 
@@ -3209,15 +3330,18 @@ extract_preseason_pbp_stats <- function(
   set.seed(802)
   STppg_mixed_model <- lmer(
     play_pts_scored ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / real_offense_conference) +
-      (1 | def_pos_team_subdivision / real_defense_conference) +
-      (1 | real_offense_conference) +
-      (1 | real_defense_conference) +
-      (1 | real_offense_conference / real_pos_team) +
-      (1 | real_defense_conference / real_def_pos_team),
-    # (1 | real_pos_team) + (1 | real_def_pos_team),
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / real_offense_conference) +
+      # (1 | def_pos_team_subdivision / real_defense_conference) +
+      # (1 | real_offense_conference) +
+      # (1 | real_defense_conference) +
+      # (1 | real_offense_conference / real_pos_team) +
+      # (1 | real_defense_conference / real_def_pos_team),
+      (1 | real_pos_team) +
+      (1 | real_def_pos_team),
+    # (1 | pos_team_subdivision / real_pos_team) +
+    # (1 | def_pos_team_subdivision / real_def_pos_team),
     data = PBP_STPPGAdjustment
   )
 
@@ -3324,12 +3448,12 @@ extract_preseason_pbp_stats <- function(
   set.seed(802)
   epa_mixed_model <- lmer(
     epa_ppa_mean ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / offense_conference) +
-      (1 | def_pos_team_subdivision / defense_conference) +
-      (1 | offense_conference) +
-      (1 | defense_conference) +
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / offense_conference) +
+      # (1 | def_pos_team_subdivision / defense_conference) +
+      # (1 | offense_conference) +
+      # (1 | defense_conference) +
       (1 | offense_conference / pos_team) +
       (1 | defense_conference / def_pos_team),
     # (1 | pos_team) +
@@ -3359,17 +3483,19 @@ extract_preseason_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school") |>
-    mutate(
-      adj_off_epa_PY2 = case_when(
-        school %in% PY2_FCS$school ~ adj_off_epa_PY2 / 2,
-        TRUE ~ adj_off_epa_PY2
-      ),
-      adj_def_epa_PY2 = case_when(
-        school %in% PY2_FCS$school ~ adj_def_epa_PY2 * 2,
-        TRUE ~ adj_def_epa_PY2
-      )
-    )
+    left_join(def_adj, by = "school") #|>
+  # mutate(
+  #   adj_off_epa_PY2 = case_when(
+  #     school %in% PY2_FCS$school ~ adj_off_epa_PY2 -
+  #       (abs(adj_off_epa_PY2) / 2),
+  #     TRUE ~ adj_off_epa_PY2
+  #   ),
+  #   adj_def_epa_PY2 = case_when(
+  #     school %in% PY2_FCS$school ~ adj_def_epa_PY2 +
+  #       (abs(adj_def_epa_PY2) / 2),
+  #     TRUE ~ adj_def_epa_PY2
+  #   )
+  # )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(epa_mixed_model)
@@ -3502,15 +3628,18 @@ extract_preseason_pbp_stats <- function(
   set.seed(802)
   exp_mixed_model <- lmer(
     epa_ppa_mean ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / offense_conference) +
-      (1 | def_pos_team_subdivision / defense_conference) +
-      (1 | offense_conference) +
-      (1 | defense_conference) +
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / offense_conference) +
+      # (1 | def_pos_team_subdivision / defense_conference) +
+      # (1 | offense_conference) +
+      # (1 | defense_conference) +
       (1 | offense_conference / pos_team) +
       (1 | defense_conference / def_pos_team),
-    # (1 | pos_team) + (1 | def_pos_team),
+    # (1 | pos_team) +
+    # (1 | def_pos_team),
+    # (1 | pos_team_subdivision / pos_team) +
+    # (1 | def_pos_team_subdivision / def_pos_team),
     data = PBP_ExpAdjustment
   )
 
@@ -3529,17 +3658,17 @@ extract_preseason_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school") |>
-    mutate(
-      adj_off_explosiveness_PY2 = case_when(
-        school %in% PY2_FCS$school ~ adj_off_explosiveness_PY2 / 2,
-        TRUE ~ adj_off_explosiveness_PY2
-      ),
-      adj_def_explosiveness_PY2 = case_when(
-        school %in% PY2_FCS$school ~ adj_def_explosiveness_PY2 * 2,
-        TRUE ~ adj_def_explosiveness_PY2
-      )
-    )
+    left_join(def_adj, by = "school") #|>
+  # mutate(
+  #   adj_off_explosiveness_PY2 = case_when(
+  #     school %in% PY2_FCS$school ~ adj_off_explosiveness_PY2 / 2,
+  #     TRUE ~ adj_off_explosiveness_PY2
+  #   ),
+  #   adj_def_explosiveness_PY2 = case_when(
+  #     school %in% PY2_FCS$school ~ adj_def_explosiveness_PY2 * 1.5,
+  #     TRUE ~ adj_def_explosiveness_PY2
+  #   )
+  # )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(exp_mixed_model)
@@ -3610,15 +3739,18 @@ extract_preseason_pbp_stats <- function(
   set.seed(802)
   ppg_mixed_model <- lmer(
     play_pts_scored ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / offense_conference) +
-      (1 | def_pos_team_subdivision / defense_conference) +
-      (1 | offense_conference) +
-      (1 | defense_conference) +
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / offense_conference) +
+      # (1 | def_pos_team_subdivision / defense_conference) +
+      # (1 | offense_conference) +
+      # (1 | defense_conference) +
       (1 | offense_conference / pos_team) +
       (1 | defense_conference / def_pos_team),
-    # (1 | pos_team) + (1 | def_pos_team),
+    # (1 | pos_team) +
+    # (1 | def_pos_team),
+    # (1 | pos_team_subdivision / pos_team) +
+    # (1 | def_pos_team_subdivision / def_pos_team),
     data = PBP_PPGAdjustment
   )
 
@@ -3639,23 +3771,25 @@ extract_preseason_pbp_stats <- function(
     left_join(off_adj, by = "school") |>
     left_join(def_adj, by = "school") |>
     mutate(
-      adj_off_ppg_PY2 = case_when(
-        school %in% PY2_FCS$school ~ adj_off_pts_per_play_PY2 *
-          mean(adj_off_plays_pg_PY2) /
-          1.75,
-        TRUE ~ adj_off_pts_per_play_PY2 *
-          mean(adj_off_plays_pg_PY2) *
-          1.25
-      ),
-      adj_def_ppg_PY2 = case_when(
-        school %in% PY2_FCS$school ~ adj_def_pts_per_play_PY2 *
-          mean(adj_def_plays_pg_PY2) *
-          1.75,
-        TRUE ~ adj_def_pts_per_play_PY2 *
-          mean(adj_def_plays_pg_PY2) *
-          1.15
-      )
+      adj_off_ppg_PY2 = adj_off_pts_per_play_PY2 * mean(adj_off_plays_pg_PY2),
+      adj_def_ppg_PY2 = adj_def_pts_per_play_PY2 * mean(adj_def_plays_pg_PY2)
     )
+  # mutate(
+  #   adj_off_ppg_PY2 = case_when(
+  #     school %in% PY2_FCS$school ~ adj_off_pts_per_play_PY2 *
+  #       mean(adj_off_plays_pg_PY2) /
+  #       2,
+  #     TRUE ~ adj_off_pts_per_play_PY2 *
+  #       mean(adj_off_plays_pg_PY2)
+  #   ),
+  #   adj_def_ppg_PY2 = case_when(
+  #     school %in% PY2_FCS$school ~ adj_def_pts_per_play_PY2 *
+  #       mean(adj_def_plays_pg_PY2) *
+  #       1.5,
+  #     TRUE ~ adj_def_pts_per_play_PY2 *
+  #       mean(adj_def_plays_pg_PY2)
+  #   )
+  # )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(ppg_mixed_model)
@@ -3727,15 +3861,18 @@ extract_preseason_pbp_stats <- function(
   set.seed(802)
   ypp_mixed_model <- lmer(
     yards_gained ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / offense_conference) +
-      (1 | def_pos_team_subdivision / defense_conference) +
-      (1 | offense_conference) +
-      (1 | defense_conference) +
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / offense_conference) +
+      # (1 | def_pos_team_subdivision / defense_conference) +
+      # (1 | offense_conference) +
+      # (1 | defense_conference) +
       (1 | offense_conference / pos_team) +
       (1 | defense_conference / def_pos_team),
-    # (1 | pos_team) + (1 | def_pos_team),
+    # (1 | pos_team) +
+    # (1 | def_pos_team),
+    # (1 | pos_team_subdivision / pos_team) +
+    # (1 | def_pos_team_subdivision / def_pos_team),
     data = PBP_YPPAdjustment
   )
 
@@ -3753,17 +3890,17 @@ extract_preseason_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school") |>
-    mutate(
-      adj_off_ypp_PY2 = case_when(
-        school %in% PY2_FCS$school ~ adj_off_ypp_PY2 / 2,
-        TRUE ~ adj_off_ypp_PY2
-      ),
-      adj_def_ypp_PY2 = case_when(
-        school %in% PY2_FCS$school ~ adj_def_ypp_PY2 * 2,
-        TRUE ~ adj_def_ypp_PY2
-      )
-    )
+    left_join(def_adj, by = "school") #|>
+  # mutate(
+  #   adj_off_ypp_PY2 = case_when(
+  #     school %in% PY2_FCS$school ~ adj_off_ypp_PY2 / 2,
+  #     TRUE ~ adj_off_ypp_PY2
+  #   ),
+  #   adj_def_ypp_PY2 = case_when(
+  #     school %in% PY2_FCS$school ~ adj_def_ypp_PY2 * 1.5,
+  #     TRUE ~ adj_def_ypp_PY2
+  #   )
+  # )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(ypp_mixed_model)
@@ -3840,15 +3977,18 @@ extract_preseason_pbp_stats <- function(
   set.seed(802)
   STepa_mixed_model <- lmer(
     epa_ppa_mean ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / real_offense_conference) +
-      (1 | def_pos_team_subdivision / real_defense_conference) +
-      (1 | real_offense_conference) +
-      (1 | real_defense_conference) +
-      (1 | real_offense_conference / real_pos_team) +
-      (1 | real_defense_conference / real_def_pos_team),
-    # (1 | real_pos_team) + (1 | real_def_pos_team),
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / real_offense_conference) +
+      # (1 | def_pos_team_subdivision / real_defense_conference) +
+      # (1 | real_offense_conference) +
+      # (1 | real_defense_conference) +
+      # (1 | real_offense_conference / real_pos_team) +
+      # (1 | real_defense_conference / real_def_pos_team),
+      (1 | real_pos_team) +
+      (1 | real_def_pos_team),
+    # (1 | pos_team_subdivision / real_pos_team) +
+    # (1 | def_pos_team_subdivision / real_def_pos_team),
     data = PBP_STEPAAdjustment
   )
 
@@ -3950,15 +4090,18 @@ extract_preseason_pbp_stats <- function(
   set.seed(802)
   STppg_mixed_model <- lmer(
     play_pts_scored ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / real_offense_conference) +
-      (1 | def_pos_team_subdivision / real_defense_conference) +
-      (1 | real_offense_conference) +
-      (1 | real_defense_conference) +
-      (1 | real_offense_conference / real_pos_team) +
-      (1 | real_defense_conference / real_def_pos_team),
-    # (1 | real_pos_team) + (1 | real_def_pos_team),
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / real_offense_conference) +
+      # (1 | def_pos_team_subdivision / real_defense_conference) +
+      # (1 | real_offense_conference) +
+      # (1 | real_defense_conference) +
+      # (1 | real_offense_conference / real_pos_team) +
+      # (1 | real_defense_conference / real_def_pos_team),
+      (1 | real_pos_team) +
+      (1 | real_def_pos_team),
+    #   (1 | pos_team_subdivision / real_pos_team) +
+    #   (1 | def_pos_team_subdivision / real_def_pos_team),
     data = PBP_STPPGAdjustment
   )
 
@@ -4065,12 +4208,12 @@ extract_preseason_pbp_stats <- function(
   set.seed(802)
   epa_mixed_model <- lmer(
     epa_ppa_mean ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / offense_conference) +
-      (1 | def_pos_team_subdivision / defense_conference) +
-      (1 | offense_conference) +
-      (1 | defense_conference) +
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / offense_conference) +
+      # (1 | def_pos_team_subdivision / defense_conference) +
+      # (1 | offense_conference) +
+      # (1 | defense_conference) +
       (1 | offense_conference / pos_team) +
       (1 | defense_conference / def_pos_team),
     # (1 | pos_team) +
@@ -4100,17 +4243,19 @@ extract_preseason_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school") |>
-    mutate(
-      adj_off_epa_PY1 = case_when(
-        school %in% PY1_FCS$school ~ adj_off_epa_PY1 / 2,
-        TRUE ~ adj_off_epa_PY1
-      ),
-      adj_def_epa_PY1 = case_when(
-        school %in% PY1_FCS$school ~ adj_def_epa_PY1 * 2,
-        TRUE ~ adj_def_epa_PY1
-      )
-    )
+    left_join(def_adj, by = "school") #|>
+  # mutate(
+  #   adj_off_epa_PY1 = case_when(
+  #     school %in% PY1_FCS$school ~ adj_off_epa_PY1 -
+  #       (abs(adj_off_epa_PY1) / 2),
+  #     TRUE ~ adj_off_epa_PY1
+  #   ),
+  #   adj_def_epa_PY1 = case_when(
+  #     school %in% PY1_FCS$school ~ adj_def_epa_PY1 +
+  #       (abs(adj_def_epa_PY1) / 2),
+  #     TRUE ~ adj_def_epa_PY1
+  #   )
+  # )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(epa_mixed_model)
@@ -4243,15 +4388,18 @@ extract_preseason_pbp_stats <- function(
   set.seed(802)
   exp_mixed_model <- lmer(
     epa_ppa_mean ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / offense_conference) +
-      (1 | def_pos_team_subdivision / defense_conference) +
-      (1 | offense_conference) +
-      (1 | defense_conference) +
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / offense_conference) +
+      # (1 | def_pos_team_subdivision / defense_conference) +
+      # (1 | offense_conference) +
+      # (1 | defense_conference) +
       (1 | offense_conference / pos_team) +
       (1 | defense_conference / def_pos_team),
-    # (1 | pos_team) + (1 | def_pos_team),
+    # (1 | pos_team) +
+    # (1 | def_pos_team),
+    # (1 | pos_team_subdivision / pos_team) +
+    # (1 | def_pos_team_subdivision / def_pos_team),
     data = PBP_ExpAdjustment
   )
 
@@ -4270,17 +4418,17 @@ extract_preseason_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school") |>
-    mutate(
-      adj_off_explosiveness_PY1 = case_when(
-        school %in% PY1_FCS$school ~ adj_off_explosiveness_PY1 / 2,
-        TRUE ~ adj_off_explosiveness_PY1
-      ),
-      adj_def_explosiveness_PY1 = case_when(
-        school %in% PY1_FCS$school ~ adj_def_explosiveness_PY1 * 2,
-        TRUE ~ adj_def_explosiveness_PY1
-      )
-    )
+    left_join(def_adj, by = "school") #|>
+  # mutate(
+  #   adj_off_explosiveness_PY1 = case_when(
+  #     school %in% PY1_FCS$school ~ adj_off_explosiveness_PY1 / 2,
+  #     TRUE ~ adj_off_explosiveness_PY1
+  #   ),
+  #   adj_def_explosiveness_PY1 = case_when(
+  #     school %in% PY1_FCS$school ~ adj_def_explosiveness_PY1 * 1.5,
+  #     TRUE ~ adj_def_explosiveness_PY1
+  #   )
+  # )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(exp_mixed_model)
@@ -4351,15 +4499,18 @@ extract_preseason_pbp_stats <- function(
   set.seed(802)
   ppg_mixed_model <- lmer(
     play_pts_scored ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / offense_conference) +
-      (1 | def_pos_team_subdivision / defense_conference) +
-      (1 | offense_conference) +
-      (1 | defense_conference) +
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / offense_conference) +
+      # (1 | def_pos_team_subdivision / defense_conference) +
+      # (1 | offense_conference) +
+      # (1 | defense_conference) +
       (1 | offense_conference / pos_team) +
       (1 | defense_conference / def_pos_team),
-    # (1 | pos_team) + (1 | def_pos_team),
+    # (1 | pos_team) +
+    # (1 | def_pos_team),
+    # (1 | pos_team_subdivision / pos_team) +
+    # (1 | def_pos_team_subdivision / def_pos_team),
     data = PBP_PPGAdjustment
   )
 
@@ -4380,23 +4531,25 @@ extract_preseason_pbp_stats <- function(
     left_join(off_adj, by = "school") |>
     left_join(def_adj, by = "school") |>
     mutate(
-      adj_off_ppg_PY1 = case_when(
-        school %in% PY1_FCS$school ~ adj_off_pts_per_play_PY1 *
-          mean(adj_off_plays_pg_PY1) /
-          1.75,
-        TRUE ~ adj_off_pts_per_play_PY1 *
-          mean(adj_off_plays_pg_PY1) *
-          1.25
-      ),
-      adj_def_ppg_PY1 = case_when(
-        school %in% PY1_FCS$school ~ adj_def_pts_per_play_PY1 *
-          mean(adj_def_plays_pg_PY1) *
-          2,
-        TRUE ~ adj_def_pts_per_play_PY1 *
-          mean(adj_def_plays_pg_PY1) *
-          1.05
-      )
+      adj_off_ppg_PY1 = adj_off_pts_per_play_PY1 * mean(adj_off_plays_pg_PY1),
+      adj_def_ppg_PY1 = adj_def_pts_per_play_PY1 * mean(adj_def_plays_pg_PY1)
     )
+  # mutate(
+  #   adj_off_ppg_PY1 = case_when(
+  #     school %in% PY1_FCS$school ~ adj_off_pts_per_play_PY1 *
+  #       mean(adj_off_plays_pg_PY1) /
+  #       2,
+  #     TRUE ~ adj_off_pts_per_play_PY1 *
+  #       mean(adj_off_plays_pg_PY1)
+  #   ),
+  #   adj_def_ppg_PY1 = case_when(
+  #     school %in% PY1_FCS$school ~ adj_def_pts_per_play_PY1 *
+  #       mean(adj_def_plays_pg_PY1) *
+  #       1.5,
+  #     TRUE ~ adj_def_pts_per_play_PY1 *
+  #       mean(adj_def_plays_pg_PY1)
+  #   )
+  # )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(ppg_mixed_model)
@@ -4468,15 +4621,18 @@ extract_preseason_pbp_stats <- function(
   set.seed(802)
   ypp_mixed_model <- lmer(
     yards_gained ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / offense_conference) +
-      (1 | def_pos_team_subdivision / defense_conference) +
-      (1 | offense_conference) +
-      (1 | defense_conference) +
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / offense_conference) +
+      # (1 | def_pos_team_subdivision / defense_conference) +
+      # (1 | offense_conference) +
+      # (1 | defense_conference) +
       (1 | offense_conference / pos_team) +
       (1 | defense_conference / def_pos_team),
-    # (1 | pos_team) + (1 | def_pos_team),
+    # (1 | pos_team) +
+    # (1 | def_pos_team),
+    # (1 | pos_team_subdivision / pos_team) +
+    # (1 | def_pos_team_subdivision / def_pos_team),
     data = PBP_YPPAdjustment
   )
 
@@ -4494,17 +4650,17 @@ extract_preseason_pbp_stats <- function(
 
   VoA_df <- VoA_df |>
     left_join(off_adj, by = "school") |>
-    left_join(def_adj, by = "school") |>
-    mutate(
-      adj_off_ypp_PY1 = case_when(
-        school %in% PY1_FCS$school ~ adj_off_ypp_PY1 / 2,
-        TRUE ~ adj_off_ypp_PY1
-      ),
-      adj_def_ypp_PY1 = case_when(
-        school %in% PY1_FCS$school ~ adj_def_ypp_PY1 * 2,
-        TRUE ~ adj_def_ypp_PY1
-      )
-    )
+    left_join(def_adj, by = "school") #|>
+  # mutate(
+  #   adj_off_ypp_PY1 = case_when(
+  #     school %in% PY1_FCS$school ~ adj_off_ypp_PY1 / 2,
+  #     TRUE ~ adj_off_ypp_PY1
+  #   ),
+  #   adj_def_ypp_PY1 = case_when(
+  #     school %in% PY1_FCS$school ~ adj_def_ypp_PY1 * 1.5,
+  #     TRUE ~ adj_def_ypp_PY1
+  #   )
+  # )
 
   ### Extract random effects (team adjustments)
   # team_effects <- ranef(ypp_mixed_model)
@@ -4581,15 +4737,18 @@ extract_preseason_pbp_stats <- function(
   set.seed(802)
   STepa_mixed_model <- lmer(
     epa_ppa_mean ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / real_offense_conference) +
-      (1 | def_pos_team_subdivision / real_defense_conference) +
-      (1 | real_offense_conference) +
-      (1 | real_defense_conference) +
-      (1 | real_offense_conference / real_pos_team) +
-      (1 | real_defense_conference / real_def_pos_team),
-    # (1 | real_pos_team) + (1 | real_def_pos_team),
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / real_offense_conference) +
+      # (1 | def_pos_team_subdivision / real_defense_conference) +
+      # (1 | real_offense_conference) +
+      # (1 | real_defense_conference) +
+      # (1 | real_offense_conference / real_pos_team) +
+      # (1 | real_defense_conference / real_def_pos_team),
+      (1 | real_pos_team) +
+      (1 | real_def_pos_team),
+    # (1 | pos_team_subdivision / real_pos_team) +
+    # (1 | def_pos_team_subdivision / real_def_pos_team),
     data = PBP_STEPAAdjustment
   )
 
@@ -4691,15 +4850,18 @@ extract_preseason_pbp_stats <- function(
   set.seed(802)
   STppg_mixed_model <- lmer(
     play_pts_scored ~ hfa +
-      (1 | pos_team_subdivision) +
-      (1 | def_pos_team_subdivision) +
-      (1 | pos_team_subdivision / real_offense_conference) +
-      (1 | def_pos_team_subdivision / real_defense_conference) +
-      (1 | real_offense_conference) +
-      (1 | real_defense_conference) +
-      (1 | real_offense_conference / real_pos_team) +
-      (1 | real_defense_conference / real_def_pos_team),
-    # (1 | real_pos_team) + (1 | real_def_pos_team),
+      # (1 | pos_team_subdivision) +
+      # (1 | def_pos_team_subdivision) +
+      # (1 | pos_team_subdivision / real_offense_conference) +
+      # (1 | def_pos_team_subdivision / real_defense_conference) +
+      # (1 | real_offense_conference) +
+      # (1 | real_defense_conference) +
+      # (1 | real_offense_conference / real_pos_team) +
+      # (1 | real_defense_conference / real_def_pos_team),
+      (1 | real_pos_team) +
+      (1 | real_def_pos_team),
+    # (1 | pos_team_subdivision / real_pos_team) +
+    # (1 | def_pos_team_subdivision / real_def_pos_team),
     data = PBP_STPPGAdjustment
   )
 
