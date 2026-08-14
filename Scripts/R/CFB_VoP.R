@@ -5,6 +5,8 @@
 library(pacman)
 # fmt: skip
 p_load(tidyverse, gt, cfbfastR, here, gtExtras, RColorBrewer, cfbplotR, webshot2, betareg, arrow)
+### function to get the inverse of %in%
+`%nin%` <- Negate(`%in%`)
 ### Inputting year
 year <- readline(prompt = "What Year is it? ")
 ### Inputting upcoming week number
@@ -21,26 +23,26 @@ gameprojections_filename <- paste(
   sep = ""
 )
 ### setting gt title based on whether it's after a playoff week or not
-if (as.numeric(upcoming) == 15) {
+if (as.integer(upcoming) == 15) {
   gt_title <- paste(year, "Conference Championship Week Game Projections")
-} else if (as.numeric(upcoming) == 16) {
+} else if (as.integer(upcoming) == 16) {
   gt_title <- paste(year, "Army-Navy Game and Bowl Game Projections")
-} else if (as.numeric(upcoming) == 17) {
+} else if (as.integer(upcoming) == 17) {
   gt_title <- paste(
     year,
     "Vortex of Accuracy Bowl Game and CFP First Round Projections"
   )
-} else if (as.numeric(upcoming) == 18) {
+} else if (as.integer(upcoming) == 18) {
   gt_title <- paste(
     year,
     "Vortex of Accuracy Bowl Game and CFP Quarterfinals Projections"
   )
-} else if (as.numeric(upcoming) == 19) {
+} else if (as.integer(upcoming) == 19) {
   gt_title <- paste(
     year,
     "Vortex of Accuracy Bowl Game and CFP Semifinals Projections"
   )
-} else if (as.numeric(upcoming) == 20) {
+} else if (as.integer(upcoming) == 20) {
   gt_title <- paste(year, "Vortex of Accuracy CFP Championship Projection")
 } else {
   gt_title <- paste(
@@ -52,14 +54,14 @@ if (as.numeric(upcoming) == 15) {
 }
 
 ##### reading in most recent VoA overall ratings #####
-if (as.numeric(upcoming) == 1) {
+if (as.integer(upcoming) == 1) {
   FBS_VoA <- read_parquet(here(
     "Data",
     paste0("VoA", year),
     paste0(
       year,
       week_text,
-      as.character(as.numeric(upcoming) - 1),
+      as.character(as.integer(upcoming) - 1),
       "_FBSVoA.parquet"
     )
   )) |>
@@ -71,22 +73,28 @@ if (as.numeric(upcoming) == 1) {
     paste0(
       year,
       week_text,
-      as.character(as.numeric(upcoming) - 1),
+      as.character(as.integer(upcoming) - 1),
       "_FCSVoA.parquet"
     )
   )) |>
     select(school, conference, VoA_Rating_Ovr)
-  PrevWeek_VoA <- read_parquet(here(
+
+  ### Prev week VoA is the ratings directly calculated by the individual
+  PrevWeek_VoA_AllCols <- rbind(FBS_VoA, FCS_VoA)
+
+  PrevWeek_VoA <- PrevWeek_VoA_AllCols |>
+    select(school, VoA_Rating_Ovr)
+
+  ### reading in VoA with all D1 teams with VoA ratings adjusted to reflect general differences between FBS and FCS subivisions
+  ## unit-specific ratings not included, just overall ratings
+  AllD1VoA <- read_csv(here(
     "Data",
     paste0("VoA", year),
-    paste0(
-      year,
-      week_text,
-      as.character(as.numeric(upcoming) - 1),
-      "_FBSVoA.parquet"
-    )
-  )) |>
-    select(school, VoA_Rating_Ovr)
+    paste0("AllD1", year, week_text, as.integer(upcoming) - 1, "VoA.csv")
+  ))
+
+  LowerHalfRatings <- AllD1VoA |>
+    filter(VoA_Rating_Ovr < median(AllD1VoA$VoA_Rating_Ovr))
 } else {
   FBS_VoA <- read_parquet(here(
     "Data",
@@ -94,7 +102,7 @@ if (as.numeric(upcoming) == 1) {
     paste0(
       year,
       week_text,
-      as.character(as.numeric(upcoming) - 1),
+      as.character(as.integer(upcoming) - 1),
       "_VoA.parquet"
     )
   )) |>
@@ -105,7 +113,7 @@ if (as.numeric(upcoming) == 1) {
     paste0(
       year,
       week_text,
-      as.character(as.numeric(upcoming) - 1),
+      as.character(as.integer(upcoming) - 1),
       "_VoA.parquet"
     )
   )) |>
@@ -113,87 +121,108 @@ if (as.numeric(upcoming) == 1) {
 }
 
 
-##### pulling SRS ratings for just FCS teams since I don't have VoA ratings for them #####
-### using last year's until SRS ratings are available for current season
-## expectation is that this will be sometime between weeks 4 and 6, based on 2023 season
-# if (as.numeric(upcoming) < 5) {
-#   FCS_ratings <- cfbd_ratings_srs(as.numeric(year) - 1) |>
-#     filter(
-#       conference != "ACC" &
-#         conference != "American Athletic" &
-#         conference != "Big 12" &
-#         conference != "Big Ten" &
-#         conference != "Conference USA" &
-#         conference != "FBS Independents" &
-#         conference != "Mid-American" &
-#         conference != "Mountain West" &
-#         conference != "Pac-12" &
-#         conference != "SEC" &
-#         conference != "Sun Belt"
-#     ) |>
-#     filter(team != "Kennesaw State") |>
-#     select(team, rating)
-#   colnames(FCS_ratings) <- c("team", "VoA_Rating_Ovr")
-# } else {
-#   FCS_ratings <- cfbd_ratings_srs(as.numeric(year)) |>
-#     filter(
-#       conference != "ACC" &
-#         conference != "American Athletic" &
-#         conference != "Big 12" &
-#         conference != "Big Ten" &
-#         conference != "Conference USA" &
-#         conference != "FBS Independents" &
-#         conference != "Mid-American" &
-#         conference != "Mountain West" &
-#         conference != "Pac-12" &
-#         conference != "SEC" &
-#         conference != "Sun Belt"
-#     ) |>
-#     filter(
-#       team != "Jacksonville State" &
-#         team != "Sam Houston State" &
-#         team != "James Madison"
-#     ) |>
-#     select(team, rating)
-#   colnames(FCS_ratings) <- c("team", "VoA_Rating_Ovr")
-# }
-
-# ### Binding most recent VoA (PrevWeek_VoA) and FCS_ratings as if rating systems are the same
-# PrevWeek_VoA <- rbind(PrevWeek_VoA, FCS_ratings)
-
 ##### reading in upcoming games to create df of games and VoA projected margins #####
-if (as.numeric(upcoming) == 16) {
+if (as.integer(upcoming) == 16) {
   upcoming_games_df <- cfbd_game_info(
     as.numeric(year),
     season_type = "postseason"
   ) |>
     filter(
-      home_team %in% PrevWeek_VoA$team | away_team %in% PrevWeek_VoA$team
+      home_team %in% PrevWeek_VoA$school | away_team %in% PrevWeek_VoA$school
     ) |>
     select(game_id, season, week, neutral_site, home_team, away_team) |>
     mutate(home_VoA_Rating = 0, away_VoA_Rating = 0)
   week16games <- cfbd_game_info(as.numeric(year)) |>
     filter(completed == "FALSE") |>
     filter(
-      home_team %in% PrevWeek_VoA$team | away_team %in% PrevWeek_VoA$team
+      home_team %in% PrevWeek_VoA$school | away_team %in% PrevWeek_VoA$school
     ) |>
     select(game_id, season, week, neutral_site, home_team, away_team) |>
     mutate(home_VoA_Rating = 0, away_VoA_Rating = 0)
   upcoming_games_df <- rbind(week16games, upcoming_games_df)
-} else if (as.numeric(upcoming) == 1) {
+} else if (as.integer(upcoming) == 1) {
   FullSeason_Games <- cfbd_game_info(as.numeric(year)) |>
-    filter(
-      home_team %in% PrevWeek_VoA$team | away_team %in% PrevWeek_VoA$team
+    select(
+      game_id,
+      season,
+      week,
+      neutral_site,
+      home_team,
+      home_division,
+      home_conference,
+      away_team,
+      away_division,
+      away_conference
     ) |>
-    select(game_id, season, week, neutral_site, home_team, away_team) |>
-    mutate(home_VoA_Rating = 0, away_VoA_Rating = 0)
-} else if (as.numeric(upcoming) > 16) {
+    filter(home_team %in% AllD1VoA$school | away_team %in% AllD1VoA$school)
+
+  ### setting initial temp df for assigning VoA ratings to games where both teams are in VoA
+  temp_ratings_df <- PrevWeek_VoA |>
+    select(school, VoA_Rating_Ovr)
+  colnames(temp_ratings_df) <- c("home_team", "home_VoA_Rating")
+
+  ### assigning ratings for home teams
+  ### FBS Games
+  FBSGames <- FullSeason_Games |>
+    filter(home_team %in% FBS_VoA$school & away_team %in% FBS_VoA$school) |>
+    left_join(temp_ratings_df, by = "home_team")
+  ### FCS Games
+  FCSGames <- FullSeason_Games |>
+    filter(home_team %in% FCS_VoA$school & away_team %in% FCS_VoA$school) |>
+    left_join(temp_ratings_df, by = "home_team")
+
+  ### assigning ratings for away teams
+  colnames(temp_ratings_df) <- c("away_team", "away_VoA_Rating")
+  FBSGames <- FBSGames |>
+    left_join(temp_ratings_df, by = "away_team")
+  FCSGames <- FCSGames |>
+    left_join(temp_ratings_df, by = "away_team")
+
+  ### Games where just 1 team from the VoA is involved, not counting games above
+  NonVoAGames <- FullSeason_Games |>
+    filter(game_id %nin% FBSGames$game_id & game_id %nin% FBSGames$game_id)
+
+  ### setting temp ratings df for games between FBS and FCS teams and maybe D1 (FBS or FCS) teams and D2/D3 teams
+  temp_ratings_df <- AllD1VoA |>
+    select(school, VoA_Rating_Ovr)
+  colnames(temp_ratings_df) <- c("home_team", "home_VoA_Rating")
+  ### adding VoA ratings to home teams in NonVoAGames
+  NonVoAGames <- NonVoAGames |>
+    left_join(temp_ratings_df, by = "home_team")
+  ### assigning ratings for away teams
+  colnames(temp_ratings_df) <- c("away_team", "away_VoA_Rating")
+  ### adding VoA ratings to away teams in NonVoAGames
+  NonVoAGames <- NonVoAGames |>
+    left_join(temp_ratings_df, by = "away_team")
+
+  ### rejoining all games backtogether to get FullSeason_Games with VoA Ratings attached
+  FullSeason_Games <- rbind(FBSGames, rbind(FCSGames, NonVoAGames)) |>
+    arrange(week) |>
+    mutate(
+      home_VoA_Rating = case_when(
+        is.na(home_VoA_Rating) ~ rnorm(
+          1,
+          mean = mean(LowerHalfRatings$VoA_Rating_Ovr),
+          sd = sd(LowerHalfRatings$VoA_Rating_Ovr)
+        ),
+        TRUE ~ home_VoA_Rating
+      ),
+      away_VoA_Rating = case_when(
+        is.na(away_VoA_Rating) ~ rnorm(
+          1,
+          mean = mean(LowerHalfRatings$VoA_Rating_Ovr),
+          sd = sd(LowerHalfRatings$VoA_Rating_Ovr)
+        ),
+        TRUE ~ away_VoA_Rating
+      )
+    )
+} else if (as.integer(upcoming) > 16) {
   upcoming_games_df <- cfbd_game_info(
     as.numeric(year),
     season_type = "postseason"
   ) |>
     filter(
-      home_team %in% PrevWeek_VoA$team | away_team %in% PrevWeek_VoA$team
+      home_team %in% PrevWeek_VoA$school | away_team %in% PrevWeek_VoA$school
     ) |>
     filter(completed == FALSE) |>
     select(game_id, season, week, neutral_site, home_team, away_team) |>
@@ -201,86 +230,19 @@ if (as.numeric(upcoming) == 16) {
 } else {
   upcoming_games_df <- cfbd_game_info(
     as.numeric(year),
-    week = as.numeric(upcoming)
+    week = as.integer(upcoming)
   ) |>
     filter(
-      home_team %in% PrevWeek_VoA$team | away_team %in% PrevWeek_VoA$team
+      home_team %in% PrevWeek_VoA$school | away_team %in% PrevWeek_VoA$school
     ) |>
     select(game_id, season, week, neutral_site, home_team, away_team) |>
     mutate(home_VoA_Rating = 0, away_VoA_Rating = 0)
 }
 
-##### matching up VoA/SRS ratings with appropriate teams #####
-if (as.numeric(upcoming) == 1) {
-  ### matching up VoA/SRS ratings with appropriate teams
-  set.seed(802)
-  for (game in 1:nrow(FullSeason_Games)) {
-    if (FullSeason_Games$home_team[game] %in% PrevWeek_VoA$team) {
-      FullSeason_Games$home_VoA_Rating[game] <- PrevWeek_VoA$VoA_Rating_Ovr[
-        PrevWeek_VoA$team == FullSeason_Games$home_team[game]
-      ]
-    } else {
-      ### generating a random rating for team not in VoA/SRS ratings
-      FullSeason_Games$home_VoA_Rating[game] <- rnorm(
-        1,
-        mean = quantile(FCS_ratings$VoA_Rating_Ovr, 0.1),
-        sd = sd(FCS_ratings$VoA_Rating_Ovr, na.rm = TRUE)
-      )
-    }
-  }
-  ### repeating to fill in away ratings
-  for (game in 1:nrow(FullSeason_Games)) {
-    if (FullSeason_Games$away_team[game] %in% PrevWeek_VoA$team) {
-      FullSeason_Games$away_VoA_Rating[game] <- PrevWeek_VoA$VoA_Rating_Ovr[
-        PrevWeek_VoA$team == FullSeason_Games$away_team[game]
-      ]
-    } else {
-      ### generating a random rating for team not in VoA/SRS ratings
-      FullSeason_Games$away_VoA_Rating[game] <- rnorm(
-        1,
-        mean = quantile(FCS_ratings$VoA_Rating_Ovr, 0.1),
-        sd = sd(FCS_ratings$VoA_Rating_Ovr, na.rm = TRUE)
-      )
-    }
-  }
-} else {
-  ### matching up VoA/SRS ratings with appropriate teams
-  set.seed(802)
-  for (game in 1:nrow(upcoming_games_df)) {
-    if (upcoming_games_df$home_team[game] %in% PrevWeek_VoA$team) {
-      upcoming_games_df$home_VoA_Rating[game] <- PrevWeek_VoA$VoA_Rating_Ovr[
-        PrevWeek_VoA$team == upcoming_games_df$home_team[game]
-      ]
-    } else {
-      ### generating a random rating for team not in VoA/SRS ratings
-      upcoming_games_df$home_VoA_Rating[game] <- rnorm(
-        1,
-        mean = quantile(FCS_ratings$VoA_Rating_Ovr, 0.1) - 10,
-        sd = sd(FCS_ratings$VoA_Rating_Ovr, na.rm = TRUE)
-      )
-    }
-  }
-  ### repeating to fill in away ratings
-  for (game in 1:nrow(upcoming_games_df)) {
-    if (upcoming_games_df$away_team[game] %in% PrevWeek_VoA$team) {
-      upcoming_games_df$away_VoA_Rating[game] <- PrevWeek_VoA$VoA_Rating_Ovr[
-        PrevWeek_VoA$team == upcoming_games_df$away_team[game]
-      ]
-    } else {
-      ### generating a random rating for team not in VoA/SRS ratings
-      upcoming_games_df$away_VoA_Rating[game] <- rnorm(
-        1,
-        mean = quantile(FCS_ratings$VoA_Rating_Ovr, 0.1) - 10,
-        sd = sd(FCS_ratings$VoA_Rating_Ovr, na.rm = TRUE)
-      )
-    }
-  }
-}
-
 
 ### Creating Vortex of Projection Spread column for full season games
 ### called "predicted" so that it can be formatted easily for the CFBD prediction contest
-if (as.numeric(upcoming) == 1) {
+if (as.integer(upcoming) == 1) {
   FullSeason_Games <- FullSeason_Games |>
     mutate(
       predicted = case_when(
@@ -289,7 +251,7 @@ if (as.numeric(upcoming) == 1) {
       )
     )
   cfbdata_contest_df <- FullSeason_Games |>
-    filter(week == as.numeric(upcoming)) |>
+    filter(week == as.integer(upcoming)) |>
     select(game_id, home_team, away_team, predicted)
   colnames(cfbdata_contest_df) <- c("id", "home", "away", "predicted")
   write_csv(
@@ -326,8 +288,8 @@ if (as.numeric(upcoming) == 1) {
 
 ### simple function to take VoA Ratings and field neutrality as inputs
 margin_projection <- function(away, home, neutral) {
-  margin_proj <- PrevWeek_VoA$VoA_Rating_Ovr[PrevWeek_VoA$team == away] -
-    PrevWeek_VoA$VoA_Rating_Ovr[PrevWeek_VoA$team == home]
+  margin_proj <- PrevWeek_VoA$VoA_Rating_Ovr[PrevWeek_VoA$school == away] -
+    PrevWeek_VoA$VoA_Rating_Ovr[PrevWeek_VoA$school == home]
   if (neutral == FALSE) {
     margin_proj <- margin_proj - 2
   }
@@ -335,14 +297,14 @@ margin_projection <- function(away, home, neutral) {
 }
 ### FCS version of above function
 # srs <- cfbd_ratings_srs(as.numeric(year))
-fcs_margin_projection <- function(away, home, neutral) {
-  margin_proj <- FCS_ratings$VoA_Rating_Ovr[FCS_ratings$team == away] -
-    FCS_ratings$VoA_Rating_Ovr[FCS_ratings$team == home]
-  if (neutral == FALSE) {
-    margin_proj <- margin_proj - 2
-  }
-  return(margin_proj)
-}
+# fcs_margin_projection <- function(away, home, neutral) {
+#   margin_proj <- FCS_ratings$VoA_Rating_Ovr[FCS_ratings$school == away] -
+#     FCS_ratings$VoA_Rating_Ovr[FCS_ratings$school == home]
+#   if (neutral == FALSE) {
+#     margin_proj <- margin_proj - 2
+#   }
+#   return(margin_proj)
+# }
 
 ##### Evaluating VoP's projected winner and their respective win probability #####
 ### coefficients for calculating win probability aren't just random long decimal numbers, I fit a model using lm() to Bill Connelly's projected win probs and just took them out and wrote them into this script instead of just fitting that model over and over every week
@@ -367,7 +329,7 @@ WP_betareg <- read_rds(here("Data", "SP_Projections", "WP_betareg.rds"))
 summary(WP_betareg)
 
 
-if (as.numeric(upcoming) == 1) {
+if (as.integer(upcoming) == 1) {
   ### adding projected winner, projected win margin, and win probability
   ### home field advantage of 2 points when neutral_site == FALSE
   FullSeason_Games <- FullSeason_Games |>
@@ -394,8 +356,12 @@ if (as.numeric(upcoming) == 1) {
       week,
       neutral_site,
       home_team,
+      home_division,
+      home_conference,
       home_VoA_Rating,
       away_team,
+      away_division,
+      away_conference,
       away_VoA_Rating,
       Proj_Winner,
       Proj_Margin,
@@ -403,8 +369,8 @@ if (as.numeric(upcoming) == 1) {
     ) ## |>
   # arrange(desc(Proj_Margin))
   upcoming_games_df <- FullSeason_Games |>
-    filter(week == as.numeric(upcoming)) |>
-    filter(home_team %in% FBS_VoA$team | away_team %in% FBS_VoA$team)
+    filter(week == as.integer(upcoming)) #|>
+  # filter(home_team %in% AllD1VoA$school | away_team %in% AllD1VoA$school)
 } else {
   ### preparing df for making gt table of upcoming games df to display games with close spreads
   upcoming_games_df <- upcoming_games_df |>
@@ -439,65 +405,67 @@ if (as.numeric(upcoming) == 1) {
       Proj_Margin,
       win_prob
     ) |>
-    filter(home_team %in% FBS_VoA$team | away_team %in% FBS_VoA$team)
+    filter(home_team %in% FBS_VoA$school | away_team %in% FBS_VoA$school)
   # arrange(desc(Proj_Margin))
 }
 
 
 ##### WEEK 0 (week 1 upcoming) ONLY Calculating projected number of wins #####
-if (as.numeric(upcoming) == 1) {
+if (as.integer(upcoming) == 1) {
   ### adding column to store projected number of wins
   ## storing dummy value in it for now
-  FBS_VoA <- FBS_VoA |>
+  PrevWeek_VoA_AllCols <- PrevWeek_VoA_AllCols |>
     mutate(proj_wins = -999)
   ### calculating median projected wins, storing it in FBS_VoA$Proj_Wins for appropriate teams
-  for (school in 1:nrow(FBS_VoA)) {
+  for (team in 1:nrow(PrevWeek_VoA_AllCols)) {
     temp_games_df <- FullSeason_Games |>
       filter(
-        home_team == FBS_VoA$team[school] | away_team == FBS_VoA$team[school]
+        home_team == PrevWeek_VoA_AllCols$school[team] |
+          away_team == PrevWeek_VoA_AllCols$school[team]
       )
     temp_wins_df <- temp_games_df |>
-      filter(Proj_Winner == FBS_VoA$team[school])
+      filter(Proj_Winner == PrevWeek_VoA_AllCols$school[team])
     temp_losses_df <- temp_games_df |>
-      filter(Proj_Winner != FBS_VoA$team[school])
+      filter(Proj_Winner != PrevWeek_VoA_AllCols$school[team])
     temp_proj_wins <- (sum(temp_wins_df$win_prob)) +
       (nrow(temp_losses_df) - (sum(temp_losses_df$win_prob)))
-    FBS_VoA$proj_wins[school] <- temp_proj_wins
+    PrevWeek_VoA_AllCols$proj_wins[team] <- temp_proj_wins
   }
 
   ### making tables with gt for each conference showing each team's projected wins
   ### each conference (including independents) gets separate tables
-  AAC_ProjWins <- FBS_VoA |>
+  AAC_ProjWins <- PrevWeek_VoA_AllCols |>
     filter(conference == "American Athletic") |>
     arrange(desc(proj_wins))
-  ACC_ProjWins <- FBS_VoA |>
+  ACC_ProjWins <- PrevWeek_VoA_AllCols |>
     filter(conference == "ACC") |>
     arrange(desc(proj_wins))
-  Big12_ProjWins <- FBS_VoA |>
+  Big12_ProjWins <- PrevWeek_VoA_AllCols |>
     filter(conference == "Big 12") |>
     arrange(desc(proj_wins))
-  Big10_ProjWins <- FBS_VoA |>
+  Big10_ProjWins <- PrevWeek_VoA_AllCols |>
     filter(conference == "Big Ten") |>
     arrange(desc(proj_wins))
-  CUSA_ProjWins <- FBS_VoA |>
+  CUSA_ProjWins <- PrevWeek_VoA_AllCols |>
     filter(conference == "Conference USA") |>
     arrange(desc(proj_wins))
-  ### lumping the 2Pac with the Indys
-  Indy_2Pac_ProjWins <- FBS_VoA |>
-    filter(conference == "FBS Independents" | conference == "Pac-12") |>
+  ### FBS Independents
+  Indy_ProjWins <- PrevWeek_VoA_AllCols |>
+    filter(conference == "FBS Independents") |>
     arrange(desc(proj_wins))
-  MAC_ProjWins <- FBS_VoA |>
+  MAC_ProjWins <- PrevWeek_VoA_AllCols |>
     filter(conference == "Mid-American") |>
     arrange(desc(proj_wins))
-  MWC_ProjWins <- FBS_VoA |>
+  MWC_ProjWins <- PrevWeek_VoA_AllCols |>
     filter(conference == "Mountain West") |>
     arrange(desc(proj_wins))
-  # Pac12_ProjWins <- FBS_VoA |> filter(conference == "Pac-12") |>
-  # arrange(desc(proj_wins))
-  SEC_ProjWins <- FBS_VoA |>
+  Pac12_ProjWins <- PrevWeek_VoA_AllCols |>
+    filter(conference == "Pac-12") |>
+    arrange(desc(proj_wins))
+  SEC_ProjWins <- PrevWeek_VoA_AllCols |>
     filter(conference == "SEC") |>
     arrange(desc(proj_wins))
-  SunBelt_ProjWins <- FBS_VoA |>
+  SunBelt_ProjWins <- PrevWeek_VoA_AllCols |>
     filter(conference == "Sun Belt") |>
     arrange(desc(proj_wins))
 
@@ -541,7 +509,7 @@ if (as.numeric(upcoming) == 1) {
       )
     ) |>
     cols_label(
-      team = "Team",
+      school = "School",
       VoA_Rating_Ovr = "VoA Overall Rating",
       proj_wins = "Median Projected Wins"
     ) |> # Update labels
@@ -601,7 +569,7 @@ if (as.numeric(upcoming) == 1) {
       )
     ) |>
     cols_label(
-      team = "Team",
+      school = "School",
       VoA_Rating_Ovr = "VoA Overall Rating",
       proj_wins = "Median Projected Wins"
     ) |> # Update labels
@@ -660,7 +628,7 @@ if (as.numeric(upcoming) == 1) {
       )
     ) |>
     cols_label(
-      team = "Team",
+      school = "School",
       VoA_Rating_Ovr = "VoA Overall Rating",
       proj_wins = "Median Projected Wins"
     ) |> # Update labels
@@ -719,7 +687,7 @@ if (as.numeric(upcoming) == 1) {
       )
     ) |>
     cols_label(
-      team = "Team",
+      school = "School",
       VoA_Rating_Ovr = "VoA Overall Rating",
       proj_wins = "Median Projected Wins"
     ) |> # Update labels
@@ -778,7 +746,7 @@ if (as.numeric(upcoming) == 1) {
       )
     ) |>
     cols_label(
-      team = "Team",
+      school = "School",
       VoA_Rating_Ovr = "VoA Overall Rating",
       proj_wins = "Median Projected Wins"
     ) |> # Update labels
@@ -799,11 +767,11 @@ if (as.numeric(upcoming) == 1) {
   ### Indies/2Pac
   ### Creating gt table
   ## adding title and subtitle
-  Indy_2Pac_ProjWins_gt <- Indy_2Pac_ProjWins |>
+  Indy_ProjWins_gt <- Indy_ProjWins |>
     gt() |> # use 'gt' to make an awesome table...
     gt_theme_espn() |>
     tab_header(
-      title = paste(year, "Independents & 2Pac Median Win Total Projections"), # ...with this title
+      title = paste(year, "Independents Median Win Total Projections"), # ...with this title
       subtitle = "The Unquestionably Puzzling Yet Impeccibly Perceptive Vortex of Projection"
     ) |> # and this subtitle
     fmt_number(
@@ -837,7 +805,7 @@ if (as.numeric(upcoming) == 1) {
       )
     ) |>
     cols_label(
-      team = "Team",
+      school = "School",
       VoA_Rating_Ovr = "VoA Overall Rating",
       proj_wins = "Median Projected Wins"
     ) |> # Update labels
@@ -848,10 +816,10 @@ if (as.numeric(upcoming) == 1) {
     VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API via cfbfastR"
     ) |>
     tab_options(table.width = pct(40))
-  Indy_2Pac_ProjWins_gt
-  Indy_2Pac_ProjWins_gt |>
+  Indy_ProjWins_gt
+  Indy_ProjWins_gt |>
     gtsave(
-      "Indy_2PacWinProjections.png",
+      "IndyWinProjections.png",
       expand = 5,
       path = here("Outputs", "RVoA", paste0("VoA", year), "VoP")
     )
@@ -896,7 +864,7 @@ if (as.numeric(upcoming) == 1) {
       )
     ) |>
     cols_label(
-      team = "Team",
+      school = "School",
       VoA_Rating_Ovr = "VoA Overall Rating",
       proj_wins = "Median Projected Wins"
     ) |> # Update labels
@@ -955,7 +923,7 @@ if (as.numeric(upcoming) == 1) {
       )
     ) |>
     cols_label(
-      team = "Team",
+      school = "School",
       VoA_Rating_Ovr = "VoA Overall Rating",
       proj_wins = "Median Projected Wins"
     ) |> # Update labels
@@ -970,6 +938,64 @@ if (as.numeric(upcoming) == 1) {
   MWC_ProjWins_gt |>
     gtsave(
       "MWCWinProjections.png",
+      expand = 5,
+      path = here("Outputs", "RVoA", paste0("VoA", year), "VoP")
+    )
+  ### Pac12
+  ### Creating gt table
+  ## adding title and subtitle
+  Pac12_ProjWins_gt <- Pac12_ProjWins |>
+    gt() |> # use 'gt' to make an awesome table...
+    gt_theme_espn() |>
+    tab_header(
+      title = paste(year, "Pac 12 Median Win Total Projections"), # ...with this title
+      subtitle = "The Unquestionably Puzzling Yet Impeccibly Perceptive Vortex of Projection"
+    ) |> # and this subtitle
+    fmt_number(
+      # Another numeric column
+      columns = c(VoA_Rating_Ovr),
+      decimals = 3
+    ) |>
+    fmt_number(
+      # Another numeric column
+      columns = c(proj_wins),
+      decimals = 1
+    ) |>
+    data_color(
+      # Update cell colors, testing different color palettes
+      columns = c(VoA_Rating_Ovr), # ...for dose column
+      fn = scales::col_numeric(
+        # <- bc it's numeric
+        palette = brewer.pal(11, "RdBu"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    data_color(
+      # Update cell colors, testing different color palettes
+      columns = c(proj_wins), # ...for dose column
+      fn = scales::col_numeric(
+        # <- bc it's numeric
+        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+        domain = c(), # Column scale endpoints
+        reverse = FALSE
+      )
+    ) |>
+    cols_label(
+      school = "School",
+      VoA_Rating_Ovr = "VoA Overall Rating",
+      proj_wins = "Median Projected Wins"
+    ) |> # Update labels
+    # cols_move_to_end(columns = "win_prob") |>
+    cols_hide(c(conference)) |>
+    tab_footnote(
+      footnote = "Data from CFB Data API via cfbfastR"
+    ) |>
+    tab_options(table.width = pct(50))
+  Pac12_ProjWins_gt
+  Pac12_ProjWins_gt |>
+    gtsave(
+      "Pac12WinProjections.png",
       expand = 5,
       path = here("Outputs", "RVoA", paste0("VoA", year), "VoP")
     )
@@ -1014,7 +1040,7 @@ if (as.numeric(upcoming) == 1) {
       )
     ) |>
     cols_label(
-      team = "Team",
+      school = "School",
       VoA_Rating_Ovr = "VoA Overall Rating",
       proj_wins = "Median Projected Wins"
     ) |> # Update labels
@@ -1073,7 +1099,7 @@ if (as.numeric(upcoming) == 1) {
       )
     ) |>
     cols_label(
-      team = "Team",
+      school = "School",
       VoA_Rating_Ovr = "VoA Overall Rating",
       proj_wins = "Median Projected Wins"
     ) |> # Update labels
@@ -1163,7 +1189,16 @@ upcoming_games_gt <- upcoming_games_df |>
     win_prob = "Win Probability"
   ) |> # Update labels
   cols_move_to_end(columns = "win_prob") |>
-  cols_hide(c(game_id, season, week, neutral_site)) |>
+  cols_hide(c(
+    game_id,
+    season,
+    week,
+    neutral_site,
+    home_division,
+    home_conference,
+    away_division,
+    away_conference
+  )) |>
   tab_footnote(
     footnote = "Data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org,
     VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API via cfbfastR"
@@ -1237,10 +1272,18 @@ upcoming_games_gt_sorted <- upcoming_games_df_sorted |>
     win_prob = "Win Probability"
   ) |> # Update labels
   cols_move_to_end(columns = "win_prob") |>
-  cols_hide(c(game_id, season, week, neutral_site)) |>
+  cols_hide(c(
+    game_id,
+    season,
+    week,
+    neutral_site,
+    home_division,
+    home_conference,
+    away_division,
+    away_conference
+  )) |>
   tab_footnote(
-    footnote = "Data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org,
-    VoA Ratings for FCS teams are actually SRS ratings taken from CFB Data API via cfbfastR"
+    footnote = "Data from CFB Data API via cfbfastR"
   )
 upcoming_games_gt_sorted
 upcoming_games_gt
