@@ -57,7 +57,6 @@ parameters {
 // with mean 'mu' equal to a linear deterministic function and SD 'sigma'.
 model {
   // priors
-   // priors
   b0 ~ normal(20, 1);
   beta_def_epa ~ normal(3, 3);
   beta_def_ypp ~ normal(1, 4);
