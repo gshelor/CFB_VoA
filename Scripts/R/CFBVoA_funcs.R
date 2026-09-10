@@ -43,6 +43,7 @@ create_voavarstrain_df <- function(PY, teams_df, pbp_df) {
 ### function to create VoAVariables df that will be used for inference/generating current ratings
 create_voavars_df <- function(year, week_num) {
   if (week_num == 0) {
+    ##### Preseason VoAVariables df creation #####
     ### filtering out teams that haven't played D1 football for the last 3 years so I'm only dealing with teams that have reliable stats
     VoA_df <- D1Teams |>
       filter(
@@ -133,8 +134,9 @@ create_voavars_df <- function(year, week_num) {
         )
       )
   } else {
+    ##### Week 1-end of season VoAVariables df creation #####
     VoA_df <- D1Teams |>
-      filter(school %in% PrevWeek_VoA$school) |>
+      filter(school %in% PreseasonVoA$school) |>
       select(
         team_id,
         school,

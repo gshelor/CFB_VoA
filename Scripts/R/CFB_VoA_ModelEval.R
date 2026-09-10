@@ -3,7 +3,7 @@
 ### Load Packages
 library(pacman)
 # fmt: skip
-pacman::p_load(tidyverse, matrixStats, grid, gridExtra, gt, gtExtras, viridis, webshot2, cfbfastR, here, ggsci, RColorBrewer, ggpubr, Metrics, ModelMetrics, data.table, arrow)
+p_load(tidyverse, matrixStats, grid, gridExtra, gt, gtExtras, viridis, webshot2, cfbfastR, here, ggsci, RColorBrewer, ggpubr, Metrics, ModelMetrics, data.table, arrow)
 
 ### identifying season and week of season
 season <- readline("What season is it? ")
@@ -15,10 +15,36 @@ VoP_text <- "VoP"
 week_text <- "Week"
 
 ### Reading in VoA to filter games to only be between FBS teams since VoA only rates/ranks FBS teams
-PrevWeekVoA <- read_csv(here(
+PrevWeekFBSVoA <- read_parquet(here(
   "Data",
   paste0("VoA", season),
-  paste0(season, week_text, as.character(as.numeric(cfb_week) - 1), "_VoA.csv")
+  paste0(
+    season,
+    week_text,
+    as.character(as.numeric(cfb_week) - 1),
+    "_FBSVoA.parquet"
+  )
+))
+PrevWeekFCSVoA <- read_parquet(here(
+  "Data",
+  paste0("VoA", season),
+  paste0(
+    season,
+    week_text,
+    as.character(as.numeric(cfb_week) - 1),
+    "_FCSVoA.parquet"
+  )
+))
+PrevWeekFBSFCSVoA <- read_csv(here(
+  "Data",
+  paste0("VoA", season),
+  paste0(
+    "AllD1",
+    season,
+    week_text,
+    as.character(as.numeric(cfb_week) - 1),
+    "VoA.csv"
+  )
 ))
 
 
@@ -131,11 +157,35 @@ if (as.numeric(cfb_week) >= 17) {
     "Projections",
     paste0(season, VoP_text, week_text, cfb_week, "Games.csv")
   )) |>
-    filter(home %in% PrevWeekVoA$team & away %in% PrevWeekVoA$team) |>
+    filter(
+      home %in% PrevWeekFBSFCSVoA$school & away %in% PrevWeekFBSFCSVoA$school
+    ) |>
     select(id, predicted)
-  colnames(PrevWeekVoP) <- c("game_id", "proj_margin")
 
-  LastWeekGames <- cfbd_game_info(as.numeric(season)) |>
+  ### filtering out games by subdivision or if cross-subdivision to see if they even show up in the cfbd_game_info output
+  # PrevWeekFBSVoP <- PrevWeekVoP |>
+  #   filter(home %in% PrevWeekFBSVoA$school & away %in% PrevWeekFBSVoA$school) |>
+  #   select(id, predicted)
+
+  # PrevWeekFCSVoP <- PrevWeekVoP |>
+  #   filter(home %in% PrevWeekFCSVoA$school & away %in% PrevWeekFCSVoA$school) |>
+  #   select(id, predicted)
+
+  # PrevWeekCrossDivVoP <- PrevWeekVoP |>
+  #   filter(
+  #     (home %in% PrevWeekFBSVoA$school & away %in% PrevWeekFCSVoA$school) |
+  #       (home %in% PrevWeekFCSVoA$school & away %in% PrevWeekFBSVoA$school)
+  #   ) |>
+  #   select(id, predicted)
+
+  # PrevWeekVoP <- PrevWeekVoP |>
+  #   select(id, predicted)
+  colnames(PrevWeekVoP) <- c("game_id", "proj_margin")
+  # colnames(PrevWeekFBSVoP) <- c("game_id", "proj_margin")
+  # colnames(PrevWeekFCSVoP) <- c("game_id", "proj_margin")
+  # colnames(PrevWeekCrossDivVoP) <- c("game_id", "proj_margin")
+
+  LastWeekGames <- cfbd_game_info(as.integer(season)) |>
     filter(completed == TRUE) |>
     filter(week == as.numeric(cfb_week)) |>
     filter(game_id %in% PrevWeekVoP$game_id) |>
@@ -145,8 +195,10 @@ if (as.numeric(cfb_week) >= 17) {
       week,
       completed,
       home_team,
+      home_division,
       home_points,
       away_team,
+      away_division,
       away_points
     ) |>
     mutate(
@@ -166,7 +218,11 @@ LastWeekSpreads_temp$spread <- as.numeric(LastWeekSpreads_temp$spread)
 ### grouping games by game_id and taking the average of the spreads
 LastWeekSpreads <- LastWeekSpreads_temp |>
   group_by(game_id) |>
-  summarise(mean_spread = mean(spread))
+  summarise(
+    mean_spread = mean(spread, na.rm = TRUE),
+    mean_home_moneyline = mean(home_moneyline, na.rm = TRUE),
+    mean_away_moneyline = mean(away_moneyline, na.rm = TRUE)
+  )
 
 
 ### merging df with all completed games that have projections, does not include spread
@@ -175,13 +231,13 @@ LastWeekGames <- spread_games_list |>
   reduce(full_join, by = "game_id") |>
   ### just gonna ignore games that have NAs for anything interesting
   ### will also be useful if a game gets cancelled like AppSt/Liberty in 2024
-  drop_na() |>
+  drop_na(result) |>
   ### calculating error metrics for both my projections and betting spreads
   mutate(
-    abs_error = Metrics::ae(result, proj_margin),
-    vegas_abs_error = Metrics::ae(result, mean_spread),
+    VoA_AE = Metrics::ae(result, proj_margin),
+    vegas_AE = Metrics::ae(result, mean_spread),
     sqd_error = Metrics::se(result, proj_margin),
-    vegas_sqd_error = Metrics::se(result, mean_spread),
+    vegas_SE = Metrics::se(result, mean_spread),
     straight_up_win = case_when(
       result >= 0 & proj_margin >= 0 ~ 1,
       result <= 0 & proj_margin <= 0 ~ 1,
@@ -197,25 +253,23 @@ LastWeekGames <- spread_games_list |>
       result < mean_spread & proj_margin < mean_spread ~ 1,
       TRUE ~ 0
     ),
-    AE_ATS_win = case_when(abs_error < vegas_abs_error ~ 1, TRUE ~ 0)
+    AE_ATS_win = case_when(VoA_AE < vegas_AE ~ 1, TRUE ~ 0)
   )
 
 ### calculating weekly average error metrics for games with spread info available
 WeekMeanAccuracyMetrics <- data.frame(
-  week = as.numeric(cfb_week),
+  week = as.integer(cfb_week),
   games = nrow(LastWeekGames),
-  mean_ae = mean(LastWeekGames$abs_error),
-  mean_vegas_ae = mean(LastWeekGames$vegas_abs_error),
+  mean_VoA_AE = mean(LastWeekGames$VoA_AE),
+  mean_vegas_AE = mean(LastWeekGames$vegas_AE),
   mean_se = mean(LastWeekGames$sqd_error),
-  mean_vegas_se = mean(LastWeekGames$vegas_sqd_error),
+  mean_vegas_SE = mean(LastWeekGames$vegas_SE),
   RMSE = rmse(LastWeekGames$result, LastWeekGames$proj_margin),
   vegas_RMSE = rmse(LastWeekGames$result, LastWeekGames$mean_spread),
-  straight_up_win_pct = sum(LastWeekGames$straight_up_win) /
-    nrow(LastWeekGames),
-  vegas_straight_up_win_pct = sum(LastWeekGames$vegas_straight_up_win) /
-    nrow(LastWeekGames),
-  ATS_win_pct = sum(LastWeekGames$ATS_win) / nrow(LastWeekGames),
-  AE_ATS_win_pct = sum(LastWeekGames$AE_ATS_win) / nrow(LastWeekGames)
+  straight_up_win_pct = mean(LastWeekGames$straight_up_win),
+  vegas_straight_up_win_pct = mean(LastWeekGames$vegas_straight_up_win),
+  ATS_win_pct = mean(LastWeekGames$ATS_win),
+  AE_ATS_win_pct = mean(LastWeekGames$AE_ATS_win)
 )
 
 
@@ -342,17 +396,16 @@ if (as.numeric(cfb_week) >= 5) {
     group_by(season) |>
     summarize(
       games = nrow(CompletedGames),
-      mean_ae = mean(abs_error),
-      mean_vegas_ae = mean(vegas_abs_error),
+      mean_VoA_AE = mean(VoA_AE),
+      mean_vegas_AE = mean(vegas_AE),
       mean_se = mean(sqd_error),
-      mean_vegas_se = mean(vegas_sqd_error),
+      mean_vegas_SE = mean(vegas_SE),
       RMSE = rmse(result, proj_margin),
       vegas_RMSE = rmse(result, mean_spread),
-      straight_up_win_pct = sum(straight_up_win) / nrow(CompletedGames),
-      vegas_straight_up_win_pct = sum(vegas_straight_up_win) /
-        nrow(CompletedGames),
-      ATS_win_pct = sum(ATS_win) / nrow(CompletedGames),
-      AE_ATS_win_pct = sum(AE_ATS_win) / nrow(CompletedGames)
+      straight_up_win_pct = mean(straight_up_win),
+      vegas_straight_up_win_pct = mean(vegas_straight_up_win),
+      ATS_win_pct = mean(ATS_win),
+      AE_ATS_win_pct = mean(AE_ATS_win)
     ) |>
     drop_na()
 
@@ -373,12 +426,12 @@ if (as.numeric(cfb_week) >= 5) {
 ##### Making Plots of Error Throughout Season #####
 
 if (as.numeric(cfb_week) >= 4) {
-  WeeklyMAEPlot <- ggplot(CompletedWeeks, aes(x = week, y = mean_ae)) +
+  WeeklyMAEPlot <- ggplot(CompletedWeeks, aes(x = week, y = mean_VoA_AE)) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
     geom_point(size = 5) +
-    geom_line(mapping = aes(y = mean_vegas_ae), col = "blue", linewidth = 1.5) +
-    geom_point(mapping = aes(y = mean_vegas_ae), col = "blue", size = 5) +
+    geom_line(mapping = aes(y = mean_vegas_AE), col = "blue", linewidth = 1.5) +
+    geom_point(mapping = aes(y = mean_vegas_AE), col = "blue", size = 5) +
     xlab("Week") +
     ylab("MAE") +
     labs(

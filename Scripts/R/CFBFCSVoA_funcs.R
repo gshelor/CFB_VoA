@@ -43,6 +43,7 @@ create_voavarstrain_df <- function(PY, teams_df, pbp_df) {
 ### function to create VoAVariables df that will be used for inference/generating current ratings
 create_voavars_df <- function(year, week_num) {
   if (week_num == 0) {
+    ##### Preseason VoAVariables df creation #####
     ### filtering out teams that haven't played D1 football for the last 3 years so I'm only dealing with teams that have reliable stats
     VoA_df <- D1Teams |>
       filter(
@@ -133,8 +134,9 @@ create_voavars_df <- function(year, week_num) {
         )
       )
   } else {
+    ##### Week 1-end of season VoAVariables df creation #####
     VoA_df <- D1Teams |>
-      filter(school %in% PrevWeek_VoA$school) |>
+      filter(school %in% PreseasonVoA$school) |>
       select(
         team_id,
         school,
@@ -5164,6 +5166,478 @@ calc_output_conf_avg <- function(VoA_df) {
       Conf_Rk_col8 = Conf_Rk,
       Conf_Rk_col9 = Conf_Rk,
       Conf_Rk_col10 = Conf_Rk
+    )
+
+  return(VoA_df)
+}
+
+fix_VoA_NA_cols <- function(VoA_df) {
+  VoA_df <- VoA_df |>
+    left_join(WeightedPreseasonVoAVars, by = "school") |>
+    mutate(
+      off_passing_downs_explosiveness = case_when(
+        is.na(off_passing_downs_explosiveness) ~ weighted_off_explosiveness,
+        TRUE ~ off_passing_downs_explosiveness
+      ),
+      def_passing_downs_explosiveness = case_when(
+        is.na(def_passing_downs_explosiveness) ~ weighted_def_explosiveness,
+        TRUE ~ def_passing_downs_explosiveness
+      ),
+      off_fourth_conv_rate = case_when(
+        is.na(off_fourth_conv_rate) ~ 0,
+        TRUE ~ off_fourth_conv_rate
+      ),
+      def_fourth_conv_rate = case_when(
+        is.na(def_fourth_conv_rate) ~ 0,
+        TRUE ~ def_fourth_conv_rate
+      ),
+      off_power_success = case_when(
+        is.na(off_power_success) ~ weighted_off_success_rate,
+        TRUE ~ off_power_success
+      ),
+      def_power_success = case_when(
+        is.na(def_power_success) ~ weighted_def_success_rate,
+        TRUE ~ def_power_success
+      ),
+      off_pts_per_opp = case_when(
+        is.na(off_pts_per_opp) ~ weighted_off_pts_per_opp,
+        TRUE ~ off_pts_per_opp
+      ),
+      def_pts_per_opp = case_when(
+        is.na(def_pts_per_opp) ~ weighted_def_pts_per_opp,
+        TRUE ~ def_pts_per_opp
+      ),
+      off_turnovers_pg = case_when(
+        is.na(off_turnovers_pg) ~ 0,
+        TRUE ~ off_turnovers_pg
+      ),
+      def_turnovers_pg = case_when(
+        is.na(def_turnovers_pg) ~ 0,
+        TRUE ~ def_turnovers_pg
+      ),
+      off_pts_scored = case_when(
+        is.na(off_pts_scored) ~ 0,
+        TRUE ~ off_pts_scored
+      ),
+      def_pts_allowed = case_when(
+        is.na(def_pts_allowed) ~ 0,
+        TRUE ~ def_pts_allowed
+      ),
+      fg_rate = case_when(
+        is.na(fg_rate) ~ 0,
+        TRUE ~ fg_rate
+      ),
+      fg_rate_allowed = case_when(
+        is.na(fg_rate_allowed) ~ 0,
+        TRUE ~ fg_rate_allowed
+      ),
+      fg_made_pg = case_when(
+        is.na(fg_made_pg) ~ 0,
+        TRUE ~ fg_made_pg
+      ),
+      fg_made_pg_allowed = case_when(
+        is.na(fg_made_pg_allowed) ~ 0,
+        TRUE ~ fg_made_pg_allowed
+      ),
+      punt_return_yds = case_when(
+        is.na(punt_return_yds) ~ 0,
+        TRUE ~ punt_return_yds
+      ),
+      punt_return_yds_allowed = case_when(
+        is.na(punt_return_yds_allowed) ~ 0,
+        TRUE ~ punt_return_yds_allowed
+      ),
+      kick_return_yds = case_when(
+        is.na(kick_return_yds) ~ 0,
+        TRUE ~ kick_return_yds
+      ),
+      kick_return_yds_allowed = case_when(
+        is.na(kick_return_yds_allowed) ~ 0,
+        TRUE ~ kick_return_yds_allowed
+      ),
+      off_ppg = case_when(
+        is.na(off_ppg) ~ weighted_off_ppg_mean,
+        TRUE ~ off_ppg
+      ),
+      def_ppg = case_when(
+        is.na(def_ppg) ~ weighted_def_ppg_mean,
+        TRUE ~ def_ppg
+      ),
+      punt_return_TDs = case_when(
+        is.na(punt_return_TDs) ~ 0,
+        TRUE ~ punt_return_TDs
+      ),
+      punt_return_TDs_allowed = case_when(
+        is.na(punt_return_TDs_allowed) ~ 0,
+        TRUE ~ punt_return_TDs_allowed
+      ),
+      off_ypp = case_when(
+        is.na(off_ypp) ~ weighted_off_ypp,
+        TRUE ~ off_ypp
+      ),
+      def_ypp = case_when(
+        is.na(def_ypp) ~ weighted_def_ypp,
+        TRUE ~ def_ypp
+      ),
+      off_ypg = case_when(
+        is.na(off_ypg) ~ off_ypg_PY1,
+        TRUE ~ off_ypg
+      ),
+      def_ypg = case_when(
+        is.na(def_ypg) ~ def_ypg_PY1,
+        TRUE ~ def_ypg
+      ),
+      off_epa = case_when(
+        is.na(off_epa) ~ weighted_off_epa,
+        TRUE ~ off_epa
+      ),
+      def_epa = case_when(
+        is.na(def_epa) ~ weighted_def_epa,
+        TRUE ~ def_epa
+      ),
+      off_plays_pg = case_when(
+        is.na(off_plays_pg) ~ weighted_off_plays_pg,
+        TRUE ~ off_plays_pg
+      ),
+      def_plays_pg = case_when(
+        is.na(def_plays_pg) ~ weighted_def_plays_pg,
+        TRUE ~ def_plays_pg
+      ),
+      games = case_when(
+        is.na(games) ~ 0,
+        TRUE ~ games
+      ),
+      off_standard_downs_epa = case_when(
+        is.na(off_standard_downs_epa) ~ weighted_off_epa,
+        TRUE ~ off_standard_downs_epa
+      ),
+      def_standard_downs_epa = case_when(
+        is.na(def_standard_downs_epa) ~ weighted_def_epa,
+        TRUE ~ def_standard_downs_epa
+      ),
+      off_standard_downs_success_rate = case_when(
+        is.na(off_standard_downs_success_rate) ~ weighted_off_success_rate,
+        TRUE ~ off_standard_downs_success_rate
+      ),
+      def_standard_downs_success_rate = case_when(
+        is.na(def_standard_downs_success_rate) ~ weighted_def_success_rate,
+        TRUE ~ def_standard_downs_success_rate
+      ),
+      off_standard_downs_explosiveness = case_when(
+        is.na(off_standard_downs_explosiveness) ~ weighted_off_explosiveness,
+        TRUE ~ off_standard_downs_explosiveness
+      ),
+      def_standard_downs_explosiveness = case_when(
+        is.na(def_standard_downs_explosiveness) ~ weighted_def_explosiveness,
+        TRUE ~ def_standard_downs_explosiveness
+      ),
+      off_passing_downs_epa = case_when(
+        is.na(off_passing_downs_epa) ~ weighted_off_epa,
+        TRUE ~ off_passing_downs_epa
+      ),
+      def_passing_downs_epa = case_when(
+        is.na(def_passing_downs_epa) ~ weighted_def_epa,
+        TRUE ~ def_passing_downs_epa
+      ),
+      off_passing_downs_success_rate = case_when(
+        is.na(off_passing_downs_success_rate) ~ weighted_off_success_rate,
+        TRUE ~ off_passing_downs_success_rate
+      ),
+      def_passing_downs_success_rate = case_when(
+        is.na(def_passing_downs_success_rate) ~ weighted_def_success_rate,
+        TRUE ~ def_passing_downs_success_rate
+      ),
+      off_passing_downs_explosiveness = case_when(
+        is.na(off_passing_downs_explosiveness) ~ weighted_off_explosiveness,
+        TRUE ~ off_passing_downs_explosiveness
+      ),
+      def_passing_downs_explosiveness = case_when(
+        is.na(def_passing_downs_explosiveness) ~ weighted_def_explosiveness,
+        TRUE ~ def_passing_downs_explosiveness
+      ),
+      off_explosiveness = case_when(
+        is.na(off_explosiveness) ~ weighted_off_explosiveness,
+        TRUE ~ off_explosiveness
+      ),
+      def_explosiveness = case_when(
+        is.na(def_explosiveness) ~ weighted_def_explosiveness,
+        TRUE ~ def_explosiveness
+      ),
+      off_third_conv_rate = case_when(
+        is.na(off_third_conv_rate) ~ weighted_off_third_conv_rate,
+        TRUE ~ off_third_conv_rate
+      ),
+      def_third_conv_rate = case_when(
+        is.na(def_third_conv_rate) ~ weighted_def_third_conv_rate,
+        TRUE ~ def_third_conv_rate
+      ),
+      off_pass_ypg = case_when(
+        is.na(off_pass_ypg) ~ off_pass_ypg_PY1,
+        TRUE ~ off_pass_ypg
+      ),
+      def_pass_ypg = case_when(
+        is.na(def_pass_ypg) ~ def_pass_ypg_PY1,
+        TRUE ~ def_pass_ypg
+      ),
+      off_pass_ypa = case_when(
+        is.na(off_pass_ypa) ~ off_pass_ypa_PY1,
+        TRUE ~ off_pass_ypa
+      ),
+      def_pass_ypa = case_when(
+        is.na(def_pass_ypa) ~ def_pass_ypa_PY1,
+        TRUE ~ def_pass_ypa
+      ),
+      off_pass_ypr = case_when(
+        is.na(off_pass_ypr) ~ off_pass_ypr_PY1,
+        TRUE ~ off_pass_ypr
+      ),
+      def_pass_ypr = case_when(
+        is.na(def_pass_ypr) ~ def_pass_ypr_PY1,
+        TRUE ~ def_pass_ypr
+      ),
+      off_comp_pct = case_when(
+        is.na(off_comp_pct) ~ off_comp_pct_PY1,
+        TRUE ~ off_comp_pct
+      ),
+      def_comp_pct = case_when(
+        is.na(def_comp_pct) ~ def_comp_pct_PY1,
+        TRUE ~ def_comp_pct
+      ),
+      off_havoc_total = case_when(
+        is.na(off_havoc_total) ~ off_havoc_total_PY1,
+        TRUE ~ off_havoc_total
+      ),
+      def_havoc_total = case_when(
+        is.na(def_havoc_total) ~ weighted_def_havoc_total,
+        TRUE ~ def_havoc_total
+      ),
+      off_pass_epa = case_when(
+        is.na(off_pass_epa) ~ off_pass_epa_PY1,
+        TRUE ~ off_pass_epa
+      ),
+      def_pass_epa = case_when(
+        is.na(def_pass_epa) ~ def_pass_epa_PY1,
+        TRUE ~ def_pass_epa
+      ),
+      off_pass_success_rate = case_when(
+        is.na(off_pass_success_rate) ~ off_pass_success_rate_PY1,
+        TRUE ~ off_pass_success_rate
+      ),
+      def_pass_success_rate = case_when(
+        is.na(def_pass_success_rate) ~ def_pass_success_rate_PY1,
+        TRUE ~ def_pass_success_rate
+      ),
+      off_pass_explosiveness = case_when(
+        is.na(off_pass_explosiveness) ~ off_pass_explosiveness_PY1,
+        TRUE ~ off_pass_explosiveness
+      ),
+      def_pass_explosiveness = case_when(
+        is.na(def_pass_explosiveness) ~ def_pass_explosiveness_PY1,
+        TRUE ~ def_pass_explosiveness
+      ),
+      off_rush_epa = case_when(
+        is.na(off_rush_epa) ~ off_rush_epa_PY1,
+        TRUE ~ off_rush_epa
+      ),
+      def_rush_epa = case_when(
+        is.na(def_rush_epa) ~ def_rush_epa_PY1,
+        TRUE ~ def_rush_epa
+      ),
+      off_rush_success_rate = case_when(
+        is.na(off_rush_success_rate) ~ off_rush_success_rate_PY1,
+        TRUE ~ off_rush_success_rate
+      ),
+      def_rush_success_rate = case_when(
+        is.na(def_rush_success_rate) ~ def_rush_success_rate_PY1,
+        TRUE ~ def_rush_success_rate
+      ),
+      off_rush_explosiveness = case_when(
+        is.na(off_rush_explosiveness) ~ off_rush_explosiveness_PY1,
+        TRUE ~ off_rush_explosiveness
+      ),
+      def_rush_explosiveness = case_when(
+        is.na(def_rush_explosiveness) ~ def_rush_explosiveness_PY1,
+        TRUE ~ def_rush_explosiveness
+      ),
+      off_rush_ypg = case_when(
+        is.na(off_rush_ypg) ~ off_rush_ypg_PY1,
+        TRUE ~ off_rush_ypg
+      ),
+      def_rush_ypg = case_when(
+        is.na(def_rush_ypg) ~ def_rush_ypg_PY1,
+        TRUE ~ def_rush_ypg
+      ),
+      off_rush_ypa = case_when(
+        is.na(off_rush_ypa) ~ off_rush_ypa_PY1,
+        TRUE ~ off_rush_ypa
+      ),
+      def_rush_ypa = case_when(
+        is.na(def_rush_ypa) ~ def_rush_ypa_PY1,
+        TRUE ~ def_rush_ypa
+      ),
+      off_stuff_rate = case_when(
+        is.na(off_stuff_rate) ~ off_stuff_rate_PY1,
+        TRUE ~ off_stuff_rate
+      ),
+      def_stuff_rate = case_when(
+        is.na(def_stuff_rate) ~ def_stuff_rate_PY1,
+        TRUE ~ def_stuff_rate
+      ),
+      off_line_yds = case_when(
+        is.na(off_line_yds) ~ off_line_yds_PY1,
+        TRUE ~ off_line_yds
+      ),
+      def_line_yds = case_when(
+        is.na(def_line_yds) ~ def_line_yds_PY1,
+        TRUE ~ def_line_yds
+      ),
+      off_st_epa = case_when(
+        is.na(off_st_epa) ~ off_st_epa_PY1,
+        TRUE ~ off_st_epa
+      ),
+      def_st_epa = case_when(
+        is.na(def_st_epa) ~ def_st_epa_PY1,
+        TRUE ~ def_st_epa
+      ),
+      off_success_rate = case_when(
+        is.na(off_success_rate) ~ weighted_off_success_rate,
+        TRUE ~ off_success_rate
+      ),
+      def_success_rate = case_when(
+        is.na(def_success_rate) ~ weighted_def_success_rate,
+        TRUE ~ def_success_rate
+      ),
+      kick_return_TDs = case_when(
+        is.na(kick_return_TDs) ~ 0,
+        TRUE ~ kick_return_TDs
+      ),
+      kick_return_TDs_allowed = case_when(
+        is.na(kick_return_TDs_allowed) ~ 0,
+        TRUE ~ kick_return_TDs_allowed
+      ),
+      net_st_ppg = case_when(
+        is.na(net_st_ppg) ~ weighted_net_st_ppg_mean,
+        TRUE ~ net_st_ppg
+      ),
+      net_punt_return_yds = case_when(
+        is.na(net_punt_return_yds) ~ weighted_net_punt_return_yds,
+        TRUE ~ net_punt_return_yds
+      ),
+      net_kick_return_yds = case_when(
+        is.na(net_kick_return_yds) ~ weighted_net_kick_return_yds,
+        TRUE ~ net_kick_return_yds
+      ),
+      net_punt_return_TDs = case_when(
+        is.na(net_punt_return_TDs) ~ 0,
+        TRUE ~ net_punt_return_TDs
+      ),
+      net_kick_return_TDs = case_when(
+        is.na(net_kick_return_TDs) ~ 0,
+        TRUE ~ net_kick_return_TDs
+      ),
+      net_fg_rate = case_when(
+        is.na(net_fg_rate) ~ weighted_net_fg_rate,
+        TRUE ~ net_fg_rate
+      ),
+      net_fg_made_pg = case_when(
+        is.na(net_fg_made_pg) ~ weighted_net_fg_made_pg,
+        TRUE ~ net_fg_made_pg
+      ),
+      adj_off_epa = case_when(
+        is.na(adj_off_epa) ~ weighted_off_epa,
+        TRUE ~ adj_off_epa
+      ),
+      adj_def_epa = case_when(
+        is.na(adj_def_epa) ~ weighted_def_epa,
+        TRUE ~ adj_def_epa
+      ),
+      adj_off_plays_pg = case_when(
+        is.na(adj_off_plays_pg) ~ weighted_off_plays_pg,
+        TRUE ~ adj_off_plays_pg
+      ),
+      adj_def_plays_pg = case_when(
+        is.na(adj_def_plays_pg) ~ weighted_def_plays_pg,
+        TRUE ~ adj_def_plays_pg
+      ),
+      adj_off_explosiveness = case_when(
+        is.na(adj_off_explosiveness) ~ weighted_off_explosiveness,
+        TRUE ~ adj_off_explosiveness
+      ),
+      adj_def_explosiveness = case_when(
+        is.na(adj_def_explosiveness) ~ weighted_def_explosiveness,
+        TRUE ~ adj_def_explosiveness
+      ),
+      adj_off_pts_per_play = case_when(
+        is.na(adj_off_pts_per_play) ~ adj_off_pts_per_play_PY1,
+        TRUE ~ adj_off_pts_per_play
+      ),
+      adj_def_pts_per_play = case_when(
+        is.na(adj_def_pts_per_play) ~ adj_def_pts_per_play_PY1,
+        TRUE ~ adj_def_pts_per_play
+      ),
+      adj_off_ypp = case_when(
+        is.na(adj_off_ypp) ~ weighted_off_ypp,
+        TRUE ~ adj_off_ypp
+      ),
+      adj_def_ypp = case_when(
+        is.na(adj_def_ypp) ~ weighted_def_ypp,
+        TRUE ~ adj_def_ypp
+      ),
+      adj_off_st_epa = case_when(
+        is.na(adj_off_st_epa) ~ adj_off_st_epa_PY1,
+        TRUE ~ adj_off_st_epa
+      ),
+      adj_def_st_epa = case_when(
+        is.na(adj_def_st_epa) ~ adj_def_st_epa_PY1,
+        TRUE ~ adj_def_st_epa
+      ),
+      net_adj_st_epa = case_when(
+        is.na(net_adj_st_epa) ~ weighted_net_adj_st_epa,
+        TRUE ~ net_adj_st_epa
+      ),
+      adj_off_st_pts_per_play = case_when(
+        is.na(adj_off_st_pts_per_play) ~ adj_off_st_pts_per_play_PY1,
+        TRUE ~ adj_off_st_pts_per_play
+      ),
+      adj_def_st_pts_per_play = case_when(
+        is.na(adj_def_st_pts_per_play) ~ adj_def_st_pts_per_play_PY1,
+        TRUE ~ adj_def_st_pts_per_play
+      ),
+      adj_off_st_ppg = case_when(
+        is.na(adj_off_st_ppg) ~ adj_off_st_ppg_PY1,
+        TRUE ~ adj_off_st_ppg
+      ),
+      adj_def_st_ppg = case_when(
+        is.na(adj_def_st_ppg) ~ adj_def_st_ppg_PY1,
+        TRUE ~ adj_def_st_ppg
+      )
+    ) |>
+    mutate(
+      st_net_epa = case_when(
+        is.na(st_net_epa) ~ off_st_epa - def_st_epa,
+        TRUE ~ st_net_epa
+      ),
+      net_adj_st_ppg = case_when(
+        is.na(net_adj_st_ppg) ~ adj_off_st_ppg - adj_def_st_ppg,
+        TRUE ~ net_adj_st_ppg
+      ),
+      EPA_diff = case_when(
+        is.na(EPA_diff) ~ adj_off_epa - adj_def_epa,
+        TRUE ~ EPA_diff
+      ),
+      SuccessRt_diff = case_when(
+        is.na(SuccessRt_diff) ~ off_success_rate - def_success_rate,
+        TRUE ~ SuccessRt_diff
+      ),
+      HavocRt_diff = case_when(
+        is.na(HavocRt_diff) ~ off_havoc_total - def_havoc_total,
+        TRUE ~ HavocRt_diff
+      ),
+      Explosiveness_diff = case_when(
+        is.na(Explosiveness_diff) ~ adj_off_explosiveness -
+          adj_def_explosiveness,
+        TRUE ~ Explosiveness_diff
+      )
     )
 
   return(VoA_df)
