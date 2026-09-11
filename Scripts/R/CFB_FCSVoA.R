@@ -70,7 +70,7 @@ FCS_hist_title <- paste(
   year,
   week_text,
   cfb_week,
-  FCS_text,
+  # FCS_text,
   VoA_text,
   "Ratings"
 )
@@ -7484,7 +7484,7 @@ VoA_OffDef_Rating_plot <- ggplot(
   aes(x = OffVoA_MeanRating, y = DefVoA_MeanRating)
 ) +
   theme_bw() +
-  geom_point(size = 2) +
+  geom_point(size = 5) +
   geom_smooth() +
   scale_y_reverse() +
   # geom_cfb_logos(aes(team = school), width = 0.035) +
@@ -7525,7 +7525,7 @@ if (as.integer(cfb_week) <= 9) {
     )
   ) +
     theme_bw() +
-    geom_point(size = 2) +
+    geom_point(size = 5) +
     # geom_smooth() +
     scale_y_reverse() +
     # geom_cfb_logos(aes(team = school), width = 0.035) +
@@ -7553,7 +7553,7 @@ if (as.integer(cfb_week) <= 9) {
     aes(x = adj_off_epa, y = adj_def_epa)
   ) +
     theme_bw() +
-    geom_point(size = 2) +
+    geom_point(size = 5) +
     # geom_smooth() +
     scale_y_reverse() +
     # geom_cfb_logos(aes(team = school), width = 0.035) +
