@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 import seaborn as sbn
 from dotenv import load_dotenv
 from datetime import date, datetime, timedelta
-# import cmdstanpy
+import cmdstanpy
+import multiprocessing
 # import pymc as pm
 # import arviz as az
 # import preliz as pz
@@ -328,8 +329,59 @@ SP_WPdata = (
 
 
 ##### Fitting a logistic regression model using old VoA projections #####
-PrevVoAPreds = pl.read_csv(os.path.join(os.getcwd(), "Data", "VoA" + str(int(cfb_year) - 1), "AccuracyMetrics", "Games", "VoA" + str(int(cfb_year) - 1) + "Week1Week20GameAccuracyMetrics.csv")).select(["proj_margin", "straight_up_win"])
+if int(upcoming) == 1:
+    PrevVoAPreds_PY1 = pl.read_csv(os.path.join(os.getcwd(), "Data", "VoA" + str(int(cfb_year) - 1), "AccuracyMetrics", "Games", "VoA" + str(int(cfb_year) - 1) + "Week1Week20GameAccuracyMetrics.csv")).select(["proj_margin", "straight_up_win"])
+    PrevVoAPreds_PY2 = pl.read_csv(os.path.join(os.getcwd(), "Data", "VoA" + str(int(cfb_year) - 2), "AccuracyMetrics", "Games", "VoA" + str(int(cfb_year) - 2) + "Week1Week17GameAccuracyMetrics.csv")).select(["proj_margin", "straight_up_win"])
+    PrevVoAPreds = pl.concat([PrevVoAPreds_PY1, PrevVoAPreds_PY2], how = "vertical")
+else:
+    PrevVoAPreds_PY1 = pl.read_csv(os.path.join(os.getcwd(), "Data", "VoA" + str(int(cfb_year) - 1), "AccuracyMetrics", "Games", "VoA" + str(int(cfb_year) - 1) + "Week1Week20GameAccuracyMetrics.csv")).select(["proj_margin", "straight_up_win"])
+    PrevVoAPreds_PY2 = pl.read_csv(os.path.join(os.getcwd(), "Data", "VoA" + str(int(cfb_year) - 2), "AccuracyMetrics", "Games", "VoA" + str(int(cfb_year) - 2) + "Week1Week17GameAccuracyMetrics.csv")).select(["proj_margin", "straight_up_win"])
+    PrevVoAPreds = pl.read_csv(os.path.join(os.getcwd(), "Data", "VoA" + cfb_year, "AccuracyMetrics", "Games", "VoA" + cfb_year + "Week1Week" + str(int(upcoming) - 1) + "GameAccuracyMetrics.csv")).select(["proj_margin", "VoA_correct_winner"]).rename(
+        {"VoA_correct_winner": "straight_up_win"}
+    )
+    PrevVoAPreds = pl.concat([PrevVoAPreds, PrevVoAPreds_PY1, PrevVoAPreds_PY2], how = "vertical")
 # poopypants2 = pl.read_csv(os.path.join(os.getcwd(), "Data", "VoA" + cfb_year, "AccuracyMetrics", "Games", "VoA" + cfb_year + "Week1" + "Week" + upcoming + "GameAccuracyMetrics.csv")).select("proj_margin", "straight_up_win")
+
+##### Fitting Stan Model to make win probability projections #####
+### creating list of data to be fed into model
+VoP_wp_datalist = {
+    "N": PrevVoAPreds.height,
+    "win_loss": PrevVoAPreds["straight_up_win"].to_numpy(),
+    "win_margin": PrevVoAPreds["proj_margin"].abs().to_numpy(),
+}
+
+cores = max(1, multiprocessing.cpu_count() // 2)
+
+wp_VoP_model = cmdstanpy.CmdStanModel(
+    stan_file= os.path.join(
+        os.getcwd(),
+        "Scripts",
+        "Stan",
+        "CFBVoP_WinProb.stan"))
+
+### sampling from posterior distributions
+wp_VoP_fit = wp_VoP_model.sample(
+    data=VoP_wp_datalist,
+    chains=3,
+    iter_sampling=10000,
+    iter_warmup=2500,
+    seed=802,
+    parallel_chains=cores,
+)
+
+### summarizing and diagnosing model
+print(wp_VoP_fit.summary())
+print(wp_VoP_fit.diagnose())
+
+### saving model fit
+# wp_VoP_fit.save_csvfiles(os.path.join(
+#     os.getcwd(),
+#     "Data",
+#     "FittedModels",
+#     "CFBVoP_StanWPModel.csv"
+# ))
+
+wp_VoP_pars = pl.from_pandas(wp_VoP_fit.draws_pd(vars=["alpha", "beta_score"]))
 
 WinProb_x = PrevVoAPreds['proj_margin'].abs()
 WinProb_y = PrevVoAPreds['straight_up_win']
@@ -375,9 +427,31 @@ if int(upcoming) == 1:
     ### adding win_prob column via model predict and select columns
     random.seed(802)
     WinProb_preds = WinProb_glm.predict(FullSeasonGames_df['Proj_Margin'].abs().to_numpy())
+    ### using matrix math to turn posterior samples from Stan model into win probability projections for each game
+    wp_design_matrix = np.column_stack(
+        [
+            np.ones(FullSeasonGames_df.height),
+            FullSeasonGames_df["Proj_Margin"].abs().to_numpy(),
+        ]
+    )
+
+    ### Extract Parameter Matrix: (N_draws x 2)
+    wp_VoP_pars_matrix = wp_VoP_pars.select(["alpha", "beta_score"]).to_numpy()
+
+    ### Matrix Multiplication -> Linear Predictors (N_draws x N_games)
+    wp_means_matrix = wp_VoP_pars_matrix @ wp_design_matrix.T
+
+    ### Inverse logit transformation to win probabilities
+    VoP_win_probs = 1 / (1 + np.exp(-wp_means_matrix))
+
+    ### Calculate median win probability across draws/ for each game (axis=0 operates across draws)
+    VoP_median_win_probs = np.median(VoP_win_probs, axis=0)
+
+    ### adding win probability values to games df containing VoA projections
     FullSeasonGames_df = (
         FullSeasonGames_df.with_columns(
-            win_prob=pl.Series(WinProb_preds)
+            glm_win_prob=pl.Series(WinProb_preds),
+            win_prob = pl.Series(VoP_median_win_probs)
         ).select(
             [
                 "id",
@@ -394,6 +468,7 @@ if int(upcoming) == 1:
                 "away_VoA_rating",
                 "Proj_Winner",
                 "Proj_Margin",
+                "glm_win_prob",
                 "win_prob",
             ]
         )
@@ -453,9 +528,31 @@ else:
     ### adding win_prob column via model predict and select columns
     random.seed(802)
     WinProb_preds = WinProb_glm.predict(upcoming_games_df['Proj_Margin'].abs().to_numpy())
+
+    ### using matrix math to turn posterior samples from Stan model into win probability projections for each game
+    wp_design_matrix = np.column_stack(
+        [
+            np.ones(upcoming_games_df.height),
+            upcoming_games_df["Proj_Margin"].abs().to_numpy(),
+        ]
+    )
+
+    ### Extract Parameter Matrix: (N_draws x 2)
+    wp_VoP_pars_matrix = wp_VoP_pars.select(["alpha", "beta_score"]).to_numpy()
+
+    ### Matrix Multiplication -> Linear Predictors (N_draws x N_games)
+    wp_means_matrix = wp_VoP_pars_matrix @ wp_design_matrix.T
+
+    ### Inverse logit transformation to win probabilities
+    VoP_win_probs = 1 / (1 + np.exp(-wp_means_matrix))
+
+    ### Calculate median win probability across draws/ for each game (axis=0 operates across draws)
+    VoP_median_win_probs = np.median(VoP_win_probs, axis=0)
+
     upcoming_games_df = (
         upcoming_games_df.with_columns(
-            win_prob=pl.Series(WinProb_preds)
+            glm_win_prob=pl.Series(WinProb_preds),
+            win_prob = pl.Series(VoP_median_win_probs)
         ).select(
             [
                 "id",
@@ -472,6 +569,7 @@ else:
                 "away_VoA_rating",
                 "Proj_Winner",
                 "Proj_Margin",
+                "glm_win_prob",
                 "win_prob",
             ]
         )

@@ -958,7 +958,8 @@ upcoming_games_gt <- upcoming_games_df |>
     home_classification,
     home_conference,
     away_classification,
-    away_conference
+    away_conference,
+    glm_win_prob
   )) |>
   tab_footnote(
     footnote = "Data from CFB Data API via cfbfastR, FCS data mostly from stats.ncaa.org,
@@ -1041,7 +1042,8 @@ upcoming_games_gt_sorted <- upcoming_games_df_sorted |>
     home_classification,
     home_conference,
     away_classification,
-    away_conference
+    away_conference,
+    glm_win_prob
   )) |>
   tab_footnote(
     footnote = "Data from CFB Data API via cfbfastR"
