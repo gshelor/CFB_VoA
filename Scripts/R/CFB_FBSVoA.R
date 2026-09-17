@@ -70,7 +70,7 @@ FBS_hist_title <- paste(
   year,
   week_text,
   cfb_week,
-  FBS_text,
+  # FBS_text,
   VoA_text,
   "Ratings"
 )
