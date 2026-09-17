@@ -1,9 +1,8 @@
-##### Vortex of Projection version 1.1.0 #####
+##### Vortex of Projection version 1.2.0 #####
 ### This script will take the most recent csv from the VoA
 ### It will take the VoA Ratings from that csv and use them to project scoring margins for upcoming FBS games
-### THIS SCRIPT NO LONGER IN USE
-## cfbfastR doesn't provide as many games as just directly pinging the CFBD API directly for some reason
-## fcs in particular seems to be excluded
+### switched to pulling games directly from CFBD API using official CFBD python library because for some reason cfbfastR doesn't pull all the games
+## but I like the gt R package more than the gt python library so I save the dataframes there
 ### loading packages
 library(pacman)
 # fmt: skip
@@ -142,369 +141,33 @@ if (as.integer(upcoming) == 1) {
 }
 
 
-##### reading in upcoming games to create df of games and VoA projected margins #####
-if (as.integer(upcoming) == 16) {
-  ##### Week 16 Game Pull #####
-  upcoming_games_df <- cfbd_game_info(
-    as.numeric(year),
-    season_type = "postseason"
-  ) |>
-    filter(
-      home_team %in% PrevWeek_VoA$school | away_team %in% PrevWeek_VoA$school
-    ) |>
-    select(game_id, season, week, neutral_site, home_team, away_team) |>
-    mutate(home_VoA_rating = 0, away_VoA_rating = 0)
-  week16games <- cfbd_game_info(as.numeric(year)) |>
-    filter(completed == "FALSE") |>
-    filter(
-      home_team %in% PrevWeek_VoA$school | away_team %in% PrevWeek_VoA$school
-    ) |>
-    select(game_id, season, week, neutral_site, home_team, away_team) |>
-    mutate(home_VoA_rating = 0, away_VoA_rating = 0)
-  upcoming_games_df <- rbind(week16games, upcoming_games_df)
-} else if (as.integer(upcoming) == 1) {
-  ##### Preseason Game Pull #####
-  FullSeason_Games <- cfbd_game_info(as.numeric(year)) |>
-    select(
-      game_id,
-      season,
-      week,
-      neutral_site,
-      home_team,
-      home_division,
-      home_conference,
-      away_team,
-      away_division,
-      away_conference
-    ) |>
-    filter(home_team %in% AllD1VoA$school | away_team %in% AllD1VoA$school)
-
-  ### setting initial temp df for assigning VoA ratings to games where both teams are in VoA
-  temp_ratings_df <- PrevWeek_VoA |>
-    select(school, VoA_Rating_Ovr)
-  colnames(temp_ratings_df) <- c("home_team", "home_VoA_rating")
-
-  ### assigning ratings for home teams
-  ### FBS Games
-  FBSGames <- FullSeason_Games |>
-    filter(home_team %in% FBS_VoA$school & away_team %in% FBS_VoA$school) |>
-    left_join(temp_ratings_df, by = "home_team")
-  ### FCS Games
-  FCSGames <- FullSeason_Games |>
-    filter(home_team %in% FCS_VoA$school & away_team %in% FCS_VoA$school) |>
-    left_join(temp_ratings_df, by = "home_team")
-
-  ### assigning ratings for away teams
-  colnames(temp_ratings_df) <- c("away_team", "away_VoA_rating")
-  FBSGames <- FBSGames |>
-    left_join(temp_ratings_df, by = "away_team")
-  FCSGames <- FCSGames |>
-    left_join(temp_ratings_df, by = "away_team")
-
-  ### Games where just 1 team from the VoA is involved, not counting games above
-  NonVoAGames <- FullSeason_Games |>
-    filter(game_id %nin% FBSGames$game_id & game_id %nin% FCSGames$game_id)
-
-  ### setting temp ratings df for games between FBS and FCS teams and maybe D1 (FBS or FCS) teams and D2/D3 teams
-  temp_ratings_df <- AllD1VoA |>
-    select(school, VoA_Rating_Ovr)
-  colnames(temp_ratings_df) <- c("home_team", "home_VoA_rating")
-  ### adding VoA ratings to home teams in NonVoAGames
-  NonVoAGames <- NonVoAGames |>
-    left_join(temp_ratings_df, by = "home_team")
-  ### assigning ratings for away teams
-  colnames(temp_ratings_df) <- c("away_team", "away_VoA_rating")
-  ### adding VoA ratings to away teams in NonVoAGames
-  NonVoAGames <- NonVoAGames |>
-    left_join(temp_ratings_df, by = "away_team")
-
-  ### rejoining all games backtogether to get FullSeason_Games with VoA Ratings attached
-  FullSeason_Games <- rbind(FBSGames, rbind(FCSGames, NonVoAGames)) |>
-    arrange(week) |>
-    mutate(
-      home_VoA_rating = case_when(
-        is.na(home_VoA_rating) ~ rnorm(
-          1,
-          mean = mean(LowerHalfRatings$VoA_Rating_Ovr),
-          sd = sd(LowerHalfRatings$VoA_Rating_Ovr)
-        ),
-        TRUE ~ home_VoA_rating
-      ),
-      away_VoA_rating = case_when(
-        is.na(away_VoA_rating) ~ rnorm(
-          1,
-          mean = mean(LowerHalfRatings$VoA_Rating_Ovr),
-          sd = sd(LowerHalfRatings$VoA_Rating_Ovr)
-        ),
-        TRUE ~ away_VoA_rating
-      )
-    )
-} else if (as.integer(upcoming) > 16) {
-  ##### Bowl Season and post-week 16 Game Pull #####
-  upcoming_games_df <- cfbd_game_info(
-    as.numeric(year),
-    season_type = "postseason"
-  ) |>
-    filter(
-      home_team %in% PrevWeek_VoA$school | away_team %in% PrevWeek_VoA$school
-    ) |>
-    filter(completed == FALSE) |>
-    select(game_id, season, week, neutral_site, home_team, away_team) |>
-    mutate(home_VoA_rating = 0, away_VoA_rating = 0)
-} else {
-  ##### Regular Season Game Pull #####
-  upcoming_games_df <- cfbd_game_info(
-    as.numeric(year),
-    week = as.integer(upcoming)
-  ) |>
-    select(
-      game_id,
-      season,
-      week,
-      neutral_site,
-      home_team,
-      home_division,
-      home_conference,
-      away_team,
-      away_division,
-      away_conference
-    ) |>
-    filter(home_team %in% AllD1VoA$school | away_team %in% AllD1VoA$school)
-
-  ### setting initial temp df for assigning VoA ratings to games where both teams are in VoA
-  temp_ratings_df <- PrevWeek_VoA |>
-    select(school, VoA_Rating_Ovr)
-  colnames(temp_ratings_df) <- c("home_team", "home_VoA_rating")
-
-  ### assigning ratings for home teams
-  ### FBS Games
-  FBSGames <- upcoming_games_df |>
-    filter(home_team %in% FBS_VoA$school & away_team %in% FBS_VoA$school) |>
-    left_join(temp_ratings_df, by = "home_team")
-  ### FCS Games
-  FCSGames <- upcoming_games_df |>
-    filter(home_team %in% FCS_VoA$school & away_team %in% FCS_VoA$school) |>
-    left_join(temp_ratings_df, by = "home_team")
-
-  ### assigning ratings for away teams
-  colnames(temp_ratings_df) <- c("away_team", "away_VoA_rating")
-  FBSGames <- FBSGames |>
-    left_join(temp_ratings_df, by = "away_team")
-  FCSGames <- FCSGames |>
-    left_join(temp_ratings_df, by = "away_team")
-
-  ### Games where just 1 team from the VoA is involved, not counting games above
-  NonVoAGames <- upcoming_games_df |>
-    filter(game_id %nin% FBSGames$game_id & game_id %nin% FBSGames$game_id)
-
-  ### setting temp ratings df for games between FBS and FCS teams and maybe D1 (FBS or FCS) teams and D2/D3 teams
-  temp_ratings_df <- AllD1VoA |>
-    select(school, VoA_Rating_Ovr)
-  colnames(temp_ratings_df) <- c("home_team", "home_VoA_rating")
-  ### adding VoA ratings to home teams in NonVoAGames
-  NonVoAGames <- NonVoAGames |>
-    left_join(temp_ratings_df, by = "home_team")
-  ### assigning ratings for away teams
-  colnames(temp_ratings_df) <- c("away_team", "away_VoA_rating")
-  ### adding VoA ratings to away teams in NonVoAGames
-  NonVoAGames <- NonVoAGames |>
-    left_join(temp_ratings_df, by = "away_team")
-
-  ### rejoining all games backtogether to get FullSeason_Games with VoA Ratings attached
-  upcoming_games_df <- rbind(FBSGames, rbind(FCSGames, NonVoAGames)) |>
-    arrange(week) |>
-    mutate(
-      home_VoA_rating = case_when(
-        is.na(home_VoA_rating) ~ rnorm(
-          1,
-          mean = mean(LowerHalfRatings$VoA_Rating_Ovr),
-          sd = sd(LowerHalfRatings$VoA_Rating_Ovr)
-        ),
-        TRUE ~ home_VoA_rating
-      ),
-      away_VoA_rating = case_when(
-        is.na(away_VoA_rating) ~ rnorm(
-          1,
-          mean = mean(LowerHalfRatings$VoA_Rating_Ovr),
-          sd = sd(LowerHalfRatings$VoA_Rating_Ovr)
-        ),
-        TRUE ~ away_VoA_rating
-      )
-    )
-}
-
-
-### Creating Vortex of Projection Spread column for full season games
-### called "predicted" so that it can be formatted easily for the CFBD prediction contest
+##### Reading in data based on week #####
 if (as.integer(upcoming) == 1) {
-  FullSeason_Games <- FullSeason_Games |>
-    mutate(
-      predicted = case_when(
-        neutral_site == FALSE ~ away_VoA_rating - (home_VoA_rating + 2),
-        TRUE ~ away_VoA_rating - home_VoA_rating
-      )
-    )
-  cfbdata_contest_df <- FullSeason_Games |>
-    filter(week == as.integer(upcoming)) |>
-    select(game_id, home_team, away_team, predicted)
-  colnames(cfbdata_contest_df) <- c("id", "home", "away", "predicted")
-  write_csv(
-    cfbdata_contest_df,
+  ### reading in full season's game projections
+  FullSeason_Games <- read_parquet(here(
+    "Data",
+    paste0("VoA", year),
+    "Projections",
+    paste0("FullSeason", year, "GamesPreds.parquet")
+  ))
+
+  upcoming_games_df <- read_parquet(
     here(
       "Data",
-      paste("VoA", year, sep = ""),
+      paste0("VoA", year),
       "Projections",
-      paste(year, "VoPWeek", upcoming, "Games.csv", sep = "")
+      paste0(year, "VoPWeek", upcoming, "Games.parquet")
     )
   )
 } else {
-  ### Creating Vortex of Projection Spread column for upcoming week's games
-  cfbdata_contest_df <- upcoming_games_df |>
-    mutate(
-      predicted = case_when(
-        neutral_site == FALSE ~ away_VoA_rating - (home_VoA_rating + 2),
-        TRUE ~ away_VoA_rating - home_VoA_rating
-      )
-    ) |>
-    select(game_id, home_team, away_team, predicted)
-  colnames(cfbdata_contest_df) <- c("id", "home", "away", "predicted")
-
-  write_csv(
-    cfbdata_contest_df,
+  upcoming_games_df <- read_parquet(
     here(
       "Data",
-      paste("VoA", year, sep = ""),
+      paste0("VoA", year),
       "Projections",
-      paste(year, "VoPWeek", upcoming, "Games.csv", sep = "")
+      paste0(year, "VoPWeek", upcoming, "Games.parquet")
     )
   )
-}
-
-### simple function to take VoA Ratings and field neutrality as inputs
-margin_projection <- function(away, home, neutral) {
-  margin_proj <- PrevWeek_VoA$VoA_Rating_Ovr[PrevWeek_VoA$school == away] -
-    PrevWeek_VoA$VoA_Rating_Ovr[PrevWeek_VoA$school == home]
-  if (neutral == FALSE) {
-    margin_proj <- margin_proj - 2
-  }
-  return(margin_proj)
-}
-### FCS version of above function
-# srs <- cfbd_ratings_srs(as.numeric(year))
-# fcs_margin_projection <- function(away, home, neutral) {
-#   margin_proj <- FCS_ratings$VoA_Rating_Ovr[FCS_ratings$school == away] -
-#     FCS_ratings$VoA_Rating_Ovr[FCS_ratings$school == home]
-#   if (neutral == FALSE) {
-#     margin_proj <- margin_proj - 2
-#   }
-#   return(margin_proj)
-# }
-
-##### Evaluating VoP's projected winner and their respective win probability #####
-### coefficients for calculating win probability aren't just random long decimal numbers, I fit a model using lm() to Bill Connelly's projected win probs and just took them out and wrote them into this script instead of just fitting that model over and over every week
-### it's a lazy way of "calculating" win prob but it works well enough for my purposes
-### I wanted to fit a stan model but that didn't work so I'm trying a beta regression model with betareg to do something different, see how it goes
-# SP_WPdata <- read_csv(here("Data", "SP_Projections", "All_SP.csv")) |>
-#   separate(col = "Game", into = c("away_team", "home_team"), sep = " at ") |>
-#   drop_na(away_team, home_team) |>
-#   filter(home_team == Proj_winner | away_team == Proj_winner) |>
-#   mutate(away_WP_pct = case_when(Proj_winner == away_team ~ WP_pct,
-#                                  TRUE ~ 1 - WP_pct),
-#          Proj_Margin = case_when(Proj_winner == away_team ~ Proj_margin,
-#                                  TRUE ~ -1 * Proj_margin))
-
-# ### fitting betareg model
-# set.seed(802)
-# WP_betareg <- betareg(away_WP_pct ~ Proj_Margin, data = SP_WPdata)
-#
-# ### since the model's already fit, I'm just saving it as an RDS file so I don't have to fit it each and every week
-# saveRDS(WP_betareg, here("Data", "SP_Projections", "WP_betareg.rds"))
-WP_betareg <- read_rds(here("Data", "SP_Projections", "WP_betareg.rds"))
-summary(WP_betareg)
-
-
-if (as.integer(upcoming) == 1) {
-  ### adding projected winner, projected win margin, and win probability
-  ### home field advantage of 2 points when neutral_site == FALSE
-  FullSeason_Games <- FullSeason_Games |>
-    mutate(
-      Proj_Winner = case_when(
-        neutral_site == FALSE &
-          (home_VoA_rating + 2) > away_VoA_rating ~ home_team,
-        neutral_site == FALSE &
-          away_VoA_rating > (home_VoA_rating + 2) ~ away_team,
-        neutral_site == TRUE & home_VoA_rating > away_VoA_rating ~ home_team,
-        neutral_site == TRUE & away_VoA_rating > home_VoA_rating ~ away_team,
-        TRUE ~ "TIE"
-      ),
-      Proj_Margin = case_when(
-        neutral_site == FALSE ~ abs(away_VoA_rating - (home_VoA_rating + 2)),
-        TRUE ~ abs(away_VoA_rating - home_VoA_rating)
-      )
-    )
-  FullSeason_Games <- FullSeason_Games |>
-    mutate(win_prob = predict(WP_betareg, newdata = FullSeason_Games)) |>
-    select(
-      game_id,
-      season,
-      week,
-      neutral_site,
-      home_team,
-      home_division,
-      home_conference,
-      home_VoA_rating,
-      away_team,
-      away_division,
-      away_conference,
-      away_VoA_rating,
-      Proj_Winner,
-      Proj_Margin,
-      win_prob
-    ) ## |>
-  # arrange(desc(Proj_Margin))
-  upcoming_games_df <- FullSeason_Games |>
-    filter(week == as.integer(upcoming)) #|>
-  # filter(home_team %in% AllD1VoA$school | away_team %in% AllD1VoA$school)
-} else {
-  ### preparing df for making gt table of upcoming games df to display games with close spreads
-  upcoming_games_df <- upcoming_games_df |>
-    mutate(
-      Proj_Winner = case_when(
-        neutral_site == FALSE &
-          (home_VoA_rating + 2) > away_VoA_rating ~ home_team,
-        neutral_site == FALSE &
-          away_VoA_rating > (home_VoA_rating + 2) ~ away_team,
-        neutral_site == TRUE & home_VoA_rating > away_VoA_rating ~ home_team,
-        neutral_site == TRUE & away_VoA_rating > home_VoA_rating ~ away_team,
-        TRUE ~ "TIE"
-      ),
-      Proj_Margin = case_when(
-        neutral_site == FALSE ~ abs(away_VoA_rating - (home_VoA_rating + 2)),
-        TRUE ~ abs(away_VoA_rating - home_VoA_rating)
-      )
-    )
-  ### calculating win probability based on model built with betareg
-  upcoming_games_df <- upcoming_games_df |>
-    mutate(win_prob = predict(WP_betareg, newdata = upcoming_games_df)) |>
-    select(
-      game_id,
-      season,
-      week,
-      neutral_site,
-      home_team,
-      home_division,
-      home_conference,
-      home_VoA_rating,
-      away_team,
-      away_division,
-      away_conference,
-      away_VoA_rating,
-      Proj_Winner,
-      Proj_Margin,
-      win_prob
-    ) #|>
-  # filter(home_team %in% FBS_VoA$school | away_team %in% FBS_VoA$school)
-  # arrange(desc(Proj_Margin))
 }
 
 
@@ -1288,13 +951,13 @@ upcoming_games_gt <- upcoming_games_df |>
   ) |> # Update labels
   cols_move_to_end(columns = "win_prob") |>
   cols_hide(c(
-    game_id,
+    id,
     season,
     week,
     neutral_site,
-    home_division,
+    home_classification,
     home_conference,
-    away_division,
+    away_classification,
     away_conference
   )) |>
   tab_footnote(
@@ -1371,13 +1034,13 @@ upcoming_games_gt_sorted <- upcoming_games_df_sorted |>
   ) |> # Update labels
   cols_move_to_end(columns = "win_prob") |>
   cols_hide(c(
-    game_id,
+    id,
     season,
     week,
     neutral_site,
-    home_division,
+    home_classification,
     home_conference,
-    away_division,
+    away_classification,
     away_conference
   )) |>
   tab_footnote(
