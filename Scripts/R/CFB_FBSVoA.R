@@ -4708,6 +4708,7 @@ if (as.integer(cfb_week) == 0) {
   #   ),
   #   format = "draws_df"
   # )
+  ### reading in parameters from pre-fit model that were saved as a parquet file
   Off_VoA_pars <- read_parquet(here(
     "Data",
     "FittedModels",

@@ -97,16 +97,21 @@ if int(cfb_week) >= 17:
 #     select(game_id, spread, home_moneyline, away_moneyline)
 elif int(cfb_week) == 16:
     print("fix the below code")
-  ### reading in most recent week's projections
-#   PrevWeekVoP = pl.read_csv(os.path.join(os.getcwd,
-#     "Data",
-#     paste0("VoA", season),
-#     "Projections",
-#     paste0(season, VoP_text, week_text, cfb_week, "Games.csv")
-#   )) |>
-#     filter(home %in% PrevWeekVoA$team & away %in% PrevWeekVoA$team) |>
-#     select(id, predicted)
-#   colnames(PrevWeekVoP) = c("game_id", "proj_margin")
+    ### reading in most recent week's projections
+    PrevWeekVoP = pl.read_csv(os.path.join(os.getcwd(),
+    "Data",
+    "VoA" + season,
+    "Projections",
+    "CFBD",
+    season + VoP_text + week_text + cfb_week + "Games.csv")
+    ).filter(
+        (pl.col("home").is_in(PrevWeekFBSFCSVoA["school"].implode())) & (pl.col("away").is_in(PrevWeekFBSFCSVoA["school"].implode()))
+        ).select(
+            ["id", "predicted"]
+            )
+
+    # PrevWeekVoP = PrevWeekVoP.select(["id", "predicted"])
+    PrevWeekVoP = PrevWeekVoP.rename({"predicted": "proj_margin"})
 
 #   ### reading in completed games from previous week
 #   ## in week 16, this should just be Army-Navy, with any completed bowl games being read in separately below
@@ -150,8 +155,8 @@ elif int(cfb_week) == 16:
 #       winner = case_when(result > 0 ~ away_team, TRUE ~ home_team)
 #     )
 
-#   ### binding regular season games and completed bowl games together for error calculation
-#   LastWeekGames = pl.concat([LastWeekGames, LastWeekBowlGames], how = "vertical")
+    ### binding regular season games and completed bowl games together for error calculation
+    LastWeekGames = pl.concat([LastWeekGames, LastWeekBowlGames], how = "vertical")
 #   ### pulling spread lines to compare to VoA error
 #   LastWeekSpreads_temp = cfbd_betting_lines(year = int(season)) |>
 #     filter(week == int(cfb_week)) |>

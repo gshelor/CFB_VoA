@@ -170,6 +170,7 @@ elif int(upcoming) > 16:
     games = games_api_instance.get_games(year = int(cfb_year), season_type = "postseason")
 else:
     ### pulling games for any regular season week between 2 and 15 (inclusive)
+    ### only including games where both teams are in VoA after week 1 since I am not trying to make full season win total projections except during week 1
     upcoming_games_df = pl.DataFrame(games_api_instance.get_games(year = int(cfb_year), week = int(upcoming)), infer_schema_length = None).select(
       ["id",
       "season",
@@ -181,7 +182,7 @@ else:
       "away_team",
       "away_classification",
       "away_conference"]).filter(
-        (pl.col("home_team").is_in(PrevWeek_VoA['school'].implode())) | (pl.col("away_team").is_in(PrevWeek_VoA['school'].implode()))
+        (pl.col("home_team").is_in(PrevWeek_VoA['school'].implode())) & (pl.col("away_team").is_in(PrevWeek_VoA['school'].implode()))
       )
       ### setting initial temp df for assigning VoA ratings to games where both teams are in VoA
     temp_ratings_df = PrevWeek_VoA.select(["school", "VoA_Rating_Ovr"]).rename({
