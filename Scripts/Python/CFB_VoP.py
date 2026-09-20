@@ -113,6 +113,7 @@ if int(upcoming) == 1:
       ["id",
       "season",
       "week",
+      "start_date",
       "neutral_site",
       "home_team",
       "home_classification",
@@ -159,23 +160,24 @@ if int(upcoming) == 1:
 
     ### rejoining all games backtogether to get FullSeason_Games with VoA Ratings attached
     random.seed(802)
-    FullSeasonGames_df = pl.concat([FBSGames, FCSGames, NonVoAGames], how = "vertical").sort("week", descending = False).with_columns(
+    FullSeasonGames_df = pl.concat([FBSGames, FCSGames, NonVoAGames], how = "vertical").sort(["week", "start_date"], descending = False).with_columns(
         home_VoA_rating = pl.col("home_VoA_rating").fill_null(np.random.normal(LowerQtrRatings['VoA_Rating_Ovr'].mean(), LowerQtrRatings['VoA_Rating_Ovr'].std(), size=len(FullSeasonGames_df))),
         away_VoA_rating = pl.col("away_VoA_rating").fill_null(np.random.normal(LowerQtrRatings['VoA_Rating_Ovr'].mean(), LowerQtrRatings['VoA_Rating_Ovr'].std(), size=len(FullSeasonGames_df)))
     )
 
 elif int(upcoming) == 16:
-    ### copy game stuff from above, change where needed
-    games = games_api_instance.get_games(year = int(cfb_year), season_type = "postseason")
-elif int(upcoming) > 16:
-    games = games_api_instance.get_games(year = int(cfb_year), season_type = "postseason")
-else:
-    ### pulling games for any regular season week between 2 and 15 (inclusive)
-    ### only including games where both teams are in VoA after week 1 since I am not trying to make full season win total projections except during week 1
-    upcoming_games_df = pl.DataFrame(games_api_instance.get_games(year = int(cfb_year), week = int(upcoming)), infer_schema_length = None).select(
+    ##### Week 16 Game Pull #####
+    ### as of 2025 (2024? I don't fully remember) the army navy game happens at the same time as bowl games and/or conference championship games that I can only pull via setting "season_type" to "postseason"
+    ### but army-navy is not postseason so I call it via the regular way, and also i think it's labeled in cfbd as a week 15 game? don't fully remember
+    ### anyway
+    ### reading in bowl games
+    BowlGames = pl.DataFrame(games_api_instance.get_games(year = int(cfb_year), season_type = "postseason"), infer_schema_length = None).filter(
+        pl.col("completed") == False
+    ).select(
       ["id",
       "season",
       "week",
+      "start_date",
       "neutral_site",
       "home_team",
       "home_classification",
@@ -184,8 +186,28 @@ else:
       "away_classification",
       "away_conference"]).filter(
         (pl.col("home_team").is_in(PrevWeek_VoA['school'].implode())) & (pl.col("away_team").is_in(PrevWeek_VoA['school'].implode()))
-      )
-      ### setting initial temp df for assigning VoA ratings to games where both teams are in VoA
+    )
+    ### just pulling all regular season games and filtering out games already completed
+    upcoming_games_df = pl.DataFrame(games_api_instance.get_games(year = int(cfb_year)), infer_schema_length = None).filter(
+        pl.col("completed") == False
+    ).select(
+      ["id",
+      "season",
+      "week",
+      "start_date",
+      "neutral_site",
+      "home_team",
+      "home_classification",
+      "home_conference",
+      "away_team",
+      "away_classification",
+      "away_conference"]).filter(
+        (pl.col("home_team").is_in(PrevWeek_VoA['school'].implode())) & (pl.col("away_team").is_in(PrevWeek_VoA['school'].implode()))
+    )
+
+    ### combining any bowl games with whatever regular season games are left
+    upcoming_games_df = pl.concat([upcoming_games_df, BowlGames], how = "vertical")
+    ### setting initial temp df for assigning VoA ratings to games where both teams are in VoA
     temp_ratings_df = PrevWeek_VoA.select(["school", "VoA_Rating_Ovr"]).rename({
     "school": "home_team",
     "VoA_Rating_Ovr": "home_VoA_rating"})
@@ -221,7 +243,123 @@ else:
 
     ### rejoining all games backtogether to get FullSeason_Games with VoA Ratings attached
     random.seed(802)
-    upcoming_games_df = pl.concat([FBSGames, FCSGames, NonVoAGames], how = "vertical").sort("id", descending = False).with_columns(
+    upcoming_games_df = pl.concat([FBSGames, FCSGames, NonVoAGames], how = "vertical").sort(["start_date", "id"], descending = False).with_columns(
+        home_VoA_rating = pl.col("home_VoA_rating").fill_null(np.random.normal(LowerQtrRatings['VoA_Rating_Ovr'].mean(), LowerQtrRatings['VoA_Rating_Ovr'].std(), size=len(upcoming_games_df))),
+        away_VoA_rating = pl.col("away_VoA_rating").fill_null(np.random.normal(LowerQtrRatings['VoA_Rating_Ovr'].mean(), LowerQtrRatings['VoA_Rating_Ovr'].std(), size=len(upcoming_games_df)))
+    )
+elif int(upcoming) > 16:
+    ### pulling bowl games
+    upcoming_games_df = pl.DataFrame(games_api_instance.get_games(year = int(cfb_year), season_type = "postseason"), infer_schema_length = None).filter(
+        pl.col("completed") == False
+    ).select(
+      ["id",
+      "season",
+      "week",
+      "start_date",
+      "neutral_site",
+      "home_team",
+      "home_classification",
+      "home_conference",
+      "away_team",
+      "away_classification",
+      "away_conference"]).filter(
+        (pl.col("home_team").is_in(PrevWeek_VoA['school'].implode())) & (pl.col("away_team").is_in(PrevWeek_VoA['school'].implode()))
+    )
+    
+    ### setting initial temp df for assigning VoA ratings to games where both teams are in VoA
+    temp_ratings_df = PrevWeek_VoA.select(["school", "VoA_Rating_Ovr"]).rename({
+    "school": "home_team",
+    "VoA_Rating_Ovr": "home_VoA_rating"})
+
+    ### assigning ratings for home teams
+    ### FBS Games
+    FBSGames = upcoming_games_df.filter((pl.col("home_team").is_in(FBS_VoA["school"].implode())) & (pl.col("away_team").is_in(FBS_VoA["school"].implode()))).join(temp_ratings_df, on = "home_team", how = "left")
+    ### FCS Games
+    FCSGames = upcoming_games_df.filter((pl.col("home_team").is_in(FCS_VoA["school"].implode())) & (pl.col("away_team").is_in(FCS_VoA["school"].implode()))).join(temp_ratings_df, on = "home_team", how = "left")
+
+    ### assigning ratings for away teams
+    temp_ratings_df = temp_ratings_df.rename({
+        "home_team": "away_team", 
+        "home_VoA_rating": "away_VoA_rating"})
+    FBSGames = FBSGames.join(temp_ratings_df, on = "away_team", how = "left")
+    FCSGames = FCSGames.join(temp_ratings_df, on = "away_team", how = "left")
+
+    ### Games where just 1 team from the VoA is involved, not counting games above
+    NonVoAGames = upcoming_games_df.filter((pl.col("id").is_in(FBSGames["id"].implode()).not_()) & (pl.col("id").is_in(FCSGames["id"].implode()).not_()))
+
+    ### setting temp ratings df for games between FBS and FCS teams and maybe D1 (FBS or FCS) teams and D2/D3 teams
+    temp_ratings_df = AllD1VoA.select(["school", "VoA_Rating_Ovr"]).rename({
+        "school": "home_team",
+        "VoA_Rating_Ovr": "home_VoA_rating"})
+    ### adding VoA ratings to home teams in NonVoAGames
+    NonVoAGames = NonVoAGames.join(temp_ratings_df, on = "home_team", how = "left")
+    ### assigning ratings for away teams
+    temp_ratings_df = temp_ratings_df.rename({
+        "home_team": "away_team", 
+        "home_VoA_rating": "away_VoA_rating"})
+    ### adding VoA ratings to away teams in NonVoAGames
+    NonVoAGames = NonVoAGames.join(temp_ratings_df, on = "away_team", how = "left")
+
+    ### rejoining all games backtogether to get FullSeason_Games with VoA Ratings attached
+    random.seed(802)
+    upcoming_games_df = pl.concat([FBSGames, FCSGames, NonVoAGames], how = "vertical").sort(["start_date", "id"], descending = False).with_columns(
+        home_VoA_rating = pl.col("home_VoA_rating").fill_null(np.random.normal(LowerQtrRatings['VoA_Rating_Ovr'].mean(), LowerQtrRatings['VoA_Rating_Ovr'].std(), size=len(upcoming_games_df))),
+        away_VoA_rating = pl.col("away_VoA_rating").fill_null(np.random.normal(LowerQtrRatings['VoA_Rating_Ovr'].mean(), LowerQtrRatings['VoA_Rating_Ovr'].std(), size=len(upcoming_games_df)))
+    )
+else:
+    ### pulling games for any regular season week between 2 and 15 (inclusive)
+    ### only including games where both teams are in VoA after week 1 since I am not trying to make full season win total projections except during week 1
+    upcoming_games_df = pl.DataFrame(games_api_instance.get_games(year = int(cfb_year), week = int(upcoming)), infer_schema_length = None).select(
+      ["id",
+      "season",
+      "week",
+      "start_date",
+      "neutral_site",
+      "home_team",
+      "home_classification",
+      "home_conference",
+      "away_team",
+      "away_classification",
+      "away_conference"]).filter(
+        (pl.col("home_team").is_in(PrevWeek_VoA['school'].implode())) & (pl.col("away_team").is_in(PrevWeek_VoA['school'].implode()))
+      )
+    ### setting initial temp df for assigning VoA ratings to games where both teams are in VoA
+    temp_ratings_df = PrevWeek_VoA.select(["school", "VoA_Rating_Ovr"]).rename({
+    "school": "home_team",
+    "VoA_Rating_Ovr": "home_VoA_rating"})
+
+    ### assigning ratings for home teams
+    ### FBS Games
+    FBSGames = upcoming_games_df.filter((pl.col("home_team").is_in(FBS_VoA["school"].implode())) & (pl.col("away_team").is_in(FBS_VoA["school"].implode()))).join(temp_ratings_df, on = "home_team", how = "left")
+    ### FCS Games
+    FCSGames = upcoming_games_df.filter((pl.col("home_team").is_in(FCS_VoA["school"].implode())) & (pl.col("away_team").is_in(FCS_VoA["school"].implode()))).join(temp_ratings_df, on = "home_team", how = "left")
+
+    ### assigning ratings for away teams
+    temp_ratings_df = temp_ratings_df.rename({
+        "home_team": "away_team", 
+        "home_VoA_rating": "away_VoA_rating"})
+    FBSGames = FBSGames.join(temp_ratings_df, on = "away_team", how = "left")
+    FCSGames = FCSGames.join(temp_ratings_df, on = "away_team", how = "left")
+
+    ### Games where just 1 team from the VoA is involved, not counting games above
+    NonVoAGames = upcoming_games_df.filter((pl.col("id").is_in(FBSGames["id"].implode()).not_()) & (pl.col("id").is_in(FCSGames["id"].implode()).not_()))
+
+    ### setting temp ratings df for games between FBS and FCS teams and maybe D1 (FBS or FCS) teams and D2/D3 teams
+    temp_ratings_df = AllD1VoA.select(["school", "VoA_Rating_Ovr"]).rename({
+        "school": "home_team",
+        "VoA_Rating_Ovr": "home_VoA_rating"})
+    ### adding VoA ratings to home teams in NonVoAGames
+    NonVoAGames = NonVoAGames.join(temp_ratings_df, on = "home_team", how = "left")
+    ### assigning ratings for away teams
+    temp_ratings_df = temp_ratings_df.rename({
+        "home_team": "away_team", 
+        "home_VoA_rating": "away_VoA_rating"})
+    ### adding VoA ratings to away teams in NonVoAGames
+    NonVoAGames = NonVoAGames.join(temp_ratings_df, on = "away_team", how = "left")
+
+    ### rejoining all games backtogether to get FullSeason_Games with VoA Ratings attached
+    random.seed(802)
+    upcoming_games_df = pl.concat([FBSGames, FCSGames, NonVoAGames], how = "vertical").sort(["start_date", "id"], descending = False).with_columns(
         home_VoA_rating = pl.col("home_VoA_rating").fill_null(np.random.normal(LowerQtrRatings['VoA_Rating_Ovr'].mean(), LowerQtrRatings['VoA_Rating_Ovr'].std(), size=len(upcoming_games_df))),
         away_VoA_rating = pl.col("away_VoA_rating").fill_null(np.random.normal(LowerQtrRatings['VoA_Rating_Ovr'].mean(), LowerQtrRatings['VoA_Rating_Ovr'].std(), size=len(upcoming_games_df)))
     )
@@ -344,7 +482,7 @@ else:
 
 ##### Fitting Stan Model to make win probability projections #####
 ### creating list of data to be fed into model
-VoP_wp_datalist = {
+VoP_WP_datalist = {
     "N": PrevVoAPreds.height,
     "win_loss": PrevVoAPreds["straight_up_win"].to_numpy(),
     "win_margin": PrevVoAPreds["proj_margin"].abs().to_numpy(),
@@ -352,7 +490,7 @@ VoP_wp_datalist = {
 
 cores = max(1, multiprocessing.cpu_count() // 2)
 
-wp_VoP_model = cmdstanpy.CmdStanModel(
+WP_VoP_model = cmdstanpy.CmdStanModel(
     stan_file= os.path.join(
         os.getcwd(),
         "Scripts",
@@ -360,8 +498,8 @@ wp_VoP_model = cmdstanpy.CmdStanModel(
         "CFBVoP_WinProb.stan"))
 
 ### sampling from posterior distributions
-wp_VoP_fit = wp_VoP_model.sample(
-    data=VoP_wp_datalist,
+WP_VoP_fit = WP_VoP_model.sample(
+    data=VoP_WP_datalist,
     chains=3,
     iter_sampling=10000,
     iter_warmup=2500,
@@ -370,18 +508,18 @@ wp_VoP_fit = wp_VoP_model.sample(
 )
 
 ### summarizing and diagnosing model
-print(wp_VoP_fit.summary())
-print(wp_VoP_fit.diagnose())
+print(WP_VoP_fit.summary())
+print(WP_VoP_fit.diagnose())
 
 ### saving model fit
-# wp_VoP_fit.save_csvfiles(os.path.join(
+# WP_VoP_fit.save_csvfiles(os.path.join(
 #     os.getcwd(),
 #     "Data",
 #     "FittedModels",
 #     "CFBVoP_StanWPModel.csv"
 # ))
 
-wp_VoP_pars = pl.from_pandas(wp_VoP_fit.draws_pd(vars=["alpha", "beta_score"]))
+WP_VoP_pars = pl.from_pandas(WP_VoP_fit.draws_pd(vars=["alpha", "beta_score"]))
 
 WinProb_x = PrevVoAPreds['proj_margin'].abs()
 WinProb_y = PrevVoAPreds['straight_up_win']
@@ -428,7 +566,7 @@ if int(upcoming) == 1:
     random.seed(802)
     WinProb_preds = WinProb_glm.predict(FullSeasonGames_df['Proj_Margin'].abs().to_numpy())
     ### using matrix math to turn posterior samples from Stan model into win probability projections for each game
-    wp_design_matrix = np.column_stack(
+    WP_design_matrix = np.column_stack(
         [
             np.ones(FullSeasonGames_df.height),
             FullSeasonGames_df["Proj_Margin"].abs().to_numpy(),
@@ -436,13 +574,13 @@ if int(upcoming) == 1:
     )
 
     ### Extract Parameter Matrix: (N_draws x 2)
-    wp_VoP_pars_matrix = wp_VoP_pars.select(["alpha", "beta_score"]).to_numpy()
+    WP_VoP_pars_matrix = WP_VoP_pars.select(["alpha", "beta_score"]).to_numpy()
 
     ### Matrix Multiplication -> Linear Predictors (N_draws x N_games)
-    wp_means_matrix = wp_VoP_pars_matrix @ wp_design_matrix.T
+    WP_means_matrix = WP_VoP_pars_matrix @ WP_design_matrix.T
 
     ### Inverse logit transformation to win probabilities
-    VoP_win_probs = 1 / (1 + np.exp(-wp_means_matrix))
+    VoP_win_probs = 1 / (1 + np.exp(-WP_means_matrix))
 
     ### Calculate median win probability across draws/ for each game (axis=0 operates across draws)
     VoP_median_win_probs = np.median(VoP_win_probs, axis=0)
@@ -457,6 +595,7 @@ if int(upcoming) == 1:
                 "id",
                 "season",
                 "week",
+                "start_date",
                 "neutral_site",
                 "home_team",
                 "home_classification",
@@ -530,7 +669,7 @@ else:
     WinProb_preds = WinProb_glm.predict(upcoming_games_df['Proj_Margin'].abs().to_numpy())
 
     ### using matrix math to turn posterior samples from Stan model into win probability projections for each game
-    wp_design_matrix = np.column_stack(
+    WP_design_matrix = np.column_stack(
         [
             np.ones(upcoming_games_df.height),
             upcoming_games_df["Proj_Margin"].abs().to_numpy(),
@@ -538,13 +677,13 @@ else:
     )
 
     ### Extract Parameter Matrix: (N_draws x 2)
-    wp_VoP_pars_matrix = wp_VoP_pars.select(["alpha", "beta_score"]).to_numpy()
+    WP_VoP_pars_matrix = WP_VoP_pars.select(["alpha", "beta_score"]).to_numpy()
 
     ### Matrix Multiplication -> Linear Predictors (N_draws x N_games)
-    wp_means_matrix = wp_VoP_pars_matrix @ wp_design_matrix.T
+    WP_means_matrix = WP_VoP_pars_matrix @ WP_design_matrix.T
 
     ### Inverse logit transformation to win probabilities
-    VoP_win_probs = 1 / (1 + np.exp(-wp_means_matrix))
+    VoP_win_probs = 1 / (1 + np.exp(-WP_means_matrix))
 
     ### Calculate median win probability across draws/ for each game (axis=0 operates across draws)
     VoP_median_win_probs = np.median(VoP_win_probs, axis=0)
@@ -558,6 +697,7 @@ else:
                 "id",
                 "season",
                 "week",
+                "start_date",
                 "neutral_site",
                 "home_team",
                 "home_classification",
@@ -570,7 +710,7 @@ else:
                 "Proj_Winner",
                 "Proj_Margin",
                 "glm_win_prob",
-                "win_prob",
+                "win_prob"
             ]
         )
     ).filter(
@@ -584,6 +724,29 @@ else:
         "VoA" + cfb_year,
         "Projections",
         cfb_year + "VoPWeek" + upcoming + "Games.parquet"
+    ))
+
+    ### writing out file for testing what payouts would be if I picked VoA's winners on kalshi
+    kalshi_df = upcoming_games_df.select([
+        "id",
+        "home_team",
+        "home_classification",
+        "home_conference",
+        "home_VoA_rating",
+        "away_team",
+        "away_classification",
+        "away_conference",
+        "away_VoA_rating",
+        "Proj_Winner",
+        "Proj_Margin",
+        "win_prob"
+    ])
+
+    kalshi_df.write_csv(os.path.join(
+        os.getcwd(),
+        "Data",
+        "Kalshi",
+        "CFBKalshi.csv"
     ))
 
 

@@ -145,6 +145,8 @@ if (as.integer(upcoming) == 1) {
 ##### reading in upcoming games to create df of games and VoA projected margins #####
 if (as.integer(upcoming) == 16) {
   ##### Week 16 Game Pull #####
+  ### as of 2025 (2024? I don't fully remember) the army navy game happens at the same time as bowl games and/or conference championship games that I can only pull via setting "season_type" to "postseason"
+  ### but army-navy is not postseason so I call it via the regular way, and also i think it's labeled in cfbd as a week 15 game? don't fully remember
   upcoming_games_df <- cfbd_game_info(
     as.numeric(year),
     season_type = "postseason"
