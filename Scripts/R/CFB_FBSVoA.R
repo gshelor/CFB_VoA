@@ -7058,7 +7058,7 @@ if (as.integer(cfb_week) >= 3) {
   ) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Overall Rating") +
     labs(
@@ -7127,7 +7127,7 @@ if (as.integer(cfb_week) >= 3) {
   ) +
     theme_bw() +
     geom_line(linewidth = 1.5) +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
     xlab("Week") +
     ylab("VoA Ranking") +
     labs(
@@ -7677,10 +7677,10 @@ if (as.integer(cfb_week) <= 9) {
     aes(x = adj_off_epa, y = adj_def_epa)
   ) +
     theme_bw() +
-    geom_point(size = 2) +
+    # geom_point(size = 2) +
     # geom_smooth() +
     scale_y_reverse() +
-    # geom_cfb_logos(aes(team = school), width = 0.035) +
+    geom_cfb_logos(aes(team = school), width = 0.035) +
     geom_hline(yintercept = mean(VoAVariables$adj_def_epa)) +
     geom_vline(xintercept = mean(VoAVariables$adj_off_epa)) +
     # scale_x_continuous(breaks = seq(0,135,10)) +
