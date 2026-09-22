@@ -952,6 +952,7 @@ upcoming_games_gt <- upcoming_games_df |>
   cols_move_to_end(columns = "win_prob") |>
   cols_hide(c(
     id,
+    start_date,
     season,
     week,
     neutral_site,
@@ -1036,6 +1037,7 @@ upcoming_games_gt_sorted <- upcoming_games_df_sorted |>
   cols_move_to_end(columns = "win_prob") |>
   cols_hide(c(
     id,
+    start_date,
     season,
     week,
     neutral_site,

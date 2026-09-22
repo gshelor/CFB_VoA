@@ -50,7 +50,7 @@ CUSA_text <- "CUSA"
 Indy_text <- "Independents"
 MAC_text <- "MAC"
 MWC_text <- "MWC"
-Pac2_text <- "Pac2"
+Pac12_text <- "Pac12"
 SEC_text <- "SEC"
 SunBelt_text <- "SunBelt"
 FBS_text <- "FBS"
@@ -258,19 +258,19 @@ MWC_Ranking_filename <- paste(
   Ranking_text,
   sep = ""
 )
-Pac2_Output_filename <- paste(
+Pac12_Output_filename <- paste(
   year,
   week_text,
   cfb_week,
-  Pac2_text,
+  Pac12_text,
   Rating_text,
   sep = ""
 )
-Pac2_Ranking_filename <- paste(
+Pac12_Ranking_filename <- paste(
   year,
   week_text,
   cfb_week,
-  Pac2_text,
+  Pac12_text,
   Ranking_text,
   sep = ""
 )
@@ -5590,7 +5590,7 @@ if (as.integer(cfb_week) > 11) {
     ### extracting SRS ratings of FCS opponents
     temp_teamFCSOpps <- FCS |>
       filter(team %in% temp_team$team_opp) |>
-      select(team, rating)
+      select(school, rating)
     colnames(temp_teamFCSOpps) <- c("school", "VoA_Rating_Ovr")
     temp_teamOpps <- rbind(temp_teamFBSOpps, temp_teamFCSOpps)
     colnames(temp_teamOpps) <- c("team_opp", "opp_VoA_rating")
@@ -5637,13 +5637,13 @@ if (as.integer(cfb_week) > 11) {
 
   ### filtering resume top 25 out for table
   ResumeVoATop25 <- VoAVariables |>
-    select(team, Resume_VoA, Resume_VoA_Rank) |>
+    select(school, Resume_VoA, Resume_VoA_Rank) |>
     filter(Resume_VoA_Rank < 26) |>
     arrange(Resume_VoA_Rank)
 
   ### full resume VoA, simplified for table
   FinalResumeTable <- VoAVariables |>
-    select(team, Resume_VoA, Resume_VoA_Rank) |>
+    select(school, Resume_VoA, Resume_VoA_Rank) |>
     arrange(Resume_VoA_Rank)
 } else {
   print("no Resume VoA until Week 12!")
@@ -5914,10 +5914,10 @@ if (as.integer(cfb_week) == 3) {
   Week0_VoA <- read_parquet(here(
     "Data",
     paste0("VoA", year),
-    paste0(year, "Week0_VoA.parquet")
+    paste0(year, "Week0_FBSVoA.parquet")
   )) |>
     select(
-      team,
+      school,
       conference,
       CFB_Week,
       VoA_Output,
@@ -5927,10 +5927,10 @@ if (as.integer(cfb_week) == 3) {
   Week1_VoA <- read_parquet(here(
     "Data",
     paste0("VoA", year),
-    paste0(year, "Week1_VoA.parquet")
+    paste0(year, "Week1_FBSVoA.parquet")
   )) |>
     select(
-      team,
+      school,
       conference,
       CFB_Week,
       VoA_Output,
@@ -5940,10 +5940,10 @@ if (as.integer(cfb_week) == 3) {
   Week2_VoA <- read_parquet(here(
     "Data",
     paste0("VoA", year),
-    paste0(year, "Week2_VoA.parquet")
+    paste0(year, "Week2_FBSVoA.parquet")
   )) |>
     select(
-      team,
+      school,
       conference,
       CFB_Week,
       VoA_Output,
@@ -5981,7 +5981,7 @@ if (as.integer(cfb_week) == 3) {
     )
   )) |>
     select(
-      team,
+      school,
       conference,
       CFB_Week,
       VoA_Output,
@@ -6022,7 +6022,7 @@ if (as.integer(cfb_week) >= 3) {
     filter(conference == "FBS Independents" | conference == "Pac-12")
   MAC_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Mid-American")
   MWC_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Mountain West")
-  # Pac12_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Pac-12")
+  Pac12_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Pac-12")
   SEC_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "SEC")
   SunBelt_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Sun Belt")
 
@@ -6110,7 +6110,7 @@ if (as.integer(cfb_week) >= 3) {
       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
     ) +
     ggtitle("American Conference Vortex of Accuracy Rankings by Week") +
-    expand_limits(y = c(0, 130)) +
+    expand_limits(y = c(0, 140)) +
     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
     scale_y_reverse() +
     scale_x_continuous(
@@ -6238,7 +6238,7 @@ if (as.integer(cfb_week) >= 3) {
       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
     ) +
     ggtitle("ACC Vortex of Accuracy Rankings by Week") +
-    expand_limits(y = c(0, 130)) +
+    expand_limits(y = c(0, 140)) +
     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
     scale_y_reverse() +
     scale_x_continuous(
@@ -6366,7 +6366,7 @@ if (as.integer(cfb_week) >= 3) {
       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
     ) +
     ggtitle("Big 12 Vortex of Accuracy Rankings by Week") +
-    expand_limits(y = c(0, 130)) +
+    expand_limits(y = c(0, 140)) +
     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
     scale_y_reverse() +
     scale_x_continuous(
@@ -6494,7 +6494,7 @@ if (as.integer(cfb_week) >= 3) {
       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
     ) +
     ggtitle("Big 10 Vortex of Accuracy Rankings by Week") +
-    expand_limits(y = c(0, 130)) +
+    expand_limits(y = c(0, 140)) +
     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
     scale_y_reverse() +
     scale_x_continuous(
@@ -6622,7 +6622,7 @@ if (as.integer(cfb_week) >= 3) {
       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
     ) +
     ggtitle("CUSA Vortex of Accuracy Rankings by Week") +
-    expand_limits(y = c(0, 130)) +
+    expand_limits(y = c(0, 140)) +
     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
     scale_y_reverse() +
     scale_x_continuous(
@@ -6750,7 +6750,7 @@ if (as.integer(cfb_week) >= 3) {
       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
     ) +
     ggtitle("Independents Vortex of Accuracy Rankings by Week") +
-    expand_limits(y = c(0, 130)) +
+    expand_limits(y = c(0, 140)) +
     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
     scale_y_reverse() +
     scale_x_continuous(
@@ -6878,7 +6878,7 @@ if (as.integer(cfb_week) >= 3) {
       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
     ) +
     ggtitle("MAC Vortex of Accuracy Rankings by Week") +
-    expand_limits(y = c(0, 130)) +
+    expand_limits(y = c(0, 140)) +
     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
     scale_y_reverse() +
     scale_x_continuous(
@@ -7006,7 +7006,7 @@ if (as.integer(cfb_week) >= 3) {
       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
     ) +
     ggtitle("Mountain West Vortex of Accuracy Rankings by Week") +
-    expand_limits(y = c(0, 130)) +
+    expand_limits(y = c(0, 140)) +
     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
     scale_y_reverse() +
     scale_x_continuous(
@@ -7134,7 +7134,7 @@ if (as.integer(cfb_week) >= 3) {
       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
     ) +
     ggtitle("Pac 12 Vortex of Accuracy Rankings by Week") +
-    expand_limits(y = c(0, 130)) +
+    expand_limits(y = c(0, 140)) +
     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
     scale_y_reverse() +
     scale_x_continuous(
@@ -7262,7 +7262,7 @@ if (as.integer(cfb_week) >= 3) {
       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
     ) +
     ggtitle("SEC Vortex of Accuracy Rankings by Week") +
-    expand_limits(y = c(0, 130)) +
+    expand_limits(y = c(0, 140)) +
     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
     scale_y_reverse() +
     scale_x_continuous(
@@ -7312,7 +7312,10 @@ if (as.integer(cfb_week) >= 3) {
   ## this stopped working so I've had to make this frankly easy fix that I should've just always done so that App shows up as App instead of the NCAA
   SunBelt_Ratings_Rks <- SunBelt_Ratings_Rks |>
     mutate(
-      team = case_when(team == "App State" ~ "Appalachian State", TRUE ~ team)
+      school = case_when(
+        school == "App State" ~ "Appalachian State",
+        TRUE ~ school
+      )
     )
   SunBelt_VoA_Rating_Chart <- ggplot(
     SunBelt_Ratings_Rks,
@@ -7396,7 +7399,7 @@ if (as.integer(cfb_week) >= 3) {
       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
     ) +
     ggtitle("Sun Belt Vortex of Accuracy Rankings by Week") +
-    expand_limits(y = c(0, 130)) +
+    expand_limits(y = c(0, 140)) +
     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
     scale_y_reverse() +
     scale_x_continuous(

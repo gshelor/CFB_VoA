@@ -7,7 +7,7 @@
 start_time <- Sys.time()
 library(pacman)
 # fmt: skip
-p_load(tidyverse, gt, cfbfastR, here, RColorBrewer, gtExtras, cfbplotR, ggpubr, webshot2, cmdstanr, parallel, posterior, data.table, lme4, arrow)
+p_load(tidyverse, gt, cfbfastR, here, RColorBrewer, gtExtras, cfbplotR, ggpubr, webshot2, cmdstanr, parallel, posterior, data.table, lme4, arrow, ggimage)
 ## used to use these packages
 # viridis, and also rstan since I'm switching to cmdstanr
 ### reading in script of functions (will be called later)
@@ -42,17 +42,20 @@ top25_png <- "FCSVoATop25.png"
 fulltable_png <- "FCSVoAFullTable.png"
 VoA_text <- "FCS Vortex of Accuracy"
 Postseason_text <- " CFB Postseason"
-# AAC_text <- "AAC"
-# ACC_text <- "ACC"
-# Big12_text <- "Big12"
-# Big10_text <- "Big10"
-# CUSA_text <- "CUSA"
-Indy_text <- "Independents"
-# MAC_text <- "MAC"
-# MWC_text <- "MWC"
-# Pac2_text <- "Pac2"
-# SEC_text <- "SEC"
-# SunBelt_text <- "SunBelt"
+UAC_text <- "UAC"
+CoastalAthletic_text <- "Coastal Athletic"
+BigSky_text <- "BigSky"
+Ivy_text <- "Ivy"
+MEAC_text <- "MEAC"
+Indy_text <- "FCSIndependents"
+MVFC_text <- "MVFC"
+NEC_text <- "NEC"
+OVC_text <- "OVC"
+Patriot_text <- "Patriot"
+Pioneer_text <- "Pioneer"
+SoCon_text <- "SoCon"
+Southland_text <- "Southland"
+SWAC_text <- "SWAC"
 FCS_text <- "FCS"
 # Power_Five_text <- "Power 5"
 # Group_Five_text <- "Group of 5"
@@ -130,182 +133,230 @@ resumefulltable_file_pathway <- paste(
   fulltable_png,
   sep = ""
 )
-# AAC_Output_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   AAC_text,
-#   Rating_text,
-#   sep = ""
-# )
-# AAC_Ranking_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   AAC_text,
-#   Ranking_text,
-#   sep = ""
-# )
-# ACC_Output_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   ACC_text,
-#   Rating_text,
-#   sep = ""
-# )
-# ACC_Ranking_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   ACC_text,
-#   Ranking_text,
-#   sep = ""
-# )
-# Big12_Output_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   Big12_text,
-#   Rating_text,
-#   sep = ""
-# )
-# Big12_Ranking_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   Big12_text,
-#   Ranking_text,
-#   sep = ""
-# )
-# Big10_Output_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   Big10_text,
-#   Rating_text,
-#   sep = ""
-# )
-# Big10_Ranking_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   Big10_text,
-#   Ranking_text,
-#   sep = ""
-# )
-# CUSA_Output_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   CUSA_text,
-#   Rating_text,
-#   sep = ""
-# )
-# CUSA_Ranking_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   CUSA_text,
-#   Ranking_text,
-#   sep = ""
-# )
-# Indy_Output_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   Indy_text,
-#   Rating_text,
-#   sep = ""
-# )
-# Indy_Ranking_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   Indy_text,
-#   Ranking_text,
-#   sep = ""
-# )
-# MAC_Output_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   MAC_text,
-#   Rating_text,
-#   sep = ""
-# )
-# MAC_Ranking_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   MAC_text,
-#   Ranking_text,
-#   sep = ""
-# )
-# MWC_Output_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   MWC_text,
-#   Rating_text,
-#   sep = ""
-# )
-# MWC_Ranking_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   MWC_text,
-#   Ranking_text,
-#   sep = ""
-# )
-# Pac2_Output_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   Pac2_text,
-#   Rating_text,
-#   sep = ""
-# )
-# Pac2_Ranking_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   Pac2_text,
-#   Ranking_text,
-#   sep = ""
-# )
-# SEC_Output_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   SEC_text,
-#   Rating_text,
-#   sep = ""
-# )
-# SEC_Ranking_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   SEC_text,
-#   Ranking_text,
-#   sep = ""
-# )
-# SunBelt_Output_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   SunBelt_text,
-#   Rating_text,
-#   sep = ""
-# )
-# SunBelt_Ranking_filename <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   SunBelt_text,
-#   Ranking_text,
-#   sep = ""
-# )
+UAC_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  UAC_text,
+  Rating_text,
+  sep = ""
+)
+UAC_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  UAC_text,
+  Ranking_text,
+  sep = ""
+)
+CoastalAthletic_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  CoastalAthletic_text,
+  Rating_text,
+  sep = ""
+)
+CoastalAthletic_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  CoastalAthletic_text,
+  Ranking_text,
+  sep = ""
+)
+BigSky_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  BigSky_text,
+  Rating_text,
+  sep = ""
+)
+BigSky_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  BigSky_text,
+  Ranking_text,
+  sep = ""
+)
+Ivy_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Ivy_text,
+  Rating_text,
+  sep = ""
+)
+Ivy_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Ivy_text,
+  Ranking_text,
+  sep = ""
+)
+MEAC_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  MEAC_text,
+  Rating_text,
+  sep = ""
+)
+MEAC_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  MEAC_text,
+  Ranking_text,
+  sep = ""
+)
+Indy_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Indy_text,
+  Rating_text,
+  sep = ""
+)
+Indy_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Indy_text,
+  Ranking_text,
+  sep = ""
+)
+MVFC_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  MVFC_text,
+  Rating_text,
+  sep = ""
+)
+MVFC_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  MVFC_text,
+  Ranking_text,
+  sep = ""
+)
+NEC_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  NEC_text,
+  Rating_text,
+  sep = ""
+)
+NEC_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  NEC_text,
+  Ranking_text,
+  sep = ""
+)
+OVC_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  OVC_text,
+  Rating_text,
+  sep = ""
+)
+OVC_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  OVC_text,
+  Ranking_text,
+  sep = ""
+)
+Patriot_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Patriot_text,
+  Rating_text,
+  sep = ""
+)
+Patriot_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Patriot_text,
+  Ranking_text,
+  sep = ""
+)
+Pioneer_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Pioneer_text,
+  Rating_text,
+  sep = ""
+)
+Pioneer_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Pioneer_text,
+  Ranking_text,
+  sep = ""
+)
+SoCon_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  SoCon_text,
+  Rating_text,
+  sep = ""
+)
+SoCon_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  SoCon_text,
+  Ranking_text,
+  sep = ""
+)
+Southland_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Southland_text,
+  Rating_text,
+  sep = ""
+)
+Southland_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  Southland_text,
+  Ranking_text,
+  sep = ""
+)
+SWAC_Output_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  SWAC_text,
+  Rating_text,
+  sep = ""
+)
+SWAC_Ranking_filename <- paste(
+  year,
+  week_text,
+  cfb_week,
+  SWAC_text,
+  Ranking_text,
+  sep = ""
+)
 FCS_hist_filename <- paste(
   year,
   week_text,
@@ -5796,7 +5847,7 @@ if (as.integer(cfb_week) == 3) {
     paste0(year, "Week0_FCSVoA.parquet")
   )) |>
     select(
-      team,
+      school,
       conference,
       CFB_Week,
       VoA_Output,
@@ -5809,7 +5860,7 @@ if (as.integer(cfb_week) == 3) {
     paste0(year, "Week1_FCSVoA.parquet")
   )) |>
     select(
-      team,
+      school,
       conference,
       CFB_Week,
       VoA_Output,
@@ -5822,7 +5873,7 @@ if (as.integer(cfb_week) == 3) {
     paste0(year, "Week2_FCSVoA.parquet")
   )) |>
     select(
-      team,
+      school,
       conference,
       CFB_Week,
       VoA_Output,
@@ -5860,7 +5911,7 @@ if (as.integer(cfb_week) == 3) {
     )
   )) |>
     select(
-      team,
+      school,
       conference,
       CFB_Week,
       VoA_Output,
@@ -5887,1468 +5938,1894 @@ if (as.integer(cfb_week) == 3) {
 ### end of if statement
 
 ### Filtering by conference for unintelligible charts
-# if (as.integer(cfb_week) >= 3) {
-### each conference (including independents) gets separate charts
-### given that the Pac12 is now really the 2Pac, they get lumped in with the Indies
-# AAC_Ratings_Rks <- Full_Ratings_Rks |>
-#   filter(conference == "American Athletic")
-# ACC_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "ACC")
-# Big12_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Big 12")
-# Big10_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Big Ten")
-# CUSA_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Conference USA")
-# ### lumping the 2Pac with the Indys for unintelligible chart purposes
-# Indy_Ratings_Rks <- Full_Ratings_Rks |>
-#   filter(conference == "FCS Independents" | conference == "Pac-12")
-# MAC_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Mid-American")
-# MWC_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Mountain West")
-# Pac12_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Pac-12")
-# SEC_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "SEC")
-# SunBelt_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Sun Belt")
+if (as.integer(cfb_week) >= 3) {
+  ### each conference (including independents, except in 2026 since the only FCS indy I currently include is Merrimack) gets separate charts
+  Logos <- cfbd_team_info(only_fbs = FALSE, year = as.integer(year)) |>
+    filter(school %in% VoAVariables$school) |>
+    select(school, logo)
+  UAC_Ratings_Rks <- Full_Ratings_Rks |>
+    filter(conference == "UAC") |>
+    left_join(Logos, by = "school")
+  CoastalAthletic_Ratings_Rks <- Full_Ratings_Rks |>
+    filter(conference == "Coastal Athletic") |>
+    left_join(Logos, by = "school")
+  BigSky_Ratings_Rks <- Full_Ratings_Rks |>
+    filter(conference == "Big Sky") |>
+    left_join(Logos, by = "school")
+  Ivy_Ratings_Rks <- Full_Ratings_Rks |>
+    filter(conference == "Ivy") |>
+    left_join(Logos, by = "school")
+  MEAC_Ratings_Rks <- Full_Ratings_Rks |>
+    filter(conference == "MEAC") |>
+    left_join(Logos, by = "school")
+  ### there's only 1 FCS Indy currently in the VoA (there are others but they're new either to CFB or at least FCS/D1 so I'm not including them in the VoA yet out of convenience and laziness) and it's Merrimack and they used to be in the NEC so I'm gonna lump them in with the NEC
+  # Indy_Ratings_Rks <- Full_Ratings_Rks |>
+  #   filter(conference == "FCS Independents")
+  MVFC_Ratings_Rks <- Full_Ratings_Rks |>
+    filter(conference == "MVFC") |>
+    left_join(Logos, by = "school")
+  NEC_Ratings_Rks <- Full_Ratings_Rks |>
+    filter(conference == "NEC" | conference == "FCS Independents") |>
+    left_join(Logos, by = "school")
+  OVC_Ratings_Rks <- Full_Ratings_Rks |>
+    filter(conference == "OVC") |>
+    left_join(Logos, by = "school")
+  Patriot_Ratings_Rks <- Full_Ratings_Rks |>
+    filter(conference == "Patriot") |>
+    left_join(Logos, by = "school")
+  Pioneer_Ratings_Rks <- Full_Ratings_Rks |>
+    filter(conference == "Pioneer") |>
+    left_join(Logos, by = "school")
+  SoCon_Ratings_Rks <- Full_Ratings_Rks |>
+    filter(conference == "Southern") |>
+    left_join(Logos, by = "school")
+  Southland_Ratings_Rks <- Full_Ratings_Rks |>
+    filter(conference == "Southland") |>
+    left_join(Logos, by = "school")
+  SWAC_Ratings_Rks <- Full_Ratings_Rks |>
+    filter(conference == "SWAC") |>
+    left_join(Logos, by = "school")
 
-##### Creating Charts #####
-### charting VoA_Rating and VoA_Ranking for each week from week 2 on
-#   AAC_VoA_Rating_Chart <- ggplot(
-#     AAC_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Overall Rating") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("American Conference Vortex of Accuracy Overall Ratings by Week") +
-#     expand_limits(
-#       y = c(
-#         floor(floor(min(AAC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
-#         ceiling((ceiling(max(AAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
-#       )
-#     ) +
-#     scale_y_continuous(
-#       breaks = seq(
-#         (floor((floor(min(AAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         (ceiling((ceiling(max(AAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         by = 5
-#       )
-#     ) +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   AAC_VoA_Rating_Chart
-#   ggsave(
-#     AAC_Output_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  ##### Creating Charts #####
+  ### charting VoA_Rating and VoA_Ranking for each week from week 2 on
+  UAC_VoA_Rating_Chart <- ggplot(
+    UAC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("UAC Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(UAC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(UAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(UAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(UAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  UAC_VoA_Rating_Chart
+  ggsave(
+    UAC_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-#   AAC_VoA_Ranking_Chart <- ggplot(
-#     AAC_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Ranking") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("American Conference Vortex of Accuracy Rankings by Week") +
-#     expand_limits(y = c(0, 130)) +
-#     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
-#     scale_y_reverse() +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   AAC_VoA_Ranking_Chart
-#   ggsave(
-#     AAC_Ranking_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  UAC_VoA_Ranking_Chart <- ggplot(
+    UAC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("UAC Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  UAC_VoA_Ranking_Chart
+  ggsave(
+    UAC_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-#   ACC_VoA_Rating_Chart <- ggplot(
-#     ACC_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Overall Rating") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("ACC Vortex of Accuracy Overall Ratings by Week") +
-#     expand_limits(
-#       y = c(
-#         floor(floor(min(ACC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
-#         ceiling((ceiling(max(ACC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
-#       )
-#     ) +
-#     scale_y_continuous(
-#       breaks = seq(
-#         (floor((floor(min(ACC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         (ceiling((ceiling(max(ACC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         by = 5
-#       )
-#     ) +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   ACC_VoA_Rating_Chart
-#   ggsave(
-#     ACC_Output_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  CoastalAthletic_VoA_Rating_Chart <- ggplot(
+    CoastalAthletic_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Coastal Athletic Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(CoastalAthletic_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling(
+          (ceiling(max(CoastalAthletic_Ratings_Rks$VoA_Rating_Ovr)) / 10)
+        ) *
+          10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(CoastalAthletic_Ratings_Rks$VoA_Rating_Ovr)) / 10)) *
+          10),
+        (ceiling(
+          (ceiling(max(CoastalAthletic_Ratings_Rks$VoA_Rating_Ovr)) / 10)
+        ) *
+          10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  CoastalAthletic_VoA_Rating_Chart
+  ggsave(
+    CoastalAthletic_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-#   ACC_VoA_Ranking_Chart <- ggplot(
-#     ACC_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Ranking") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("ACC Vortex of Accuracy Rankings by Week") +
-#     expand_limits(y = c(0, 130)) +
-#     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
-#     scale_y_reverse() +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   ACC_VoA_Ranking_Chart
-#   ggsave(
-#     ACC_Ranking_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  CoastalAthletic_VoA_Ranking_Chart <- ggplot(
+    CoastalAthletic_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Coastal Athletic Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  CoastalAthletic_VoA_Ranking_Chart
+  ggsave(
+    CoastalAthletic_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-#   Big12_VoA_Rating_Chart <- ggplot(
-#     Big12_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Overall Rating") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("Big 12 Vortex of Accuracy Overall Ratings by Week") +
-#     expand_limits(
-#       y = c(
-#         floor(floor(min(Big12_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
-#         ceiling((ceiling(max(Big12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
-#       )
-#     ) +
-#     scale_y_continuous(
-#       breaks = seq(
-#         (floor((floor(min(Big12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         (ceiling((ceiling(max(Big12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         by = 5
-#       )
-#     ) +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   Big12_VoA_Rating_Chart
-#   ggsave(
-#     Big12_Output_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  BigSky_VoA_Rating_Chart <- ggplot(
+    BigSky_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Big Sky Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(BigSky_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(BigSky_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(BigSky_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(BigSky_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  BigSky_VoA_Rating_Chart
+  ggsave(
+    BigSky_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-#   Big12_VoA_Ranking_Chart <- ggplot(
-#     Big12_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Ranking") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("Big 12 Vortex of Accuracy Rankings by Week") +
-#     expand_limits(y = c(0, 130)) +
-#     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
-#     scale_y_reverse() +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   Big12_VoA_Ranking_Chart
-#   ggsave(
-#     Big12_Ranking_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  BigSky_VoA_Ranking_Chart <- ggplot(
+    BigSky_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Big Sky Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  BigSky_VoA_Ranking_Chart
+  ggsave(
+    BigSky_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-#   Big10_VoA_Rating_Chart <- ggplot(
-#     Big10_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Overall Rating") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("Big 10 Vortex of Accuracy Overall Ratings by Week") +
-#     expand_limits(
-#       y = c(
-#         floor(floor(min(Big10_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
-#         ceiling((ceiling(max(Big10_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
-#       )
-#     ) +
-#     scale_y_continuous(
-#       breaks = seq(
-#         (floor((floor(min(Big10_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         (ceiling((ceiling(max(Big10_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         by = 5
-#       )
-#     ) +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   Big10_VoA_Rating_Chart
-#   ggsave(
-#     Big10_Output_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  Ivy_VoA_Rating_Chart <- ggplot(
+    Ivy_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Ivy League Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(Ivy_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(Ivy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(Ivy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(Ivy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  Ivy_VoA_Rating_Chart
+  ggsave(
+    Ivy_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-#   Big10_VoA_Ranking_Chart <- ggplot(
-#     Big10_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Overall Rating") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("Big 10 Vortex of Accuracy Rankings by Week") +
-#     expand_limits(y = c(0, 130)) +
-#     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
-#     scale_y_reverse() +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   Big10_VoA_Ranking_Chart
-#   ggsave(
-#     Big10_Ranking_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  Ivy_VoA_Ranking_Chart <- ggplot(
+    Ivy_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Ivy League Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  Ivy_VoA_Ranking_Chart
+  ggsave(
+    Ivy_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-#   CUSA_VoA_Rating_Chart <- ggplot(
-#     CUSA_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Overall Rating") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("CUSA Vortex of Accuracy Overall Ratings by Week") +
-#     expand_limits(
-#       y = c(
-#         floor(floor(min(CUSA_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
-#         ceiling((ceiling(max(CUSA_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
-#       )
-#     ) +
-#     scale_y_continuous(
-#       breaks = seq(
-#         (floor((floor(min(CUSA_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         (ceiling((ceiling(max(CUSA_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         by = 5
-#       )
-#     ) +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   CUSA_VoA_Rating_Chart
-#   ggsave(
-#     CUSA_Output_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  MEAC_VoA_Rating_Chart <- ggplot(
+    MEAC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("MEAC Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(MEAC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(MEAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(MEAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(MEAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  MEAC_VoA_Rating_Chart
+  ggsave(
+    MEAC_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-#   CUSA_VoA_Ranking_Chart <- ggplot(
-#     CUSA_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Ranking") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("CUSA Vortex of Accuracy Rankings by Week") +
-#     expand_limits(y = c(0, 130)) +
-#     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
-#     scale_y_reverse() +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   CUSA_VoA_Ranking_Chart
-#   ggsave(
-#     CUSA_Ranking_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  MEAC_VoA_Ranking_Chart <- ggplot(
+    MEAC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("MEAC Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  MEAC_VoA_Ranking_Chart
+  ggsave(
+    MEAC_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-#   Indy_VoA_Rating_Chart <- ggplot(
-#     Indy_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Overall Rating") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("Independents Vortex of Accuracy Overall Ratings by Week") +
-#     expand_limits(
-#       y = c(
-#         floor(floor(min(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
-#         ceiling((ceiling(max(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
-#       )
-#     ) +
-#     scale_y_continuous(
-#       breaks = seq(
-#         (floor((floor(min(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         (ceiling((ceiling(max(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         by = 5
-#       )
-#     ) +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   Indy_VoA_Rating_Chart
-#   ggsave(
-#     Indy_Output_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  ### FCS Independents Charts
+  # Indy_VoA_Rating_Chart <- ggplot(
+  #   Indy_Ratings_Rks,
+  #   aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  # ) +
+  #   theme_bw() +
+  #   geom_line(linewidth = 1.5) +
+  #   geom_image(aes(image = logo), size = 0.055) +
+  #   # geom_point(size = 5) +
+  #   xlab("Week") +
+  #   ylab("VoA Overall Rating") +
+  #   labs(
+  #     caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+  #   ) +
+  #   ggtitle("FCS Independents Vortex of Accuracy Overall Ratings by Week") +
+  #   expand_limits(
+  #     y = c(
+  #       floor(floor(min(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+  #       ceiling((ceiling(max(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+  #     )
+  #   ) +
+  #   scale_y_continuous(
+  #     breaks = seq(
+  #       (floor((floor(min(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+  #       (ceiling((ceiling(max(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+  #       by = 5
+  #     )
+  #   ) +
+  #   scale_x_continuous(
+  #     breaks = c(
+  #       0,
+  #       1,
+  #       2,
+  #       3,
+  #       4,
+  #       5,
+  #       6,
+  #       7,
+  #       8,
+  #       9,
+  #       10,
+  #       11,
+  #       12,
+  #       13,
+  #       14,
+  #       15,
+  #       16,
+  #       17,
+  #       18,
+  #       19,
+  #       20
+  #     )
+  #   ) +
+  #   # geom_cfb_logos(aes(team = school, width = 0.035)) +
+  #   theme(
+  #     plot.title = element_text(size = 35, hjust = 0.5),
+  #     axis.text.x = element_text(size = 20),
+  #     axis.text.y = element_text(size = 20),
+  #     axis.title.x = element_text(size = 22),
+  #     axis.title.y = element_text(size = 22),
+  #     legend.text = element_text(size = 20)
+  #   )
+  # Indy_VoA_Rating_Chart
+  # ggsave(
+  #   Indy_Output_filename,
+  #   path = output_dir,
+  #   width = 50,
+  #   height = 40,
+  #   units = 'cm'
+  # )
 
-#   Indy_VoA_Ranking_Chart <- ggplot(
-#     Indy_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Ranking") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("Independents Vortex of Accuracy Rankings by Week") +
-#     expand_limits(y = c(0, 130)) +
-#     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
-#     scale_y_reverse() +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   Indy_VoA_Ranking_Chart
-#   ggsave(
-#     Indy_Ranking_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  # Indy_VoA_Ranking_Chart <- ggplot(
+  #   Indy_Ratings_Rks,
+  #   aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  # ) +
+  #   theme_bw() +
+  #   geom_line(linewidth = 1.5) +
+  #   geom_image(aes(image = logo), size = 0.055) +
+  #   # geom_point(size = 5) +
+  #   xlab("Week") +
+  #   ylab("VoA Ranking") +
+  #   labs(
+  #     caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+  #   ) +
+  #   ggtitle("FCS Independents Vortex of Accuracy Rankings by Week") +
+  #   expand_limits(y = c(0, 130)) +
+  #   scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+  #   scale_y_reverse() +
+  #   scale_x_continuous(
+  #     breaks = c(
+  #       0,
+  #       1,
+  #       2,
+  #       3,
+  #       4,
+  #       5,
+  #       6,
+  #       7,
+  #       8,
+  #       9,
+  #       10,
+  #       11,
+  #       12,
+  #       13,
+  #       14,
+  #       15,
+  #       16,
+  #       17,
+  #       18,
+  #       19,
+  #       20
+  #     )
+  #   ) +
+  #   # geom_cfb_logos(aes(team = school, width = 0.035)) +
+  #   theme(
+  #     plot.title = element_text(size = 35, hjust = 0.5),
+  #     axis.text.x = element_text(size = 20),
+  #     axis.text.y = element_text(size = 20),
+  #     axis.title.x = element_text(size = 22),
+  #     axis.title.y = element_text(size = 22),
+  #     legend.text = element_text(size = 20)
+  #   )
+  # Indy_VoA_Ranking_Chart
+  # ggsave(
+  #   Indy_Ranking_filename,
+  #   path = output_dir,
+  #   width = 50,
+  #   height = 40,
+  #   units = 'cm'
+  # )
 
-#   MAC_VoA_Rating_Chart <- ggplot(
-#     MAC_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Overall Rating") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("MAC Vortex of Accuracy Overall Ratings by Week") +
-#     expand_limits(
-#       y = c(
-#         floor(floor(min(MAC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
-#         ceiling((ceiling(max(MAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
-#       )
-#     ) +
-#     scale_y_continuous(
-#       breaks = seq(
-#         (floor((floor(min(MAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         (ceiling((ceiling(max(MAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         by = 5
-#       )
-#     ) +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   MAC_VoA_Rating_Chart
-#   ggsave(
-#     MAC_Output_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  MVFC_VoA_Rating_Chart <- ggplot(
+    MVFC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("MVFC Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(MVFC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(MVFC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(MVFC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(MVFC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  MVFC_VoA_Rating_Chart
+  ggsave(
+    MVFC_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-#   MAC_VoA_Ranking_Chart <- ggplot(
-#     MAC_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Ranking") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("MAC Vortex of Accuracy Rankings by Week") +
-#     expand_limits(y = c(0, 130)) +
-#     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
-#     scale_y_reverse() +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   MAC_VoA_Ranking_Chart
-#   ggsave(
-#     MAC_Ranking_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  MVFC_VoA_Ranking_Chart <- ggplot(
+    MVFC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("MVFC Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  MVFC_VoA_Ranking_Chart
+  ggsave(
+    MVFC_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-#   MWC_VoA_Rating_Chart <- ggplot(
-#     MWC_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Overall Rating") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("Mountain West Vortex of Accuracy Overall Ratings by Week") +
-#     expand_limits(
-#       y = c(
-#         floor(floor(min(MWC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
-#         ceiling((ceiling(max(MWC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
-#       )
-#     ) +
-#     scale_y_continuous(
-#       breaks = seq(
-#         (floor((floor(min(MWC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         (ceiling((ceiling(max(MWC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         by = 5
-#       )
-#     ) +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   MWC_VoA_Rating_Chart
-#   ggsave(
-#     MWC_Output_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  NEC_VoA_Rating_Chart <- ggplot(
+    NEC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR, Merrimack included since they used to be in the NEC and they are the only FCS Indy included in the FCS VoA as of 2026"
+    ) +
+    ggtitle("NEC (+ Merrimack) Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(NEC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(NEC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(NEC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(NEC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  NEC_VoA_Rating_Chart
+  ggsave(
+    NEC_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-#   MWC_VoA_Ranking_Chart <- ggplot(
-#     MWC_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Ranking") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("Mountain West Vortex of Accuracy Rankings by Week") +
-#     expand_limits(y = c(0, 130)) +
-#     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
-#     scale_y_reverse() +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   MWC_VoA_Ranking_Chart
-#   ggsave(
-#     MWC_Ranking_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  NEC_VoA_Ranking_Chart <- ggplot(
+    NEC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR, Merrimack included since they used to be in the NEC and they are the only FCS Indy included in the FCS VoA as of 2026"
+    ) +
+    ggtitle("NEC (+ Merrimack) Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  NEC_VoA_Ranking_Chart
+  ggsave(
+    NEC_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-#   Pac12_VoA_Rating_Chart <- ggplot(
-#     Pac12_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Overall Rating") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("Pac 12 Vortex of Accuracy Overall Ratings by Week") +
-#     expand_limits(
-#       y = c(
-#         floor(floor(min(Pac12_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
-#         ceiling((ceiling(max(Pac12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
-#       )
-#     ) +
-#     scale_y_continuous(
-#       breaks = seq(
-#         (floor((floor(min(Pac12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         (ceiling((ceiling(max(Pac12_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         by = 5
-#       )
-#     ) +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   Pac12_VoA_Rating_Chart
-#   ggsave(
-#     Pac12_Output_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  OVC_VoA_Rating_Chart <- ggplot(
+    OVC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("OVC Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(OVC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(OVC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(OVC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(OVC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  OVC_VoA_Rating_Chart
+  ggsave(
+    OVC_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-#   Pac12_VoA_Ranking_Chart <- ggplot(
-#     Pac12_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Ranking") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("Pac 12 Vortex of Accuracy Rankings by Week") +
-#     expand_limits(y = c(0, 130)) +
-#     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
-#     scale_y_reverse() +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   Pac12_VoA_Ranking_Chart
-#   ggsave(
-#     Pac12_Ranking_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  OVC_VoA_Ranking_Chart <- ggplot(
+    OVC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("OVC Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  OVC_VoA_Ranking_Chart
+  ggsave(
+    OVC_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-#   SEC_VoA_Rating_Chart <- ggplot(
-#     SEC_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Overall Rating") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("SEC Vortex of Accuracy Overall Ratings by Week") +
-#     expand_limits(
-#       y = c(
-#         floor(floor(min(SEC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
-#         ceiling((ceiling(max(SEC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
-#       )
-#     ) +
-#     scale_y_continuous(
-#       breaks = seq(
-#         (floor((floor(min(SEC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         (ceiling((ceiling(max(SEC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         by = 5
-#       )
-#     ) +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   SEC_VoA_Rating_Chart
-#   ggsave(
-#     SEC_Output_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  Patriot_VoA_Rating_Chart <- ggplot(
+    Patriot_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Patriot League Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(Patriot_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(Patriot_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(Patriot_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(Patriot_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  Patriot_VoA_Rating_Chart
+  ggsave(
+    Patriot_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-#   SEC_VoA_Ranking_Chart <- ggplot(
-#     SEC_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Ranking") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("SEC Vortex of Accuracy Rankings by Week") +
-#     expand_limits(y = c(0, 130)) +
-#     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
-#     scale_y_reverse() +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   SEC_VoA_Ranking_Chart
-#   ggsave(
-#     SEC_Ranking_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  Patriot_VoA_Ranking_Chart <- ggplot(
+    Patriot_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Patriot League Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  Patriot_VoA_Ranking_Chart
+  ggsave(
+    Patriot_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-#   ### geom_cfb_logos used to just throw the NCAA logo in place of the App State logo since for some reason cfb_plotR hasn't been updated in a while and doesn't keep up with the cfbfastR/cfbdata team names
-#   ## this stopped working so I've had to make this frankly easy fix that I should've just always done so that App shows up as App instead of the NCAA
-#   SunBelt_Ratings_Rks <- SunBelt_Ratings_Rks |>
-#     mutate(
-#       team = case_when(team == "App State" ~ "Appalachian State", TRUE ~ team)
-#     )
-#   SunBelt_VoA_Rating_Chart <- ggplot(
-#     SunBelt_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Overall Rating") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("Sun Belt Vortex of Accuracy Overall Ratings by Week") +
-#     expand_limits(
-#       y = c(
-#         floor(floor(min(SunBelt_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
-#         ceiling((ceiling(max(SunBelt_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
-#       )
-#     ) +
-#     scale_y_continuous(
-#       breaks = seq(
-#         (floor((floor(min(SunBelt_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         (ceiling((ceiling(max(SunBelt_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-#         by = 5
-#       )
-#     ) +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   SunBelt_VoA_Rating_Chart
-#   ggsave(
-#     SunBelt_Output_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
+  ### Pioneer Conference charts
+  Pioneer_VoA_Rating_Chart <- ggplot(
+    Pioneer_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Pioneer Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(Pioneer_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(Pioneer_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(Pioneer_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(Pioneer_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  Pioneer_VoA_Rating_Chart
+  ggsave(
+    Pioneer_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-#   SunBelt_VoA_Ranking_Chart <- ggplot(
-#     SunBelt_Ratings_Rks,
-#     aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
-#   ) +
-#     theme_bw() +
-#     geom_line(linewidth = 1.5) +
-#     # geom_point(size = 5) +
-#     xlab("Week") +
-#     ylab("VoA Ranking") +
-#     labs(
-#       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-#     ) +
-#     ggtitle("Sun Belt Vortex of Accuracy Rankings by Week") +
-#     expand_limits(y = c(0, 130)) +
-#     scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
-#     scale_y_reverse() +
-#     scale_x_continuous(
-#       breaks = c(
-#         0,
-#         1,
-#         2,
-#         3,
-#         4,
-#         5,
-#         6,
-#         7,
-#         8,
-#         9,
-#         10,
-#         11,
-#         12,
-#         13,
-#         14,
-#         15,
-#         16,
-#         17,
-#         18,
-#         19,
-#         20
-#       )
-#     ) +
-#     geom_cfb_logos(aes(team = school, width = 0.035)) +
-#     theme(
-#       plot.title = element_text(size = 35, hjust = 0.5),
-#       axis.text.x = element_text(size = 20),
-#       axis.text.y = element_text(size = 20),
-#       axis.title.x = element_text(size = 22),
-#       axis.title.y = element_text(size = 22),
-#       legend.text = element_text(size = 20)
-#     )
-#   SunBelt_VoA_Ranking_Chart
-#   ggsave(
-#     SunBelt_Ranking_filename,
-#     path = output_dir,
-#     width = 50,
-#     height = 40,
-#     units = 'cm'
-#   )
-# } else {
-#   print("No charts until Week 3!")
-# }
+  Pioneer_VoA_Ranking_Chart <- ggplot(
+    Pioneer_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Pioneer Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  Pioneer_VoA_Ranking_Chart
+  ggsave(
+    Pioneer_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-# ### Creating Histograms of VoA Output for all teams, and separate plots for power 5 and group of 5 teams subsetted out
-# ## plots will be made for each week, not just after week 2 like Unintelligble Charts will
-# ### subsetting teams
-# Power5_VoA <- VoAVariables |>
-#   filter(
-#     conference == "ACC" |
-#       conference == "Big 12" |
-#       conference == "Big Ten" |
-#       conference == "FCS Independents" |
-#       conference == "SEC"
-#   ) |>
-#   filter(school != "Connecticut" & school != "UMass")
+  ### SoCon Conference charts
+  SoCon_VoA_Rating_Chart <- ggplot(
+    SoCon_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("SoCon Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(SoCon_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(SoCon_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(SoCon_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(SoCon_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  SoCon_VoA_Rating_Chart
+  ggsave(
+    SoCon_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
-# Group5_VoA <- VoAVariables |>
-#   filter(
-#     conference == "Pac-12" |
-#       conference == "American Athletic" |
-#       conference == "Conference USA" |
-#       conference == "FCS Independents" |
-#       conference == "Mid-American" |
-#       conference == "Mountain West" |
-#       conference == "Sun Belt"
-#   ) |>
-#   filter(school != "Notre Dame")
+  SoCon_VoA_Ranking_Chart <- ggplot(
+    SoCon_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("SoCon Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  SoCon_VoA_Ranking_Chart
+  ggsave(
+    SoCon_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
 
+  ### Southland Conference charts
+  Southland_VoA_Rating_Chart <- ggplot(
+    Southland_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Southland Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(Southland_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(Southland_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(Southland_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(Southland_Ratings_Rks$VoA_Rating_Ovr)) / 10)) *
+          10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  Southland_VoA_Rating_Chart
+  ggsave(
+    Southland_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  Southland_VoA_Ranking_Chart <- ggplot(
+    Southland_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("Southland Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  Southland_VoA_Ranking_Chart
+  ggsave(
+    Southland_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  ### SWAC Conference charts
+  SWAC_VoA_Rating_Chart <- ggplot(
+    SWAC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Overall Rating") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("SWAC Vortex of Accuracy Overall Ratings by Week") +
+    expand_limits(
+      y = c(
+        floor(floor(min(SWAC_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+        ceiling((ceiling(max(SWAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+      )
+    ) +
+    scale_y_continuous(
+      breaks = seq(
+        (floor((floor(min(SWAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        (ceiling((ceiling(max(SWAC_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+        by = 5
+      )
+    ) +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  SWAC_VoA_Rating_Chart
+  ggsave(
+    SWAC_Output_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+
+  SWAC_VoA_Ranking_Chart <- ggplot(
+    SWAC_Ratings_Rks,
+    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  ) +
+    theme_bw() +
+    geom_line(linewidth = 1.5) +
+    geom_image(aes(image = logo), size = 0.055) +
+    # geom_point(size = 5) +
+    xlab("Week") +
+    ylab("VoA Ranking") +
+    labs(
+      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+    ) +
+    ggtitle("SWAC Vortex of Accuracy Rankings by Week") +
+    expand_limits(y = c(0, 130)) +
+    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+    scale_y_reverse() +
+    scale_x_continuous(
+      breaks = c(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      )
+    ) +
+    # geom_cfb_logos(aes(team = school, width = 0.035)) +
+    theme(
+      plot.title = element_text(size = 35, hjust = 0.5),
+      axis.text.x = element_text(size = 20),
+      axis.text.y = element_text(size = 20),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      legend.text = element_text(size = 20)
+    )
+  SWAC_VoA_Ranking_Chart
+  ggsave(
+    SWAC_Ranking_filename,
+    path = output_dir,
+    width = 50,
+    height = 40,
+    units = 'cm'
+  )
+} else {
+  print("No charts until Week 3!")
+}
+
+### Creating Histograms of VoA Output for all teams, and separate plots for power 5 and group of 5 teams subsetted out
+## plots will be made for each week, not just after week 2 like Unintelligble Charts will
 ### making histogram of ratings for all FCS teams
 FCS_Rating_histogram <- ggplot(VoAVariables, aes(VoA_Rating_Ovr)) +
   theme_bw() +
@@ -7436,21 +7913,20 @@ ggsave(
 #   units = 'cm'
 # )
 
-### repeating App St geom_cfb_logos() plot fix
+### geom_cfb_logos() from cfbfastR doesn't work in the ggplots so I'm adding logos from CFBD_team_info here
+Logos <- cfbd_team_info(only_fbs = FALSE, year = as.integer(year)) |>
+  filter(school %in% VoAVariables$school) |>
+  select(school, logo)
 VoAVariables_plot <- VoAVariables |>
-  mutate(
-    school = case_when(
-      school == "App State" ~ "Appalachian State",
-      TRUE ~ school
-    )
-  )
+  left_join(Logos, by = "school")
 ### Creating Scatterplot of VoA_Output vs VoA_Rating
 VoA_Output_Rating_plot <- ggplot(
   VoAVariables_plot,
   aes(x = VoA_Output, y = VoA_Rating_Ovr)
 ) +
   theme_bw() +
-  geom_point(size = 2) +
+  geom_image(aes(image = logo), size = 0.05) +
+  # geom_point(size = 2) +
   geom_smooth() +
   # geom_cfb_logos(aes(team = school), width = 0.035) +
   scale_x_continuous(breaks = seq(0, 135, 10)) +
@@ -7484,7 +7960,8 @@ VoA_OffDef_Rating_plot <- ggplot(
   aes(x = OffVoA_MeanRating, y = DefVoA_MeanRating)
 ) +
   theme_bw() +
-  geom_point(size = 5) +
+  geom_image(aes(image = logo), size = 0.05) +
+  # geom_point(size = 5) +
   geom_smooth() +
   scale_y_reverse() +
   # geom_cfb_logos(aes(team = school), width = 0.035) +
@@ -7525,7 +8002,8 @@ if (as.integer(cfb_week) <= 9) {
     )
   ) +
     theme_bw() +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
+    geom_image(aes(image = logo), size = 0.05) +
     # geom_smooth() +
     scale_y_reverse() +
     # geom_cfb_logos(aes(team = school), width = 0.035) +
@@ -7549,11 +8027,12 @@ if (as.integer(cfb_week) <= 9) {
     )
 } else {
   VoA_OffDef_EPA_plot <- ggplot(
-    VoAVariables_plot,
+    VoAVariables,
     aes(x = adj_off_epa, y = adj_def_epa)
   ) +
     theme_bw() +
-    geom_point(size = 5) +
+    # geom_point(size = 5) +
+    geom_image(aes(image = logo), size = 0.05) +
     # geom_smooth() +
     scale_y_reverse() +
     # geom_cfb_logos(aes(team = school), width = 0.035) +

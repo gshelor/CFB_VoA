@@ -659,7 +659,7 @@ extract_pbp_stats <- function(
     ) |>
     drop_na()
 
-  ### fitting mixed effects model, treating posessing team and defensive team as random effects
+  ### fitting mixed effects model, treating possessing team and defensive team as random effects
   set.seed(802)
   epa_mixed_model <- lmer(
     epa_ppa_mean ~ hfa +
