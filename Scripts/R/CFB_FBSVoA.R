@@ -54,8 +54,8 @@ Pac12_text <- "Pac12"
 SEC_text <- "SEC"
 SunBelt_text <- "SunBelt"
 FBS_text <- "FBS"
-Power_Five_text <- "Power 5"
-Group_Five_text <- "Group of 5"
+Power_Four_text <- "Power 4"
+Group_Six_text <- "Group of 6"
 Rating_text <- "_FBSRatings_Chart.png"
 Ranking_text <- "_FBSRankings_Chart.png"
 Histogram_text <- "_FBSRatingHist.png"
@@ -74,19 +74,19 @@ FBS_hist_title <- paste(
   VoA_text,
   "Ratings"
 )
-Power5_hist_title <- paste(
+Power4_hist_title <- paste(
   year,
   week_text,
   cfb_week,
-  Power_Five_text,
+  Power_Four_text,
   VoA_text,
   "Ratings"
 )
-Group5_hist_title <- paste(
+Group6_hist_title <- paste(
   year,
   week_text,
   cfb_week,
-  Group_Five_text,
+  Group_Six_text,
   VoA_text,
   "Ratings"
 )
@@ -315,21 +315,21 @@ FBS_hist_filename <- paste(
   Histogram_text,
   sep = ""
 )
-Power5_hist_filename <- paste(
+Power4_hist_filename <- paste(
   year,
   week_text,
   cfb_week,
   "_",
-  Power_Five_text,
+  Power_Four_text,
   Histogram_text,
   sep = ""
 )
-Group5_hist_filename <- paste(
+Group6_hist_filename <- paste(
   year,
   week_text,
   cfb_week,
   "_",
-  Group_Five_text,
+  Group_Six_text,
   Histogram_text,
   sep = ""
 )
@@ -7451,7 +7451,7 @@ if (as.integer(cfb_week) >= 3) {
 ### Creating Histograms of VoA Output for all teams, and separate plots for power 5 and group of 5 teams subsetted out
 ## plots will be made for each week, not just after week 2 like Unintelligble Charts will
 ### subsetting teams
-Power5_VoA <- VoAVariables |>
+Power4_VoA <- VoAVariables |>
   filter(
     conference == "ACC" |
       conference == "Big 12" |
@@ -7459,9 +7459,9 @@ Power5_VoA <- VoAVariables |>
       conference == "FBS Independents" |
       conference == "SEC"
   ) |>
-  filter(school != "Connecticut" & school != "UMass")
+  filter(school != "Connecticut")
 
-Group5_VoA <- VoAVariables |>
+Group6_VoA <- VoAVariables |>
   filter(
     conference == "Pac-12" |
       conference == "American Athletic" |
@@ -7503,12 +7503,12 @@ ggsave(
 )
 
 ### histogram of ratings for Power 5 (power 4?) teams
-Power5_Rating_histogram <- ggplot(Power5_VoA, aes(VoA_Rating_Ovr)) +
+Power4_Rating_histogram <- ggplot(Power4_VoA, aes(VoA_Rating_Ovr)) +
   theme_bw() +
   geom_histogram(binwidth = 5, col = "black", fill = "blue") +
   scale_x_continuous(breaks = seq(-50, 40, 5)) +
   scale_y_continuous(breaks = seq(0, 50, 5)) +
-  ggtitle(Power5_hist_title) +
+  ggtitle(Power4_hist_title) +
   xlab("VoA Rating") +
   ylab("Frequency") +
   labs(
@@ -7522,9 +7522,9 @@ Power5_Rating_histogram <- ggplot(Power5_VoA, aes(VoA_Rating_Ovr)) +
     axis.title.y = element_text(size = 22),
     legend.text = element_text(size = 20)
   )
-Power5_Rating_histogram
+Power4_Rating_histogram
 ggsave(
-  Power5_hist_filename,
+  Power4_hist_filename,
   path = output_dir,
   width = 50,
   height = 40,
@@ -7532,12 +7532,12 @@ ggsave(
 )
 
 ### histogram of VoA ratings for G5 teams
-Group5_Rating_histogram <- ggplot(Group5_VoA, aes(VoA_Rating_Ovr)) +
+Group6_Rating_histogram <- ggplot(Group6_VoA, aes(VoA_Rating_Ovr)) +
   theme_bw() +
   geom_histogram(binwidth = 5, col = "black", fill = "pink") +
   scale_x_continuous(breaks = seq(-50, 40, 5)) +
   scale_y_continuous(breaks = seq(0, 50, 5)) +
-  ggtitle(Group5_hist_title) +
+  ggtitle(Group6_hist_title) +
   xlab("VoA Rating") +
   ylab("Frequency") +
   labs(
@@ -7551,9 +7551,9 @@ Group5_Rating_histogram <- ggplot(Group5_VoA, aes(VoA_Rating_Ovr)) +
     axis.title.y = element_text(size = 22),
     legend.text = element_text(size = 20)
   )
-Group5_Rating_histogram
+Group6_Rating_histogram
 ggsave(
-  Group5_hist_filename,
+  Group6_hist_filename,
   path = output_dir,
   width = 50,
   height = 40,
