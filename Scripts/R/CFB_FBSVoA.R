@@ -6012,14 +6012,14 @@ if (as.integer(cfb_week) >= 3) {
   ### each conference (including independents) gets separate charts
   ### given that the Pac12 is now really the 2Pac, they get lumped in with the Indies
   AAC_Ratings_Rks <- Full_Ratings_Rks |>
-    filter(conference == "American Athletic")
+    filter(conference == "American Athletic" | school == "UConn")
   ACC_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "ACC")
   Big12_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Big 12")
   Big10_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Big Ten")
   CUSA_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Conference USA")
   ### lumping the 2Pac with the Indys for unintelligible chart purposes
-  Indy_Ratings_Rks <- Full_Ratings_Rks |>
-    filter(conference == "FBS Independents" | conference == "Pac-12")
+  # Indy_Ratings_Rks <- Full_Ratings_Rks |>
+  #   filter(conference == "FBS Independents")
   MAC_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Mid-American")
   MWC_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Mountain West")
   Pac12_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Pac-12")
@@ -6668,133 +6668,133 @@ if (as.integer(cfb_week) >= 3) {
     units = 'cm'
   )
 
-  Indy_VoA_Rating_Chart <- ggplot(
-    Indy_Ratings_Rks,
-    aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
-  ) +
-    theme_bw() +
-    geom_line(linewidth = 1.5) +
-    # geom_point(size = 5) +
-    xlab("Week") +
-    ylab("VoA Overall Rating") +
-    labs(
-      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-    ) +
-    ggtitle("Independents Vortex of Accuracy Overall Ratings by Week") +
-    expand_limits(
-      y = c(
-        floor(floor(min(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
-        ceiling((ceiling(max(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
-      )
-    ) +
-    scale_y_continuous(
-      breaks = seq(
-        (floor((floor(min(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-        (ceiling((ceiling(max(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
-        by = 5
-      )
-    ) +
-    scale_x_continuous(
-      breaks = c(
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9,
-        10,
-        11,
-        12,
-        13,
-        14,
-        15,
-        16,
-        17,
-        18,
-        19,
-        20
-      )
-    ) +
-    geom_cfb_logos(aes(team = school, width = 0.035)) +
-    theme(
-      plot.title = element_text(size = 35, hjust = 0.5),
-      axis.text.x = element_text(size = 20),
-      axis.text.y = element_text(size = 20),
-      axis.title.x = element_text(size = 22),
-      axis.title.y = element_text(size = 22),
-      legend.text = element_text(size = 20)
-    )
-  Indy_VoA_Rating_Chart
-  ggsave(
-    Indy_Output_filename,
-    path = output_dir,
-    width = 50,
-    height = 40,
-    units = 'cm'
-  )
+  # Indy_VoA_Rating_Chart <- ggplot(
+  #   Indy_Ratings_Rks,
+  #   aes(x = CFB_Week, y = VoA_Rating_Ovr, group = school)
+  # ) +
+  #   theme_bw() +
+  #   geom_line(linewidth = 1.5) +
+  #   # geom_point(size = 5) +
+  #   xlab("Week") +
+  #   ylab("VoA Overall Rating") +
+  #   labs(
+  #     caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+  #   ) +
+  #   ggtitle("Independents Vortex of Accuracy Overall Ratings by Week") +
+  #   expand_limits(
+  #     y = c(
+  #       floor(floor(min(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10) * 10,
+  #       ceiling((ceiling(max(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10
+  #     )
+  #   ) +
+  #   scale_y_continuous(
+  #     breaks = seq(
+  #       (floor((floor(min(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+  #       (ceiling((ceiling(max(Indy_Ratings_Rks$VoA_Rating_Ovr)) / 10)) * 10),
+  #       by = 5
+  #     )
+  #   ) +
+  #   scale_x_continuous(
+  #     breaks = c(
+  #       0,
+  #       1,
+  #       2,
+  #       3,
+  #       4,
+  #       5,
+  #       6,
+  #       7,
+  #       8,
+  #       9,
+  #       10,
+  #       11,
+  #       12,
+  #       13,
+  #       14,
+  #       15,
+  #       16,
+  #       17,
+  #       18,
+  #       19,
+  #       20
+  #     )
+  #   ) +
+  #   geom_cfb_logos(aes(team = school, width = 0.035)) +
+  #   theme(
+  #     plot.title = element_text(size = 35, hjust = 0.5),
+  #     axis.text.x = element_text(size = 20),
+  #     axis.text.y = element_text(size = 20),
+  #     axis.title.x = element_text(size = 22),
+  #     axis.title.y = element_text(size = 22),
+  #     legend.text = element_text(size = 20)
+  #   )
+  # Indy_VoA_Rating_Chart
+  # ggsave(
+  #   Indy_Output_filename,
+  #   path = output_dir,
+  #   width = 50,
+  #   height = 40,
+  #   units = 'cm'
+  # )
 
-  Indy_VoA_Ranking_Chart <- ggplot(
-    Indy_Ratings_Rks,
-    aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
-  ) +
-    theme_bw() +
-    geom_line(linewidth = 1.5) +
-    # geom_point(size = 5) +
-    xlab("Week") +
-    ylab("VoA Ranking") +
-    labs(
-      caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
-    ) +
-    ggtitle("Independents Vortex of Accuracy Rankings by Week") +
-    expand_limits(y = c(0, 140)) +
-    scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
-    scale_y_reverse() +
-    scale_x_continuous(
-      breaks = c(
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9,
-        10,
-        11,
-        12,
-        13,
-        14,
-        15,
-        16,
-        17,
-        18,
-        19,
-        20
-      )
-    ) +
-    geom_cfb_logos(aes(team = school, width = 0.035)) +
-    theme(
-      plot.title = element_text(size = 35, hjust = 0.5),
-      axis.text.x = element_text(size = 20),
-      axis.text.y = element_text(size = 20),
-      axis.title.x = element_text(size = 22),
-      axis.title.y = element_text(size = 22),
-      legend.text = element_text(size = 20)
-    )
-  Indy_VoA_Ranking_Chart
-  ggsave(
-    Indy_Ranking_filename,
-    path = output_dir,
-    width = 50,
-    height = 40,
-    units = 'cm'
-  )
+  # Indy_VoA_Ranking_Chart <- ggplot(
+  #   Indy_Ratings_Rks,
+  #   aes(x = CFB_Week, y = VoA_Ranking_Ovr, group = school)
+  # ) +
+  #   theme_bw() +
+  #   geom_line(linewidth = 1.5) +
+  #   # geom_point(size = 5) +
+  #   xlab("Week") +
+  #   ylab("VoA Ranking") +
+  #   labs(
+  #     caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
+  #   ) +
+  #   ggtitle("Independents Vortex of Accuracy Rankings by Week") +
+  #   expand_limits(y = c(0, 140)) +
+  #   scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100, 120, 140)) +
+  #   scale_y_reverse() +
+  #   scale_x_continuous(
+  #     breaks = c(
+  #       0,
+  #       1,
+  #       2,
+  #       3,
+  #       4,
+  #       5,
+  #       6,
+  #       7,
+  #       8,
+  #       9,
+  #       10,
+  #       11,
+  #       12,
+  #       13,
+  #       14,
+  #       15,
+  #       16,
+  #       17,
+  #       18,
+  #       19,
+  #       20
+  #     )
+  #   ) +
+  #   geom_cfb_logos(aes(team = school, width = 0.035)) +
+  #   theme(
+  #     plot.title = element_text(size = 35, hjust = 0.5),
+  #     axis.text.x = element_text(size = 20),
+  #     axis.text.y = element_text(size = 20),
+  #     axis.title.x = element_text(size = 22),
+  #     axis.title.y = element_text(size = 22),
+  #     legend.text = element_text(size = 20)
+  #   )
+  # Indy_VoA_Ranking_Chart
+  # ggsave(
+  #   Indy_Ranking_filename,
+  #   path = output_dir,
+  #   width = 50,
+  #   height = 40,
+  #   units = 'cm'
+  # )
 
   MAC_VoA_Rating_Chart <- ggplot(
     MAC_Ratings_Rks,

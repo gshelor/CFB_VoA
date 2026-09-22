@@ -57,8 +57,6 @@ SoCon_text <- "SoCon"
 Southland_text <- "Southland"
 SWAC_text <- "SWAC"
 FCS_text <- "FCS"
-# Power_Five_text <- "Power 5"
-# Group_Five_text <- "Group of 5"
 Rating_text <- "_FCSRatings_Chart.png"
 Ranking_text <- "_FCSRankings_Chart.png"
 Histogram_text <- "_FCSRatingHist.png"
@@ -77,22 +75,6 @@ FCS_hist_title <- paste(
   VoA_text,
   "Ratings"
 )
-# Power5_hist_title <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   Power_Five_text,
-#   VoA_text,
-#   "Ratings"
-# )
-# Group5_hist_title <- paste(
-#   year,
-#   week_text,
-#   cfb_week,
-#   Group_Five_text,
-#   VoA_text,
-#   "Ratings"
-# )
 Output_Rating_Plot_title <- paste(
   year,
   week_text,
