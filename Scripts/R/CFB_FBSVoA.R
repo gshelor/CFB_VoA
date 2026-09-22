@@ -319,8 +319,8 @@ Power4_hist_filename <- paste(
   year,
   week_text,
   cfb_week,
-  "_",
-  Power_Four_text,
+  "_P4",
+  # Power_Four_text,
   Histogram_text,
   sep = ""
 )
@@ -328,8 +328,8 @@ Group6_hist_filename <- paste(
   year,
   week_text,
   cfb_week,
-  "_",
-  Group_Six_text,
+  "_G6",
+  # Group_Six_text,
   Histogram_text,
   sep = ""
 )
