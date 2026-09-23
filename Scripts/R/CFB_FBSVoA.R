@@ -6013,7 +6013,8 @@ if (as.integer(cfb_week) >= 3) {
   ### given that the Pac12 is now really the 2Pac, they get lumped in with the Indies
   AAC_Ratings_Rks <- Full_Ratings_Rks |>
     filter(conference == "American Athletic" | school == "UConn")
-  ACC_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "ACC")
+  ACC_Ratings_Rks <- Full_Ratings_Rks |>
+    filter(conference == "ACC" | school == "Notre Dame")
   Big12_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Big 12")
   Big10_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Big Ten")
   CUSA_Ratings_Rks <- Full_Ratings_Rks |> filter(conference == "Conference USA")

@@ -243,7 +243,25 @@ else:
             ((pl.col('proj_margin') > pl.col('mean_spread')) & (pl.col('result') > pl.col('mean_spread')))).then(1)
         .otherwise(0)
     ).with_columns(
-        VoA_AEATS_winner = pl.when(pl.col('VoA_AE') < pl.col('vegas_AE')).then(1).otherwise(0)
+        VoA_AEATS_winner = pl.when(pl.col('VoA_AE') < pl.col('vegas_AE')).then(1).otherwise(0),
+        payout = pl.when(
+            pl.col("VoA_correct_winner") == 0).then(-1).when(
+                ### home wins
+                (pl.col("proj_margin") < 0) & (pl.col("home_moneyline") < 0)
+            ).then(1 + (100 / pl.col("home_moneyline").abs())).when(
+                (pl.col("proj_margin") < 0) & (pl.col("home_moneyline") > 0)
+            ).then(1 + (pl.col("home_moneyline") / 100)).when(
+                ### away wins
+                (pl.col("proj_margin") > 0) & (pl.col("away_moneyline") < 0)
+            ).then(1 + (100 / pl.col("away_moneyline").abs())).when(
+                (pl.col("proj_margin") > 0) & (pl.col("away_moneyline") > 0)
+            ).then(1 + (pl.col("away_moneyline") / 100)).otherwise(0)
+    ).with_columns(
+        profit = pl.when(
+            pl.col("VoA_correct_winner") == 0
+        ).then(-1).when(
+            pl.col("payout") == 0
+        ).then(0).otherwise(pl.col("payout") - 1)
     )
 
     ### filtering out games by subdivision or if cross-subdivision to calculate specific errors for those kinds of games
@@ -309,8 +327,14 @@ WeekAccuracy = pl.DataFrame({
     'VoA_FCS_ATS_win_pct': PrevWeekFCSGames['VoA_ATS_winner'].mean(),
     # 'VoA_crossdiv_ATS_win_pct': PrevWeekCrossDivGames['VoA_ATS_winner'].mean(),
     'VoA_FBS_AEATS_win_pct': PrevWeekFBSGames['VoA_AEATS_winner'].mean(),
-    'VoA_FCS_AEATS_win_pct': PrevWeekFCSGames['VoA_AEATS_winner'].mean()#,
+    'VoA_FCS_AEATS_win_pct': PrevWeekFCSGames['VoA_AEATS_winner'].mean(),
     # 'VoA_crossdiv_AEATS_win_pct': PrevWeekCrossDivGames['VoA_AEATS_winner'].mean()
+    'total_payout': LastWeekGames['payout'].sum(),
+    'total_fbs_payout': PrevWeekFBSGames['payout'].sum(),
+    'total_fcs_payout': PrevWeekFCSGames['payout'].sum(),
+    'total_profit': LastWeekGames['profit'].sum(),
+    'total_fbs_profit': PrevWeekFBSGames['profit'].sum(),
+    'total_fcs_profit': PrevWeekFCSGames['profit'].sum()
 }
 )
 
@@ -493,7 +517,13 @@ if int(cfb_week) >= 2:
         VoA_FCS_ATS_win_pct = FCSCompletedGames['VoA_ATS_winner'].mean(),
         VoA_AEATS_win_pct = CompletedGames['VoA_AEATS_winner'].mean(),
         VoA_FBS_AEATS_win_pct = FBSCompletedGames['VoA_AEATS_winner'].mean(),
-        VoA_FCS_AEATS_win_pct = FCSCompletedGames['VoA_AEATS_winner'].mean()
+        VoA_FCS_AEATS_win_pct = FCSCompletedGames['VoA_AEATS_winner'].mean(),
+        total_payout = CompletedGames['payout'].sum(),
+        total_fbs_payout = FBSCompletedGames['payout'].sum(),
+        total_fcs_payout = FCSCompletedGames['payout'].sum(),
+        total_profit = CompletedGames['profit'].sum(),
+        total_fbs_profit = FBSCompletedGames['profit'].sum(),
+        total_fcs_profit = FCSCompletedGames['profit'].sum()
         )
         
         
