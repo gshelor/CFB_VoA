@@ -310,8 +310,8 @@ FBS_hist_filename <- paste(
   year,
   week_text,
   cfb_week,
-  "_",
-  FBS_text,
+  # "_",
+  # FBS_text,
   Histogram_text,
   sep = ""
 )
@@ -7665,7 +7665,7 @@ if (as.integer(cfb_week) <= 9) {
       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
     ) +
     theme(
-      plot.title = element_text(size = 35, hjust = 0.5),
+      plot.title = element_text(size = 30, hjust = 0.5),
       axis.text.x = element_text(size = 20),
       axis.text.y = element_text(size = 20),
       axis.title.x = element_text(size = 22),
@@ -7693,7 +7693,7 @@ if (as.integer(cfb_week) <= 9) {
       caption = "chart by @gshelor, data from collegefootballdata.com API via cfbfastR"
     ) +
     theme(
-      plot.title = element_text(size = 35, hjust = 0.5),
+      plot.title = element_text(size = 30, hjust = 0.5),
       axis.text.x = element_text(size = 20),
       axis.text.y = element_text(size = 20),
       axis.title.x = element_text(size = 22),
