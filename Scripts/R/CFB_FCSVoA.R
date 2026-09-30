@@ -343,8 +343,8 @@ FCS_hist_filename <- paste(
   year,
   week_text,
   cfb_week,
-  "_",
-  FCS_text,
+  # "_",
+  # FCS_text,
   Histogram_text,
   sep = ""
 )
