@@ -125,6 +125,14 @@ if (as.integer(cfb_week) == 0) {
       paste0("AllD1", year, week_text, cfb_week, "VoA.csv")
     )
   )
+  ### writing out current VoA csv to different folder so I can easily read it in for rendering a table on my website
+  write_csv(
+    FinalAllD1VoA,
+    here(
+      "Data",
+      paste0("CurrentAllD1VoA.csv")
+    )
+  )
 } else {
   ##### Post Week 1 VoA subdivision-based ratings adjustment #####
   ### not refitting the mixed effects model to evaluate general margin difference between FBS and FCS because there's not enough data to justify it until the end of the season I think
@@ -283,6 +291,15 @@ if (as.integer(cfb_week) == 0) {
       "Data",
       paste0("VoA", year),
       paste0("AllD1", year, week_text, cfb_week, "VoA.csv")
+    )
+  )
+
+  ### writing out current VoA csv to different folder so I can easily read it in for rendering a table on my website
+  write_csv(
+    FinalAllD1VoA,
+    here(
+      "Data",
+      paste0("CurrentAllD1VoA.csv")
     )
   )
 }
