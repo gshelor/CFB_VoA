@@ -7,7 +7,7 @@
 start_time <- Sys.time()
 library(pacman)
 # fmt: skip
-p_load(tidyverse, gt, cfbfastR, here, RColorBrewer, gtExtras, cfbplotR, ggpubr, webshot2, cmdstanr, parallel, posterior, data.table, lme4, arrow, ggimage)
+p_load(tidyverse, gt, cfbfastR, here, RColorBrewer, gtExtras, cfbplotR, ggpubr, webshot2, cmdstanr, parallel, posterior, data.table, lme4, arrow, ggimage, dtplyr)
 ## used to use these packages
 # viridis, and also rstan since I'm switching to cmdstanr
 ### reading in script of functions (will be called later)

@@ -6,7 +6,7 @@
 ### loading packages
 library(pacman)
 # fmt: skip
-p_load(tidyverse, gt, cfbfastR, here, gtExtras, RColorBrewer, cfbplotR, webshot2, betareg, arrow)
+p_load(tidyverse, gt, cfbfastR, here, gtExtras, RColorBrewer, cfbplotR, webshot2, betareg, arrow, dtplyr, data.table)
 ### function to get the inverse of %in%
 `%nin%` <- Negate(`%in%`)
 ### Inputting year
