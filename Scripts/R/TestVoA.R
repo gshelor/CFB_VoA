@@ -5241,7 +5241,7 @@ nas_sum <- nas_sum |>
 nas_why <- nas_why |>
   filter(containsNAs == TRUE)
 nas_why_col <- VoAVariables |>
-  filter(is.na(off_ypp))
+  filter(is.na(fg_made_pg))
 # recruit_nas_teams <- anti_join(VoAVariables, recruit, by = "team")
 
 # colnames(VoAVariables)[apply(VoAVariables, 2, anyNA)]

@@ -1282,7 +1282,7 @@ if (as.integer(cfb_week) == 0) {
     filter(scoring_play == 1)
 } else if (as.integer(cfb_week) <= 5) {
   ##### WEEKS 1-5 Data Pull #####
-  ### reading in preseason VoA in case there are teams that didn't play in Week 0 or Week 1
+  ### reading in preseason VoA in case there are teams that didn't play in Week 0 or Week 1 or in case of NAs or for VoA df creation
   PreseasonVoA <- read_parquet(paste0(
     data_dir,
     "/",
@@ -1517,7 +1517,16 @@ if (as.integer(cfb_week) == 0) {
     filter(scoring_play == 1)
 } else if (as.integer(cfb_week) <= 9) {
   ##### WEEKS 6-9 Data Pull #####
-  ### assuming that everyone will have played a game that's in the PBP dataset by now so not reading in the preseason VoA, just the PY stats so I don't have to recalculate those in the extracting stats section of the script
+  ### reading in preseason VoA in case there are teams that didn't play in Week 0 or Week 1 or in case of NAs or for VoA df creation
+  PreseasonVoA <- read_parquet(paste0(
+    data_dir,
+    "/",
+    year,
+    week_text,
+    0,
+    "_",
+    VoAString
+  ))
   ### reading in PY data (before rank columns are applied) so I can join appropriate PY data to VoAVariables before weighted variables are calculated
   PYData <- read_parquet(here(
     "Data",
@@ -1525,7 +1534,8 @@ if (as.integer(cfb_week) == 0) {
     "PYData",
     paste0("FCSPYData", year, ".parquet")
   )) |>
-    select(school, ends_with("_PY1"))
+    select(school, ends_with("_PY1")) |>
+    select(-one_of(c("recruit_pts_PY2", "recruit_pts_PY1")))
 
   ### grabbing team info which will be turned into VoAVariables
   ## filtering to make sure each dataframe only includes D1 teams
@@ -1750,7 +1760,7 @@ if (as.integer(cfb_week) == 0) {
   # VoAVariables$elevation <- as.numeric(VoAVariables$elevation)
 
   ### pulling in completed games as part of opponent-adjustment of stats later
-  ### completed games
+  ### completed g2ames
   CompletedGames <- cfbd_game_info(as.integer(year) - 1) |>
     filter(completed == TRUE) |>
     filter(
@@ -2156,9 +2166,17 @@ if (as.integer(cfb_week) == 0) {
     STPlays = PBP_STPlays
   )
 
+  ### subsetting weighted preseason variables for substitution in cases when teams don't have data available or haven't played a game
+  WeightedPreseasonVoAVars <- PreseasonVoA |>
+    select(school, starts_with("weighted_"))
+
   ### joining relevant PY data to current season data
   VoAVariables <- VoAVariables |>
     left_join(PYData, by = "school")
+
+  ### some columns have NAs in them for some reason
+  VoAVariables <- fix_VoA_NA_cols(VoAVariables) |>
+    select(-starts_with("weighted_"))
 } else {
   ##### Week 10-End of Season CURRENT SEASON ONLY DF Merge #####
   ### Extracting PBP data and opponent-adjusted data for df to be used for inference/current season's ratings

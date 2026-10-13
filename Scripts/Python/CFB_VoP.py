@@ -485,7 +485,7 @@ else:
 VoP_WP_datalist = {
     "N": PrevVoAPreds.height,
     "win_loss": PrevVoAPreds["straight_up_win"].to_numpy(),
-    "win_margin": PrevVoAPreds["proj_margin"].abs().to_numpy(),
+    "win_margin": PrevVoAPreds["proj_margin"].abs().to_numpy()
 }
 
 cores = max(1, multiprocessing.cpu_count() // 2)
@@ -504,7 +504,7 @@ WP_VoP_fit = WP_VoP_model.sample(
     iter_sampling=10000,
     iter_warmup=2500,
     seed=802,
-    parallel_chains=cores,
+    parallel_chains=cores
 )
 
 ### summarizing and diagnosing model
@@ -519,6 +519,7 @@ print(WP_VoP_fit.diagnose())
 #     "CFBVoP_StanWPModel.csv"
 # ))
 
+### extracting parameters from Stan VoP Win Probability model
 WP_VoP_pars = pl.from_pandas(WP_VoP_fit.draws_pd(vars=["alpha", "beta_score"]))
 
 WinProb_x = PrevVoAPreds['proj_margin'].abs()

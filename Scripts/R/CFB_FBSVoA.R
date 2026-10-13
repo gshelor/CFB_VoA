@@ -1486,13 +1486,25 @@ if (as.integer(cfb_week) == 0) {
   ##### WEEKS 6-9 Data Pull #####
   ### assuming that everyone will have played a game that's in the PBP dataset by now so not reading in the preseason VoA, just the PY stats so I don't have to recalculate those in the extracting stats section of the script
   ### reading in PY data (before rank columns are applied) so I can join appropriate PY data to VoAVariables before weighted variables are calculated
+  ### reading in preseason VoA in case there are teams that didn't play in Week 0 or Week 1 or for VoAVars df creation
+  PreseasonVoA <- read_parquet(paste0(
+    data_dir,
+    "/",
+    year,
+    week_text,
+    0,
+    "_",
+    VoAString
+  ))
+
   PYData <- read_parquet(here(
     "Data",
     paste0("VoA", year),
     "PYData",
     paste0("PYData", year, ".parquet")
   )) |>
-    select(school, ends_with("_PY1"))
+    select(school, ends_with("_PY1")) |>
+    select(-one_of(c("recruit_pts_PY2", "recruit_pts_PY1")))
 
   ### grabbing team info which will be turned into VoAVariables
   ## filtering to make sure each dataframe only includes D1 teams
@@ -1708,6 +1720,16 @@ if (as.integer(cfb_week) == 0) {
     filter(scoring_play == 1)
 } else {
   ##### CURRENT SEASON STATS ONLY Data Pull #####
+  ### reading in preseason VoA in case there are teams that didn't play in Week 0 or Week 1 or for VoAStats df creation
+  PreseasonVoA <- read_parquet(paste0(
+    data_dir,
+    "/",
+    year,
+    week_text,
+    0,
+    "_",
+    VoAString
+  ))
   ### grabbing team info which will be turned into VoAVariables
   ## filtering to make sure each dataframe only includes D1 teams
   D1Teams <- cfbd_team_info(only_fbs = FALSE, year = as.integer(year)) |>
@@ -2219,9 +2241,115 @@ if (as.integer(cfb_week) == 0) {
     STPlays = PBP_STPlays
   )
 
+  ### subsetting weighted preseason variables for substitution in cases when teams don't have data available or haven't played a game
+  WeightedPreseasonVoAVars <- PreseasonVoA |>
+    select(school, starts_with("weighted_"))
+
   ### joining relevant PY data to current season data
+  ### fixing NAs in specific columns
+  ## if more columns produce NAs in future years, they'll be added here then
   VoAVariables <- VoAVariables |>
-    left_join(PYData, by = "school")
+    left_join(PYData, by = "school") |>
+    left_join(WeightedPreseasonVoAVars, by = "school") |>
+    mutate(
+      off_passing_downs_explosiveness = case_when(
+        is.na(off_passing_downs_explosiveness) ~ weighted_off_explosiveness,
+        TRUE ~ off_passing_downs_explosiveness
+      ),
+      # def_passing_downs_explosiveness = case_when(
+      #   is.na(def_passing_downs_explosiveness) ~ weighted_def_explosiveness,
+      #   TRUE ~ def_passing_downs_explosiveness
+      # ),
+      # off_fourth_conv_rate = case_when(
+      #   is.na(off_fourth_conv_rate) ~ 0,
+      #   TRUE ~ off_fourth_conv_rate
+      # ),
+      # def_fourth_conv_rate = case_when(
+      #   is.na(def_fourth_conv_rate) ~ 0,
+      #   TRUE ~ def_fourth_conv_rate
+      # ),
+      # off_power_success = case_when(
+      #   is.na(off_power_success) ~ weighted_off_success_rate,
+      #   TRUE ~ off_power_success
+      # ),
+      # def_power_success = case_when(
+      #   is.na(def_power_success) ~ weighted_def_success_rate,
+      #   TRUE ~ def_power_success
+      # ),
+      # off_pts_per_opp = case_when(
+      #   is.na(off_pts_per_opp) ~ weighted_off_pts_per_opp,
+      #   TRUE ~ off_pts_per_opp
+      # ),
+      # def_pts_per_opp = case_when(
+      #   is.na(def_pts_per_opp) ~ weighted_def_pts_per_opp,
+      #   TRUE ~ def_pts_per_opp
+      # ),
+      off_turnovers_pg = case_when(
+        is.na(off_turnovers_pg) ~ off_turnovers_pg_PY1,
+        TRUE ~ off_turnovers_pg
+      ),
+      def_turnovers_pg = case_when(
+        is.na(def_turnovers_pg) ~ def_turnovers_pg_PY1,
+        TRUE ~ def_turnovers_pg
+      ),
+      # off_pts_scored = case_when(
+      #   is.na(off_pts_scored) ~ 0,
+      #   TRUE ~ off_pts_scored
+      # ),
+      # def_pts_allowed = case_when(
+      #   is.na(def_pts_allowed) ~ 0,
+      #   TRUE ~ def_pts_allowed
+      # ),
+      fg_rate = case_when(
+        is.na(fg_rate) ~ 0,
+        TRUE ~ fg_rate
+      ),
+      fg_rate_allowed = case_when(
+        is.na(fg_rate_allowed) ~ 0,
+        TRUE ~ fg_rate_allowed
+      ),
+      fg_made_pg = case_when(
+        is.na(fg_made_pg) ~ 0,
+        TRUE ~ fg_made_pg
+      ),
+      fg_made_pg_allowed = case_when(
+        is.na(fg_made_pg_allowed) ~ 0,
+        TRUE ~ fg_made_pg_allowed
+      ),
+      # punt_return_yds = case_when(
+      #   is.na(punt_return_yds) ~ 0,
+      #   TRUE ~ punt_return_yds
+      # ),
+      # punt_return_yds_allowed = case_when(
+      #   is.na(punt_return_yds_allowed) ~ 0,
+      #   TRUE ~ punt_return_yds_allowed
+      # ),
+      # kick_return_yds = case_when(
+      #   is.na(kick_return_yds) ~ 0,
+      #   TRUE ~ kick_return_yds
+      # ),
+      # kick_return_yds_allowed = case_when(
+      #   is.na(kick_return_yds_allowed) ~ 0,
+      #   TRUE ~ kick_return_yds_allowed
+      # ),
+      # off_ppg = case_when(
+      #   is.na(off_ppg) ~ weighted_off_ppg_mean,
+      #   TRUE ~ off_ppg
+      # ),
+      # def_ppg = case_when(
+      #   is.na(def_ppg) ~ weighted_def_ppg_mean,
+      #   TRUE ~ def_ppg
+      # ),
+      # punt_return_TDs = case_when(
+      #   is.na(punt_return_TDs) ~ 0,
+      #   TRUE ~ punt_return_TDs
+      # ),
+      punt_return_TDs_allowed = case_when(
+        is.na(punt_return_TDs_allowed) ~ 0,
+        TRUE ~ punt_return_TDs_allowed
+      )
+    ) |>
+    select(-starts_with("weighted_"))
 } else {
   ##### Week 10-End of Season CURRENT SEASON ONLY DF Merge #####
   ### Extracting PBP data and opponent-adjusted data for df to be used for inference/current season's ratings
