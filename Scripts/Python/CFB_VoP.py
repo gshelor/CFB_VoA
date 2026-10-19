@@ -516,7 +516,7 @@ print(WP_VoP_fit.diagnose())
 #     os.getcwd(),
 #     "Data",
 #     "FittedModels",
-#     "CFBVoP_StanWPModel.csv"
+#     "CFBVoP_WPModel"
 # ))
 
 ### extracting parameters from Stan VoP Win Probability model

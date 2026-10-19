@@ -135,7 +135,7 @@ CoastalAthletic_Output_filename <- paste(
   year,
   week_text,
   cfb_week,
-  CoastalAthletic_text,
+  str_replace_all(CoastalAthletic_text, " ", ""),
   Rating_text,
   sep = ""
 )
@@ -143,7 +143,7 @@ CoastalAthletic_Ranking_filename <- paste(
   year,
   week_text,
   cfb_week,
-  CoastalAthletic_text,
+  str_replace_all(CoastalAthletic_text, " ", ""),
   Ranking_text,
   sep = ""
 )

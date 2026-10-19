@@ -6,7 +6,7 @@
 ## win margin would be the target variable
 ##### loading packages #####
 library(pacman)
-p_load(here, tidyverse, lme4, arrow, cfbfastR, gt, gtExtras, dtplyr)
+p_load(here, tidyverse, lme4, arrow, cfbfastR, gt, gtExtras, dtplyr, data.table)
 
 ### Inputting year
 year <- readline(prompt = "What Year is it? ")

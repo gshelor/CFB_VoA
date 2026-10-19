@@ -4420,7 +4420,7 @@ if (as.integer(cfb_week) == 0) {
   ### creating matrix to hold ratings
   # Off_VoA_Ratings <- matrix(NA, length(Off_VoA_pars$b0), nrow(VoAVariables))
 
-  ### creating ratings
+  # ### creating ratings
   # set.seed(802)
   # for (p in 1:length(Off_VoA_pars$b0)) {
   #   for (t in 1:nrow(VoAVariables)) {
