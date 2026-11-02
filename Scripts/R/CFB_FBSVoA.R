@@ -2402,7 +2402,7 @@ if (as.integer(cfb_week) == 0) {
 } else if (as.integer(cfb_week) == 5) {
   py1weight <- 0.4
   py2weight <- 0.05
-  cyweight <- 0.5
+  cyweight <- 0.55
 } else if (as.integer(cfb_week) == 6) {
   py1weight <- 0.4
   cyweight <- 0.6

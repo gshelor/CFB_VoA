@@ -1535,7 +1535,7 @@ if (as.integer(cfb_week) == 0) {
     paste0("FCSPYData", year, ".parquet")
   )) |>
     select(school, ends_with("_PY1")) |>
-    select(-one_of(c("recruit_pts_PY2", "recruit_pts_PY1")))
+    select(-one_of(c("recruit_pts_PY1")))
 
   ### grabbing team info which will be turned into VoAVariables
   ## filtering to make sure each dataframe only includes D1 teams
@@ -2229,7 +2229,7 @@ if (as.integer(cfb_week) == 0) {
 } else if (as.integer(cfb_week) == 5) {
   py1weight <- 0.4
   py2weight <- 0.05
-  cyweight <- 0.5
+  cyweight <- 0.55
 } else if (as.integer(cfb_week) == 6) {
   py1weight <- 0.4
   cyweight <- 0.6
