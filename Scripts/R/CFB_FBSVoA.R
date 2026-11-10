@@ -5999,8 +5999,8 @@ VoA_Full_Table |>
     path = output_dir
   )
 
-## Resume VoA not produced until Week 10
-if (as.integer(cfb_week) > 9) {
+## Resume VoA not produced until Week 12
+if (as.integer(cfb_week) > 11) {
   ### Resume tables
   ResumeVoATop25Table
   ResumeVoATop25Table |>

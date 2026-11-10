@@ -1751,6 +1751,16 @@ if (as.integer(cfb_week) == 0) {
     filter(scoring_play == 1)
 } else {
   ##### CURRENT SEASON STATS ONLY Data Pull #####
+  ### reading in preseason VoA in case there are teams that didn't play in Week 0 or Week 1 or in case of NAs or for VoA df creation
+  PreseasonVoA <- read_parquet(paste0(
+    data_dir,
+    "/",
+    year,
+    week_text,
+    0,
+    "_",
+    VoAString
+  ))
   ### grabbing team info which will be turned into VoAVariables
   ## filtering to make sure each dataframe only includes D1 teams
   D1Teams <- cfbd_team_info(only_fbs = FALSE, year = as.integer(year)) |>
@@ -5801,8 +5811,8 @@ VoA_Full_Table |>
     path = output_dir
   )
 
-## Resume VoA not produced until Week 10
-if (as.integer(cfb_week) > 9) {
+## Resume VoA not produced until Week 12
+if (as.integer(cfb_week) > 11) {
   ### Resume tables
   ResumeVoATop25Table
   ResumeVoATop25Table |>
@@ -8027,7 +8037,7 @@ if (as.integer(cfb_week) <= 9) {
     )
 } else {
   VoA_OffDef_EPA_plot <- ggplot(
-    VoAVariables,
+    VoAVariables_plot,
     aes(x = adj_off_epa, y = adj_def_epa)
   ) +
     theme_bw() +
