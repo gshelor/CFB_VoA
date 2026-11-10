@@ -1,4 +1,5 @@
-##### trying to see something in the cfbd python api #####
+##### D1 College Football Vortex of Projection version 2.whatever #####
+### cfbfastR doesn't return the FCS games for some reason when I pull the games, so I'm just using python to hit the CFBD API directly, then making the same tables in R still because I like R's gt more than the python equivalent
 
 ##### importing libraries and setting up python environment and API connection #####
 import cfbd
@@ -21,8 +22,6 @@ import statsmodels.api as sm
 # from sklearn.linear_model import LogisticRegression
 import random
 # from great_tables import GT
-# import selenium
-# import sportsdataverse
 # import json
 import pickle
 
