@@ -1,0 +1,261 @@
+school,classification,conference,VoA_Rating_Ovr,VoA_Ranking_Ovr
+Wake Forest,fbs,ACC,38.6099359461248,1
+Georgia,fbs,SEC,36.12641459657242,2
+Ohio State,fbs,Big Ten,35.664191669627776,3
+Notre Dame,fbs,FBS Independents,35.15033613487779,4
+Alabama,fbs,SEC,33.87945734144143,5
+LSU,fbs,SEC,33.33505364999366,6
+Texas,fbs,SEC,31.5326579862194,7
+Miami,fbs,ACC,31.40837551301823,8
+Indiana,fbs,Big Ten,30.870191707070923,9
+South Carolina,fbs,SEC,29.948658504329224,10
+Tennessee,fbs,SEC,29.226288603512728,11
+Utah,fbs,Big 12,27.42916368667296,12
+Texas Tech,fbs,Big 12,25.658426063937483,13
+Nebraska,fbs,Big Ten,23.68351475805897,14
+Arizona,fbs,Big 12,23.0110814210833,15
+Oklahoma State,fbs,Big 12,22.704344558309582,16
+UCLA,fbs,Big Ten,22.531154786002414,17
+BYU,fbs,Big 12,22.221463014960896,18
+Duke,fbs,ACC,22.080567508299453,19
+USC,fbs,Big Ten,21.7996120233713,20
+SMU,fbs,ACC,21.651398183739037,21
+Ole Miss,fbs,SEC,21.514246263295064,22
+Boise State,fbs,Pac-12,21.390771539747988,23
+Memphis,fbs,American Athletic,21.297697365186217,24
+Kansas,fbs,Big 12,20.81780825305196,25
+UConn,fbs,FBS Independents,20.64889088516545,26
+Northwestern,fbs,Big Ten,20.648405696065804,27
+Florida,fbs,SEC,20.563889115743798,28
+Florida State,fbs,ACC,20.47572892794897,29
+Louisville,fbs,ACC,20.051121687414938,30
+Oregon,fbs,Big Ten,19.66842997105103,31
+Oklahoma,fbs,SEC,19.300084592891093,32
+Michigan,fbs,Big Ten,18.617663969856153,33
+Liberty,fbs,Conference USA,18.61605442547696,34
+Washington,fbs,Big Ten,18.362083385316947,35
+Texas A&M,fbs,SEC,18.335028109439207,36
+Penn State,fbs,Big Ten,18.163662345728675,37
+Iowa,fbs,Big Ten,18.097699277707722,38
+Houston,fbs,Big 12,17.83509534562547,39
+North Carolina,fbs,ACC,16.66391617056711,40
+Cincinnati,fbs,Big 12,16.60817957310504,41
+Auburn,fbs,SEC,16.1689946359063,42
+Mississippi State,fbs,SEC,16.14900095201893,43
+Tulsa,fbs,American Athletic,15.540560908910305,44
+James Madison,fbs,Sun Belt,15.019653156487694,45
+Baylor,fbs,Big 12,14.689335163983168,46
+Virginia Tech,fbs,ACC,14.65448347280142,47
+TCU,fbs,Big 12,14.624298977013625,48
+West Virginia,fbs,Big 12,14.211561294835747,49
+Oregon State,fbs,Pac-12,14.20556222211344,50
+Wisconsin,fbs,Big Ten,13.940656875694774,51
+Texas State,fbs,Pac-12,13.936019999207684,52
+Illinois,fbs,Big Ten,12.961939108471162,53
+Missouri,fbs,SEC,12.796744959959367,54
+Iowa State,fbs,Big 12,12.34409786073055,55
+Arizona State,fbs,Big 12,12.20637719451881,56
+Louisiana,fbs,Sun Belt,11.979511403889118,57
+Kansas State,fbs,Big 12,11.681271933178563,58
+Georgia Southern,fbs,Sun Belt,11.27366127734619,59
+New Mexico,fbs,Mountain West,9.590718137809159,60
+Jacksonville State,fbs,Conference USA,9.412064209745168,61
+Pittsburgh,fbs,ACC,9.295189549520506,62
+Syracuse,fbs,ACC,8.975945056386976,63
+Vanderbilt,fbs,SEC,8.910309907601937,64
+Toledo,fbs,Mid-American,8.627063375548463,65
+Colorado State,fbs,Pac-12,8.287197741165157,66
+Fresno State,fbs,Pac-12,7.460583334712678,67
+Kentucky,fbs,SEC,7.283401800539093,68
+North Texas,fbs,American Athletic,6.507413419254549,69
+Georgia State,fbs,Sun Belt,6.137829008184665,70
+UTSA,fbs,American Athletic,6.023984634315429,71
+Wyoming,fbs,Mountain West,5.714884044537367,72
+Clemson,fbs,ACC,5.664304409976014,73
+South Florida,fbs,American Athletic,5.449311836511377,74
+Boston College,fbs,ACC,3.989983717806581,75
+NC State,fbs,ACC,3.9577347625923487,76
+Colorado,fbs,Big 12,3.926191771895901,77
+South Alabama,fbs,Sun Belt,2.6261630345975924,78
+UAB,fbs,American Athletic,2.4933991908065014,79
+Louisiana Tech,fbs,Sun Belt,2.4580754310364696,80
+App State,fbs,Sun Belt,2.2124267302639744,81
+Rutgers,fbs,Big Ten,2.19517853601854,82
+Navy,fbs,American Athletic,1.847465736086015,83
+Arkansas,fbs,SEC,1.4117906304325132,84
+UNLV,fbs,Mountain West,1.0432995854195575,85
+Georgia Tech,fbs,ACC,0.7467062962868418,86
+UCF,fbs,Big 12,0.32939429394559916,87
+Michigan State,fbs,Big Ten,0.20150256397734267,88
+Maryland,fbs,Big Ten,0.16954616875576356,89
+Purdue,fbs,Big Ten,-0.056093540728411995,90
+Florida International,fbs,Conference USA,-0.4128235831402005,91
+Arkansas State,fbs,Sun Belt,-0.6949258813328445,92
+Temple,fbs,American Athletic,-0.7091552848896931,93
+Air Force,fbs,Mountain West,-0.7515009444026592,94
+Minnesota,fbs,Big Ten,-0.7848387170937698,95
+Miami (OH),fbs,Mid-American,-0.8684990922347815,96
+Utah State,fbs,Pac-12,-1.5697099937561774,97
+Western Michigan,fbs,Mid-American,-1.7644463375277795,98
+North Dakota State,fbs,Mountain West,-1.9985586896968108,99
+Virginia,fbs,ACC,-2.2091875530073004,100
+Florida Atlantic,fbs,American Athletic,-2.551564738153136,101
+Tarleton State,fcs,UAC,-2.8800706787328654,102
+Ohio,fbs,Mid-American,-2.935794493192141,103
+Nevada,fbs,Mountain West,-3.042664427752804,104
+San Diego State,fbs,Pac-12,-3.051504804589939,105
+Austin Peay,fcs,UAC,-3.3231949894441613,106
+Youngstown State,fcs,MVFC,-3.522345956910815,107
+Tulane,fbs,American Athletic,-3.550319875360792,108
+Mercer,fcs,Southern,-3.797949013873147,109
+Central Michigan,fbs,Mid-American,-3.9920411857461175,110
+Delaware,fbs,Conference USA,-4.107927326688063,111
+Stanford,fbs,ACC,-4.398244676889107,112
+Coastal Carolina,fbs,Sun Belt,-4.50403091420409,113
+Buffalo,fbs,Mid-American,-4.7688983792762585,114
+Montana,fcs,Big Sky,-4.919190693864785,115
+Stephen F. Austin,fcs,Southland,-5.321615719144498,116
+Harvard,fcs,Ivy,-5.402446471811006,117
+South Carolina State,fcs,MEAC,-5.550775928113557,118
+Campbell,fcs,Coastal Athletic,-5.643866559216864,119
+Rice,fbs,American Athletic,-5.669226368608225,120
+Troy,fbs,Sun Belt,-5.743819923121084,121
+South Dakota State,fcs,MVFC,-6.130295863323449,122
+Butler,fcs,Pioneer,-6.49541397207096,123
+South Dakota,fcs,MVFC,-6.651527349376714,124
+Incarnate Word,fcs,Southland,-6.704964137446444,125
+Alabama A&M,fcs,SWAC,-6.763079344157733,126
+Tennessee Tech,fcs,Southern,-6.8031413630982485,127
+Villanova,fcs,Patriot,-7.040516103424504,128
+Massachusetts,fbs,Mid-American,-7.100053978984658,129
+Central Connecticut,fcs,NEC,-7.1250429662118435,130
+Arkansas-Pine Bluff,fcs,SWAC,-7.182789067503992,131
+Elon,fcs,Coastal Athletic,-7.197085001445194,132
+Western Illinois,fcs,OVC,-7.226541286087389,133
+Weber State,fcs,Big Sky,-7.24254748690098,134
+Montana State,fcs,Big Sky,-7.5437183882394345,135
+Kennesaw State,fbs,Conference USA,-7.593976299043799,136
+North Dakota,fcs,MVFC,-7.841923292901842,137
+Western Kentucky,fbs,Conference USA,-7.844275965108391,138
+Old Dominion,fbs,Sun Belt,-7.871646198424788,139
+Southern Miss,fbs,Sun Belt,-7.967089288497313,140
+Northern Illinois,fbs,Mountain West,-8.007883779053618,141
+Lehigh,fcs,Patriot,-8.060343158742699,142
+Stony Brook,fcs,Coastal Athletic,-8.30262925666904,143
+Chattanooga,fcs,Southern,-8.46866499380572,144
+Alcorn State,fcs,SWAC,-8.474790232990514,145
+Monmouth,fcs,Coastal Athletic,-8.67826402318575,146
+Duquesne,fcs,NEC,-8.741148123539771,147
+East Carolina,fbs,American Athletic,-8.921471375243438,148
+Bryant,fcs,Coastal Athletic,-8.969197678785104,149
+Dayton,fcs,Pioneer,-9.194327520529011,150
+Southern Utah,fcs,Big Sky,-9.216841360411202,151
+St. Thomas (MN),fcs,Pioneer,-9.223955524361278,152
+North Alabama,fcs,UAC,-9.329853608138212,153
+Lamar,fcs,Southland,-9.330548566706899,154
+San José State,fbs,Mountain West,-9.347114874168888,155
+Hawai'i,fbs,Mountain West,-9.368972984892153,156
+Brown,fcs,Ivy,-9.70285233350968,157
+Washington State,fbs,Pac-12,-9.778314419320534,158
+East Tennessee State,fcs,Southern,-9.833124491236305,159
+Cornell,fcs,Ivy,-10.019708852983356,160
+Morgan State,fcs,MEAC,-10.270878781317787,161
+Robert Morris,fcs,NEC,-10.48846219433397,162
+Northern Arizona,fcs,Big Sky,-10.492356394932479,163
+Jackson State,fcs,SWAC,-10.580764136961346,164
+UAlbany,fcs,Coastal Athletic,-10.635544614096965,165
+Princeton,fcs,Ivy,-10.646540929766514,166
+Alabama State,fcs,SWAC,-10.745140844489507,167
+Idaho State,fcs,Big Sky,-10.816712603320042,168
+Idaho,fcs,Big Sky,-10.864348591189716,169
+Merrimack,fcs,FCS Independents,-10.906500188544168,170
+Holy Cross,fcs,Patriot,-10.927089867427087,171
+Sacred Heart,fcs,Coastal Athletic,-10.92764935785451,172
+Colgate,fcs,Patriot,-11.03316119361029,173
+Stonehill,fcs,NEC,-11.080274453599102,174
+Rhode Island,fcs,Coastal Athletic,-11.116631936766359,175
+Marist,fcs,Pioneer,-11.141433382693346,176
+Dartmouth,fcs,Ivy,-11.178822926099336,177
+Middle Tennessee,fbs,Conference USA,-11.360404667488119,178
+Norfolk State,fcs,MEAC,-11.386265475329772,179
+North Carolina A&T,fcs,Coastal Athletic,-11.446748292135903,180
+UC Davis,fcs,Big Sky,-11.461316632811226,181
+Texas Southern,fcs,SWAC,-11.47508301343602,182
+Western Carolina,fcs,Southern,-11.502198817015298,183
+Northern Iowa,fcs,MVFC,-11.63126938229831,184
+Houston Christian,fcs,Southland,-11.782747272928267,185
+Towson,fcs,Coastal Athletic,-11.796880581153335,186
+East Texas A&M,fcs,Southland,-11.829402119220902,187
+San Diego,fcs,Pioneer,-11.861407633845296,188
+Eastern Illinois,fcs,OVC,-11.878569306738301,189
+Central Arkansas,fcs,UAC,-11.921660375248603,190
+Howard,fcs,MEAC,-11.97187422385236,191
+Lindenwood,fcs,OVC,-12.084914263646906,192
+Abilene Christian,fcs,UAC,-12.10519272501513,193
+Southeast Missouri State,fcs,OVC,-12.110576905660785,194
+Fordham,fcs,Patriot,-12.227906059015993,195
+Yale,fcs,Ivy,-12.47674356852383,196
+Marshall,fbs,Sun Belt,-12.575375684355347,197
+Georgetown,fcs,Patriot,-12.754521498854599,198
+Army,fbs,American Athletic,-12.764519174005805,199
+North Carolina Central,fcs,MEAC,-12.845805251703691,200
+New Mexico State,fbs,Conference USA,-12.867730971200743,201
+Delaware State,fcs,MEAC,-13.049423370974495,202
+New Hampshire,fcs,Coastal Athletic,-13.074007281595756,203
+Prairie View A&M,fcs,SWAC,-13.218205969975507,204
+Illinois State,fcs,MVFC,-13.27245886246024,205
+Southern,fcs,SWAC,-13.279539352827895,206
+Lafayette,fcs,Patriot,-13.320030658067896,207
+Indiana State,fcs,MVFC,-13.324047422987142,208
+Valparaiso,fcs,Pioneer,-13.353286173663106,209
+Wofford,fcs,Southern,-13.511094401367176,210
+UL Monroe,fbs,Sun Belt,-13.791076301361887,211
+Tennessee State,fcs,OVC,-13.805707775884395,212
+Bucknell,fcs,Patriot,-13.886595656608815,213
+Charleston Southern,fcs,OVC,-13.981052802040935,214
+Furman,fcs,Southern,-14.076100470056051,215
+UT Martin,fcs,OVC,-14.174907193277694,216
+Eastern Kentucky,fcs,UAC,-14.26324082433326,217
+Charlotte,fbs,American Athletic,-14.317017658861324,218
+Presbyterian,fcs,Pioneer,-14.624721345552613,219
+Grambling,fcs,SWAC,-14.625228974957903,220
+Pennsylvania,fcs,Ivy,-14.665013965649786,221
+Richmond,fcs,Patriot,-14.717653736610542,222
+Northern Colorado,fcs,Big Sky,-14.844006603496947,223
+Bethune-Cookman,fcs,SWAC,-14.883672639429593,224
+McNeese,fcs,Southland,-15.075475649409025,225
+Gardner-Webb,fcs,OVC,-15.218614710562811,226
+Murray State,fcs,MVFC,-15.399282864406189,227
+Morehead State,fcs,Pioneer,-15.47072849235671,228
+Southern Illinois,fcs,MVFC,-15.564056791597407,229
+Columbia,fcs,Ivy,-15.610139571947673,230
+Florida A&M,fcs,SWAC,-15.619624750913388,231
+Long Island University,fcs,NEC,-15.764972258067564,232
+SE Louisiana,fcs,Southland,-15.890977331635801,233
+Stetson,fcs,Pioneer,-16.231935330258647,234
+Samford,fcs,Southern,-16.433788043141107,235
+Mississippi Valley State,fcs,SWAC,-16.434208844429428,236
+Davidson,fcs,Pioneer,-16.591882086193397,237
+The Citadel,fcs,Southern,-16.683404264171607,238
+Eastern Washington,fcs,Big Sky,-16.764976781300856,239
+Kent State,fbs,Mid-American,-16.802746920703616,240
+Bowling Green,fbs,Mid-American,-16.846646131890832,241
+Akron,fbs,Mid-American,-17.14620971620508,242
+William & Mary,fcs,Patriot,-17.32978302969432,243
+Utah Tech,fcs,Big Sky,-17.332176366192098,244
+Missouri State,fbs,Conference USA,-17.418360425687528,245
+Cal Poly,fcs,Big Sky,-17.504640086619037,246
+Drake,fcs,Pioneer,-17.607787589144607,247
+Sam Houston,fbs,Conference USA,-17.743491906993047,248
+California,fbs,ACC,-17.794723872619347,249
+Nicholls,fcs,Southland,-17.863179415456962,250
+Wagner,fcs,NEC,-18.094625567496657,251
+Hampton,fcs,Coastal Athletic,-18.33711042400472,252
+VMI,fcs,Southern,-18.58879071218381,253
+Maine,fcs,Coastal Athletic,-19.654454341709638,254
+Portland State,fcs,Big Sky,-19.72429060332057,255
+Eastern Michigan,fbs,Mid-American,-19.727487894009965,256
+UTEP,fbs,Mountain West,-21.269183085527825,257
+Northwestern State,fcs,Southland,-21.827963768168477,258
+Ball State,fbs,Mid-American,-21.984364777175575,259
+Sacramento State,fbs,Mid-American,-22.380390748616865,260

@@ -727,7 +727,9 @@ else:
     ))
 
     ### writing out file for testing what payouts would be if I picked VoA's winners on kalshi
-    kalshi_df = upcoming_games_df.select([
+    kalshi_df = upcoming_games_df.sort(
+        ["Proj_Margin"], descending = True).head(25).sort(
+            ["start_date"], descending = False).select([
         "id",
         "home_team",
         "home_classification",

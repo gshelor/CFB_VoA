@@ -4999,6 +4999,16 @@ if (as.integer(cfb_week) == 0) {
     ncol = T_num
   )
 
+  ### def voa ratings has a bunch of negative values in it which is not possible for what the value represents (pts conceded against hypothetical avg team on a neutral field)
+  ## a better fix is probably to tinker with the priors some more but what if I don't want to because I'm tired of dealing with stan being weird and annoying
+  ## on reflection the priors probably don't change much, I'd need to fix the opponent-adjustment process more than anything else so low numbers aren't so frequent
+  ## but I'm honestly not sure how to do that
+  Def_VoA_Ratings <- ifelse(
+    Def_VoA_Ratings <= 0,
+    abs(rnorm(1, 0, sd(Def_VoA_Ratings))) / 5,
+    Def_VoA_Ratings
+  )
+
   ### generating median and mean and quantile ratings
   MeanPred <- apply(Def_VoA_Ratings, 2, mean)
   MedianPred <- apply(Def_VoA_Ratings, 2, median)
@@ -5312,6 +5322,16 @@ if (as.integer(cfb_week) == 0) {
     rnorm(P * T_num, mean = DefMeans_matrix, sd = Def_VoA_pars$sigma),
     nrow = P,
     ncol = T_num
+  )
+
+  ### def voa ratings has a bunch of negative values in it which is not possible for what the value represents (pts conceded against hypothetical avg team on a neutral field)
+  ## a better fix is probably to tinker with the priors some more but what if I don't want to because I'm tired of dealing with stan being weird and annoying
+  ## on reflection the priors probably don't change much, I'd need to fix the opponent-adjustment process more than anything else so low numbers aren't so frequent
+  ## but I'm honestly not sure how to do that
+  Def_VoA_Ratings <- ifelse(
+    Def_VoA_Ratings <= 0,
+    abs(rnorm(1, 0, sd(Def_VoA_Ratings))) / 5,
+    Def_VoA_Ratings
   )
 
   ### generating median and mean and quantile ratings
@@ -5644,307 +5664,315 @@ VoA_Full_Table <- FinalTable |>
     footnote = "Table by @gshelor, data from CFB Data API via cfbfastR"
   )
 
-##### Resume VoA #####
-### determining mean VoA Rating of top 12 teams in VoA, comparing how this hypothetical average top 12 team would do given each team's schedule
-## choosing top 12 because of future playoff expansion which seems likely if not already certain
-## it really should only be 8 max but whatever, I'm gonna be just fine
-### Resume VoA only created after week 9 (Week 10 - end of season)
-if (as.integer(cfb_week) > 11) {
-  ### adding column to VoAVariables to hold Resume VoA metric
-  ## placing dummy value for now, will be filled in for loop further down
-  VoAVariables <- VoAVariables |>
-    mutate(Resume_VoA = -999)
+# ##### Resume VoA #####
+# ### determining mean VoA Rating of top 8 teams in VoA, comparing how this hypothetical average top 8 team would do given each team's schedule
+# ## choosing top 8 because of future playoff expansion which seems likely if not already certain
+# ## it really should only be 8 max but whatever, I'm gonna be just fine
+# ### Resume VoA only created after week 9 (Week 10 - end of season)
+# if (as.integer(cfb_week) > 11) {
+#   ### adding column to VoAVariables to hold Resume VoA metric
+#   ## placing dummy value for now, will be filled in for loop further down
+#   VoAVariables <- VoAVariables |>
+#     mutate(Resume_VoA = -999)
 
-  ### calculating top 12 average since 12 teams make the playoff
-  Top12 <- VoAVariables |>
-    filter(VoA_Ranking_Ovr <= 12) |>
-    select(
-      season,
-      school,
-      OffVoA_MeanRating,
-      DefVoA_MeanRating,
-      STVoA_MeanRating
-    )
-  Top12_off_mean <- mean(Top12$OffVoA_MeanRating)
-  Top12_def_mean <- mean(Top12$DefVoA_MeanRating)
-  Top12_st_mean <- mean(Top12$STVoA_MeanRating)
-  Top12_mean <- Top12_off_mean - Top12_def_mean + Top12_st_mean
+#   ### calculating top 8 average since 8 teams make the playoff
+#   Top8 <- fread(here(
+#     "Data",
+#     paste0("VoA", year),
+#     paste0("AllD1", year, week_text, as.integer(cfb_week) - 1, "VoA.csv")
+#   )) |>
+#     filter(VoA_Ranking_Ovr <= 8) #|>
+#   # select(
+#   #   season,
+#   #   school,
+#   #   OffVoA_MeanRating,
+#   #   DefVoA_MeanRating,
+#   #   STVoA_MeanRating
+#   # )
+#   Top8_off_mean <- mean(Top8$OffVoA_MeanRating)
+#   Top8_def_mean <- mean(Top8$DefVoA_MeanRating)
+#   Top8_st_mean <- mean(Top8$STVoA_MeanRating)
+#   Top8_mean <- Top8_off_mean - Top8_def_mean + Top8_st_mean
 
-  ### pulling in completed games
-  completed_games <- cfbd_game_info(as.integer(year)) |>
-    filter(
-      home_team %in% VoAVariables$school | away_team %in% VoAVariables$school
-    ) |>
-    select(
-      game_id,
-      season,
-      week,
-      neutral_site,
-      completed,
-      home_team,
-      home_points,
-      away_team,
-      away_points
-    ) |>
-    filter(completed == TRUE)
+#   ### pulling in completed games
+#   completed_games <- cfbd_game_info(as.integer(year)) |>
+#     filter(
+#       home_team %in% VoAVariables$school | away_team %in% VoAVariables$school
+#     ) |>
+#     select(
+#       game_id,
+#       season,
+#       week,
+#       neutral_site,
+#       completed,
+#       home_team,
+#       home_points,
+#       away_team,
+#       away_points
+#     ) |>
+#     filter(completed == TRUE)
 
-  ### using SRS ratings for FCS teams instead of the randomly sampled VoA rating based on
-  ## bottom half of VoA ratings as done during 2022 CFB season
-  FCS <- cfbd_ratings_srs(year = as.integer(year)) |>
-    filter(team %nin% VoAVariables$school) |>
-    filter(
-      team %in% completed_games$home_team | team %in% completed_games$away_team
-    )
+#   ### using SRS ratings for FCS teams instead of the randomly sampled VoA rating based on
+#   ## bottom half of VoA ratings as done during 2022 CFB season
+#   FCS <- fread(here(
+#     "Data",
+#     paste0("VoA", year),
+#     paste0("AllD1", year, week_text, as.integer(cfb_week) - 1, "VoA.csv")
+#   )) |>
+#     filter(team %nin% VoAVariables$school) |>
+#     filter(
+#       team %in% completed_games$home_team | team %in% completed_games$away_team
+#     )
 
-  ##### Calculating Resume VoA team by team #####
-  for (x in 1:nrow(VoAVariables)) {
-    temp_team <- completed_games |>
-      filter(
-        home_team == VoAVariables$school[x] |
-          away_team == VoAVariables$school[x]
-      ) |>
-      mutate(
-        team = VoAVariables$school[x],
-        team_opp = case_when(
-          home_team == VoAVariables$school[x] ~ away_team,
-          TRUE ~ home_team
-        ),
-        team_VoA_rating = VoAVariables$VoA_Rating_Ovr[x]
-      )
-    ### extracting ratings of FBS opponents
-    temp_teamFBSOpps <- VoAVariables |>
-      filter(school %in% temp_team$team_opp) |>
-      select(school, VoA_Rating_Ovr)
-    ### extracting SRS ratings of FCS opponents
-    temp_teamFCSOpps <- FCS |>
-      filter(team %in% temp_team$team_opp) |>
-      select(school, rating)
-    colnames(temp_teamFCSOpps) <- c("school", "VoA_Rating_Ovr")
-    temp_teamOpps <- rbind(temp_teamFBSOpps, temp_teamFCSOpps)
-    colnames(temp_teamOpps) <- c("team_opp", "opp_VoA_rating")
+#   ##### Calculating Resume VoA team by team #####
+#   for (x in 1:nrow(VoAVariables)) {
+#     temp_team <- completed_games |>
+#       filter(
+#         home_team == VoAVariables$school[x] |
+#           away_team == VoAVariables$school[x]
+#       ) |>
+#       mutate(
+#         team = VoAVariables$school[x],
+#         team_opp = case_when(
+#           home_team == VoAVariables$school[x] ~ away_team,
+#           TRUE ~ home_team
+#         ),
+#         team_VoA_rating = VoAVariables$VoA_Rating_Ovr[x]
+#       )
+#     ### extracting ratings of FBS opponents
+#     temp_teamFBSOpps <- VoAVariables |>
+#       filter(school %in% temp_team$team_opp) |>
+#       select(school, VoA_Rating_Ovr)
+#     ### extracting SRS ratings of FCS opponents
+#     temp_teamFCSOpps <- FCS |>
+#       filter(team %in% temp_team$team_opp) |>
+#       select(school, rating)
+#     colnames(temp_teamFCSOpps) <- c("school", "VoA_Rating_Ovr")
+#     temp_teamOpps <- rbind(temp_teamFBSOpps, temp_teamFCSOpps)
+#     colnames(temp_teamOpps) <- c("team_opp", "opp_VoA_rating")
 
-    ### adding opponent ratings to main team df
-    temp_team <- full_join(temp_team, temp_teamOpps, by = "team_opp")
+#     ### adding opponent ratings to main team df
+#     temp_team <- full_join(temp_team, temp_teamOpps, by = "team_opp")
 
-    ### calculating resume score
-    temp_team <- temp_team |>
-      mutate(
-        actual_diff = case_when(
-          home_team == VoAVariables$school[x] ~ home_points - away_points,
-          TRUE ~ away_points - home_points
-        ),
-        projected_diff = case_when(
-          home_team == VoAVariables$school[x] &
-            neutral_site == FALSE ~ (team_VoA_rating + 2) - opp_VoA_rating,
-          away_team == VoAVariables$school[x] &
-            neutral_site == FALSE ~ team_VoA_rating - (opp_VoA_rating + 2),
-          TRUE ~ team_VoA_rating - opp_VoA_rating
-        ),
-        Top12_proj = case_when(
-          home_team == VoAVariables$school[x] &
-            neutral_site == FALSE ~ (Top12_mean + 2) - opp_VoA_rating,
-          TRUE ~ Top12_mean - opp_VoA_rating
-        ),
-        Resume_Score = actual_diff - Top12_proj
-      )
+#     ### calculating resume score
+#     temp_team <- temp_team |>
+#       mutate(
+#         actual_diff = case_when(
+#           home_team == VoAVariables$school[x] ~ home_points - away_points,
+#           TRUE ~ away_points - home_points
+#         ),
+#         projected_diff = case_when(
+#           home_team == VoAVariables$school[x] &
+#             neutral_site == FALSE ~ (team_VoA_rating + 2) - opp_VoA_rating,
+#           away_team == VoAVariables$school[x] &
+#             neutral_site == FALSE ~ team_VoA_rating - (opp_VoA_rating + 2),
+#           TRUE ~ team_VoA_rating - opp_VoA_rating
+#         ),
+#         Top8_proj = case_when(
+#           home_team == VoAVariables$school[x] &
+#             neutral_site == FALSE ~ (Top8_mean + 2) - opp_VoA_rating,
+#           TRUE ~ Top8_mean - opp_VoA_rating
+#         ),
+#         Resume_Score = actual_diff - Top8_proj
+#       )
 
-    ## determining number of losses
-    temp_team_losses <- temp_team |>
-      filter(
-        home_team == VoAVariables$school[x] &
-          home_points < away_points |
-          away_team == VoAVariables$school[x] & away_points < home_points
-      )
-    ## storing overall team Resume Score as vector
-    VoAVariables$Resume_VoA[x] <- sum(temp_team$Resume_Score) -
-      (7 * nrow(temp_team_losses))
-  }
+#     ## determining number of losses
+#     temp_team_losses <- temp_team |>
+#       filter(
+#         home_team == VoAVariables$school[x] &
+#           home_points < away_points |
+#           away_team == VoAVariables$school[x] & away_points < home_points
+#       )
+#     ## storing overall team Resume Score as vector
+#     VoAVariables$Resume_VoA[x] <- sum(temp_team$Resume_Score) -
+#       (7 * nrow(temp_team_losses))
+#   }
 
-  VoAVariables <- VoAVariables |>
-    mutate(Resume_VoA_Rank = dense_rank(desc(Resume_VoA)))
+#   VoAVariables <- VoAVariables |>
+#     mutate(Resume_VoA_Rank = dense_rank(desc(Resume_VoA)))
 
-  ### filtering resume top 25 out for table
-  ResumeVoATop25 <- VoAVariables |>
-    select(school, Resume_VoA, Resume_VoA_Rank) |>
-    filter(Resume_VoA_Rank < 26) |>
-    arrange(Resume_VoA_Rank)
+#   ### filtering resume top 25 out for table
+#   ResumeVoATop25 <- VoAVariables |>
+#     select(school, Resume_VoA, Resume_VoA_Rank) |>
+#     filter(Resume_VoA_Rank < 26) |>
+#     arrange(Resume_VoA_Rank)
 
-  ### full resume VoA, simplified for table
-  FinalResumeTable <- VoAVariables |>
-    select(school, Resume_VoA, Resume_VoA_Rank) |>
-    arrange(Resume_VoA_Rank)
-} else {
-  print("no Resume VoA until Week 12!")
-}
+#   ### full resume VoA, simplified for table
+#   FinalResumeTable <- VoAVariables |>
+#     select(school, Resume_VoA, Resume_VoA_Rank) |>
+#     arrange(Resume_VoA_Rank)
+# } else {
+#   print("no Resume VoA until Week 12!")
+# }
 
-##### Creating Top 25 and Full Tables Arranged by Resume VoA #####
-if (as.integer(cfb_week) > 11) {
-  ## Top 25 Table
-  # adding title and subtitle
-  ResumeVoATop25Table <- ResumeVoATop25 |>
-    gt() |> # use 'gt' to make an awesome table...
-    gt_theme_espn() |>
-    tab_header(
-      title = paste(year, week_text, cfb_week, resume_text, VoA_Top25_text), # ...with this title
-      subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy"
-    ) |> # and this subtitle
-    ## tab_style(style = cell_fill("bisque"),
-    ##           locations = cells_body()) |>  # add fill color to table
-    fmt_number(
-      # A column (numeric data)
-      columns = c(Resume_VoA), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number(
-      # Another column (also numeric data)
-      columns = c(Resume_VoA_Rank), # What column variable? FinalVoATop25$VoA_Ranking
-      decimals = 0 # I want this column to have zero decimal places
-    ) |>
-    data_color(
-      # Update cell colors, testing different color palettes
-      columns = c(Resume_VoA), # ...for dose column
-      fn = scales::col_numeric(
-        # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    cols_label(
-      Resume_VoA = "Resume VoA Rating",
-      Resume_VoA_Rank = "Resume VoA Ranking"
-    ) |> # Update labels
-    cols_move_to_end(columns = "Resume_VoA") |>
-    # cols_hide(c(conference, CFB_Week, VoA_Output)) |>
-    tab_footnote(
-      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR"
-    )
+# ##### Creating Top 25 and Full Tables Arranged by Resume VoA #####
+# if (as.integer(cfb_week) > 11) {
+#   ## Top 25 Table
+#   # adding title and subtitle
+#   ResumeVoATop25Table <- ResumeVoATop25 |>
+#     gt() |> # use 'gt' to make an awesome table...
+#     gt_theme_espn() |>
+#     tab_header(
+#       title = paste(year, week_text, cfb_week, resume_text, VoA_Top25_text), # ...with this title
+#       subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy"
+#     ) |> # and this subtitle
+#     ## tab_style(style = cell_fill("bisque"),
+#     ##           locations = cells_body()) |>  # add fill color to table
+#     fmt_number(
+#       # A column (numeric data)
+#       columns = c(Resume_VoA), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number(
+#       # Another column (also numeric data)
+#       columns = c(Resume_VoA_Rank), # What column variable? FinalVoATop25$VoA_Ranking
+#       decimals = 0 # I want this column to have zero decimal places
+#     ) |>
+#     data_color(
+#       # Update cell colors, testing different color palettes
+#       columns = c(Resume_VoA), # ...for dose column
+#       fn = scales::col_numeric(
+#         # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     cols_label(
+#       Resume_VoA = "Resume VoA Rating",
+#       Resume_VoA_Rank = "Resume VoA Ranking"
+#     ) |> # Update labels
+#     cols_move_to_end(columns = "Resume_VoA") |>
+#     # cols_hide(c(conference, CFB_Week, VoA_Output)) |>
+#     tab_footnote(
+#       footnote = "Table by @gshelor, data from CFB Data API via cfbfastR"
+#     )
 
-  ### Full 134 teams table
-  # adding title and subtitle
-  Resume_VoA_Table <- FinalResumeTable |>
-    gt() |> # use 'gt' to make an awesome table...
-    gt_theme_espn() |>
-    tab_header(
-      title = paste(year, week_text, cfb_week, resume_text, VoA_text), # ...with this title
-      subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy"
-    ) |> # and this subtitle
-    ##tab_style(style = cell_fill("bisque"),
-    ##        locations = cells_body()) |>  # add fill color to table
-    fmt_number(
-      # A column (numeric data)
-      columns = c(Resume_VoA), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number(
-      # Another column (also numeric data)
-      columns = c(Resume_VoA_Rank), # What column variable? FinalVoATop25$VoA_Ranking
-      decimals = 0 # I want this column to have zero decimal places
-    ) |>
-    data_color(
-      # Update cell colors, testing different color palettes
-      columns = c(Resume_VoA), # ...for dose column
-      fn = scales::col_numeric(
-        # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    cols_label(
-      Resume_VoA = "Resume VoA Rating",
-      Resume_VoA_Rank = "Resume VoA Rank"
-    ) |> # Update labels
-    cols_move_to_end(columns = "Resume_VoA") |>
-    # cols_hide(c(conference, CFB_Week, VoA_Output)) |>
-    tab_footnote(
-      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR"
-    )
-} else if (as.integer(cfb_week) == 20) {
-  ## Top 25 Table
-  # adding title and subtitle
-  ResumeVoATop25Table <- ResumeVoATop25 |>
-    gt() |> # use 'gt' to make an awesome table...
-    gt_theme_espn() |>
-    tab_header(
-      title = paste(year, Postseason_text, resume_text, VoA_Top25_text), # ...with this title
-      subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy"
-    ) |> # and this subtitle
-    ## tab_style(style = cell_fill("bisque"),
-    ##           locations = cells_body()) |>  # add fill color to table
-    fmt_number(
-      # A column (numeric data)
-      columns = c(Resume_VoA), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number(
-      # Another column (also numeric data)
-      columns = c(Resume_VoA_Rank), # What column variable? FinalVoATop25$VoA_Ranking
-      decimals = 0 # I want this column to have zero decimal places
-    ) |>
-    data_color(
-      # Update cell colors, testing different color palettes
-      columns = c(Resume_VoA), # ...for dose column
-      fn = scales::col_numeric(
-        # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    cols_label(
-      Resume_VoA = "Resume VoA Rating",
-      Resume_VoA_Rank = "Resume VoA Ranking"
-    ) |> # Update labels
-    cols_move_to_end(columns = "Resume_VoA") |>
-    # cols_hide(c(conference, CFB_Week, VoA_Output)) |>
-    tab_footnote(
-      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR"
-    )
+#   ### Full 134 teams table
+#   # adding title and subtitle
+#   Resume_VoA_Table <- FinalResumeTable |>
+#     gt() |> # use 'gt' to make an awesome table...
+#     gt_theme_espn() |>
+#     tab_header(
+#       title = paste(year, week_text, cfb_week, resume_text, VoA_text), # ...with this title
+#       subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy"
+#     ) |> # and this subtitle
+#     ##tab_style(style = cell_fill("bisque"),
+#     ##        locations = cells_body()) |>  # add fill color to table
+#     fmt_number(
+#       # A column (numeric data)
+#       columns = c(Resume_VoA), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number(
+#       # Another column (also numeric data)
+#       columns = c(Resume_VoA_Rank), # What column variable? FinalVoATop25$VoA_Ranking
+#       decimals = 0 # I want this column to have zero decimal places
+#     ) |>
+#     data_color(
+#       # Update cell colors, testing different color palettes
+#       columns = c(Resume_VoA), # ...for dose column
+#       fn = scales::col_numeric(
+#         # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     cols_label(
+#       Resume_VoA = "Resume VoA Rating",
+#       Resume_VoA_Rank = "Resume VoA Rank"
+#     ) |> # Update labels
+#     cols_move_to_end(columns = "Resume_VoA") |>
+#     # cols_hide(c(conference, CFB_Week, VoA_Output)) |>
+#     tab_footnote(
+#       footnote = "Table by @gshelor, data from CFB Data API via cfbfastR"
+#     )
+# } else if (as.integer(cfb_week) == 20) {
+#   ## Top 25 Table
+#   # adding title and subtitle
+#   ResumeVoATop25Table <- ResumeVoATop25 |>
+#     gt() |> # use 'gt' to make an awesome table...
+#     gt_theme_espn() |>
+#     tab_header(
+#       title = paste(year, Postseason_text, resume_text, VoA_Top25_text), # ...with this title
+#       subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy"
+#     ) |> # and this subtitle
+#     ## tab_style(style = cell_fill("bisque"),
+#     ##           locations = cells_body()) |>  # add fill color to table
+#     fmt_number(
+#       # A column (numeric data)
+#       columns = c(Resume_VoA), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number(
+#       # Another column (also numeric data)
+#       columns = c(Resume_VoA_Rank), # What column variable? FinalVoATop25$VoA_Ranking
+#       decimals = 0 # I want this column to have zero decimal places
+#     ) |>
+#     data_color(
+#       # Update cell colors, testing different color palettes
+#       columns = c(Resume_VoA), # ...for dose column
+#       fn = scales::col_numeric(
+#         # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     cols_label(
+#       Resume_VoA = "Resume VoA Rating",
+#       Resume_VoA_Rank = "Resume VoA Ranking"
+#     ) |> # Update labels
+#     cols_move_to_end(columns = "Resume_VoA") |>
+#     # cols_hide(c(conference, CFB_Week, VoA_Output)) |>
+#     tab_footnote(
+#       footnote = "Table by @gshelor, data from CFB Data API via cfbfastR"
+#     )
 
-  ### Full 134 teams table
-  ### adding title and subtitle
-  Resume_VoA_Table <- FinalResumeTable |>
-    gt() |> # use 'gt' to make an awesome table...
-    gt_theme_espn() |>
-    tab_header(
-      title = paste(year, Postseason_text, resume_text, VoA_text), # ...with this title
-      subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy"
-    ) |> # and this subtitle
-    ##tab_style(style = cell_fill("bisque"),
-    ##        locations = cells_body()) |>  # add fill color to table
-    fmt_number(
-      # A column (numeric data)
-      columns = c(Resume_VoA), # What column variable? FinalVoATop25$VoA_Rating
-      decimals = 3 # With four decimal places
-    ) |>
-    fmt_number(
-      # Another column (also numeric data)
-      columns = c(Resume_VoA_Rank), # What column variable? FinalVoATop25$VoA_Ranking
-      decimals = 0 # I want this column to have zero decimal places
-    ) |>
-    data_color(
-      # Update cell colors, testing different color palettes
-      columns = c(Resume_VoA), # ...for dose column
-      fn = scales::col_numeric(
-        # <- bc it's numeric
-        palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
-        domain = c(), # Column scale endpoints
-        reverse = FALSE
-      )
-    ) |>
-    cols_label(
-      Resume_VoA = "Resume VoA Rating",
-      Resume_VoA_Rank = "Resume VoA Rank"
-    ) |> # Update labels
-    cols_move_to_end(columns = "Resume_VoA") |>
-    # cols_hide(c(conference, CFB_Week, VoA_Output)) |>
-    tab_footnote(
-      footnote = "Table by @gshelor, data from CFB Data API via cfbfastR"
-    )
-} else {
-  print("No Resume VoA until Week 12!")
-}
+#   ### Full 134 teams table
+#   ### adding title and subtitle
+#   Resume_VoA_Table <- FinalResumeTable |>
+#     gt() |> # use 'gt' to make an awesome table...
+#     gt_theme_espn() |>
+#     tab_header(
+#       title = paste(year, Postseason_text, resume_text, VoA_text), # ...with this title
+#       subtitle = "Supremely Excellent Yet Salaciously Godlike And Infallibly Magnificent Vortex of Accuracy"
+#     ) |> # and this subtitle
+#     ##tab_style(style = cell_fill("bisque"),
+#     ##        locations = cells_body()) |>  # add fill color to table
+#     fmt_number(
+#       # A column (numeric data)
+#       columns = c(Resume_VoA), # What column variable? FinalVoATop25$VoA_Rating
+#       decimals = 3 # With four decimal places
+#     ) |>
+#     fmt_number(
+#       # Another column (also numeric data)
+#       columns = c(Resume_VoA_Rank), # What column variable? FinalVoATop25$VoA_Ranking
+#       decimals = 0 # I want this column to have zero decimal places
+#     ) |>
+#     data_color(
+#       # Update cell colors, testing different color palettes
+#       columns = c(Resume_VoA), # ...for dose column
+#       fn = scales::col_numeric(
+#         # <- bc it's numeric
+#         palette = brewer.pal(11, "RdYlGn"), # A color scheme (gradient)
+#         domain = c(), # Column scale endpoints
+#         reverse = FALSE
+#       )
+#     ) |>
+#     cols_label(
+#       Resume_VoA = "Resume VoA Rating",
+#       Resume_VoA_Rank = "Resume VoA Rank"
+#     ) |> # Update labels
+#     cols_move_to_end(columns = "Resume_VoA") |>
+#     # cols_hide(c(conference, CFB_Week, VoA_Output)) |>
+#     tab_footnote(
+#       footnote = "Table by @gshelor, data from CFB Data API via cfbfastR"
+#     )
+# } else {
+#   print("No Resume VoA until Week 12!")
+# }
 
 # poopypants <- lm(
 #   adj_off_ppg ~ adj_off_epa +
@@ -6000,25 +6028,25 @@ VoA_Full_Table |>
   )
 
 ## Resume VoA not produced until Week 12
-if (as.integer(cfb_week) > 11) {
-  ### Resume tables
-  ResumeVoATop25Table
-  ResumeVoATop25Table |>
-    gtsave(
-      resumetop25_file_pathway,
-      expand = 5,
-      path = output_dir
-    )
-  Resume_VoA_Table
-  Resume_VoA_Table |>
-    gtsave(
-      resumefulltable_file_pathway,
-      expand = 5,
-      path = output_dir
-    )
-} else {
-  print("No Resume VoA tables until week 12!")
-}
+# if (as.integer(cfb_week) > 11) {
+#   ### Resume tables
+#   ResumeVoATop25Table
+#   ResumeVoATop25Table |>
+#     gtsave(
+#       resumetop25_file_pathway,
+#       expand = 5,
+#       path = output_dir
+#     )
+#   Resume_VoA_Table
+#   Resume_VoA_Table |>
+#     gtsave(
+#       resumefulltable_file_pathway,
+#       expand = 5,
+#       path = output_dir
+#     )
+# } else {
+#   print("No Resume VoA tables until week 12!")
+# }
 
 ## Exporting final dataframe as parquet file
 write_parquet(VoAVariables, file_pathway)
